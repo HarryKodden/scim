@@ -1,16 +1,21 @@
 from schema import ListResponse, Group
 from typing import Any
 
-from data.groups import get_group_resources, get_group_resource, put_group_resource, del_group_resource
+from data.groups import \
+    get_group_resources, \
+    get_group_resource, \
+    put_group_resource, \
+    del_group_resource
 
 from fastapi import APIRouter, Body, status, HTTPException
 
 router = APIRouter(
     prefix="/Groups",
-    tags=["groups"],
+    tags=["SCIM Groups"],
 )
 
-@router.get("/")
+
+@router.get("")
 async def get_all_groups() -> ListResponse:
     """ Read all Groups """
 
@@ -19,15 +24,15 @@ async def get_all_groups() -> ListResponse:
     return ListResponse(
         Resources=resources,
         itemsPerPage=len(resources),
-	    schemas=[
-		    "urn:ietf:params:scim:api:messages:2.0:ListResponse"
-	    ],
-	    startIndex=1,
-	    totalResults=len(resources)
+        schemas=[
+            "urn:ietf:params:scim:api:messages:2.0:ListResponse"
+        ],
+        startIndex=1,
+        totalResults=len(resources)
     )
 
 
-@router.post("/", status_code=status.HTTP_201_CREATED)
+@router.post("", status_code=status.HTTP_201_CREATED)
 async def create_group(
     group: Group = Body(
         example={
@@ -35,12 +40,12 @@ async def create_group(
             "externalId": "273aca56-d86a-4f05-a159-51856b5cb1b3@sram.surf.nl",
             "members": [
                 {
-                "displayName": "John Doe",
-                "value": "25854263-01ee-4e45-a4de-e34e04e9830b"
+                    "displayName": "John Doe",
+                    "value": "25854263-01ee-4e45-a4de-e34e04e9830b"
                 },
                 {
-                "displayName": "Peter Doe",
-                "value": "89a7c3ca-1e8b-48ed-bc17-831611078a52"
+                    "displayName": "Peter Doe",
+                    "value": "89a7c3ca-1e8b-48ed-bc17-831611078a52"
                 },
             ],
             "schemas": [

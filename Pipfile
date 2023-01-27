@@ -10,9 +10,6 @@ flake8 = "*"
 fastapi = "*"
 uvicorn = "*"
 pydantic = "*"
-python-jose = "*"
-passlib = "*"
-python-multipart = "*"
 
 [requires]
 python_version = "3.10"

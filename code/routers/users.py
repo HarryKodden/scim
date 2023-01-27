@@ -2,15 +2,19 @@ from schema import ListResponse, User
 from typing import Any
 
 from fastapi import APIRouter, Body, status, HTTPException
-from data.users import get_user_resources, put_user_resource, get_user_resource, del_user_resource
+from data.users import \
+    get_user_resources, \
+    get_user_resource, \
+    put_user_resource, \
+    del_user_resource
 
 router = APIRouter(
     prefix="/Users",
-    tags=["users"],
+    tags=["SCIM Users"],
 )
 
 
-@router.get("/")
+@router.get("")
 async def get_all_users() -> ListResponse:
     """ Read all Users """
 
@@ -19,14 +23,15 @@ async def get_all_users() -> ListResponse:
     return ListResponse(
         Resources=resources,
         itemsPerPage=len(resources),
-	    schemas=[
-		    "urn:ietf:params:scim:api:messages:2.0:ListResponse"
-	    ],
-	    startIndex=1,
-	    totalResults=len(resources)
+        schemas=[
+            "urn:ietf:params:scim:api:messages:2.0:ListResponse"
+        ],
+        startIndex=1,
+        totalResults=len(resources)
     )
 
-@router.post("/", status_code=status.HTTP_201_CREATED)
+
+@router.post("", status_code=status.HTTP_201_CREATED)
 async def create_user(
     user: User = Body(
         example={
@@ -39,15 +44,15 @@ async def create_user(
             "displayName": "string",
             "emails": [
                 {
-                "primary": True,
-                "value": "string"
+                    "primary": True,
+                    "value": "string"
                 }
             ],
             "userName": "string",
             "urn:mace:surf.nl:sram:scim:extension:User": {},
             "x509Certificates": [
                 {
-                "value": "string"
+                    "value": "string"
                 }
             ],
             "schemas": [

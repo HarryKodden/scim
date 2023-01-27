@@ -1,15 +1,8 @@
+# schema.py
+
 from datetime import datetime
 from typing import ClassVar, Union, List, Optional, Dict
 from pydantic import BaseModel, Field
-
-
-class Token(BaseModel):
-    access_token: str
-    token_type: str
-
-
-class TokenData(BaseModel):
-    username: str | None = None
 
 
 class Name(BaseModel):
@@ -67,7 +60,8 @@ class User(BaseModel):
     displayName: str = None
     emails: List[Union[Email, None]] = None
     userName: str = None
-    sram_user_extension: Optional[SRAM_User_Extension] = Field(alias="urn:mace:surf.nl:sram:scim:extension:User", default={})
+    sram_user_extension: Optional[SRAM_User_Extension] = \
+        Field(alias="urn:mace:surf.nl:sram:scim:extension:User", default={})
     x509Certificates: List[Union[Certificate, None]] = None
     schemas: List[Union[str, None]] = None
 
@@ -80,11 +74,11 @@ class UserResource(BaseModel):
     displayName: str = None
     emails: List[Union[Email, None]] = None
     userName: str = None
-    sram_user_extension: Optional[SRAM_User_Extension] = Field(alias="urn:mace:surf.nl:sram:scim:extension:User", default={})
+    sram_user_extension: Optional[SRAM_User_Extension] = \
+        Field(alias="urn:mace:surf.nl:sram:scim:extension:User", default={})
     x509Certificates: List[Union[Certificate, None]] = None
     schemas: List[Union[str, None]] = None
     meta: Meta = None
-    hashed_password: str = None
 
 
 class Group(BaseModel):
@@ -92,7 +86,8 @@ class Group(BaseModel):
     displayName: str = None
     members: List[Union[Member, None]] = None
     schemas: List[Union[str, None]] = None
-    sram_group_extension: Optional[SRAM_Group_Extension] = Field(alias="urn:mace:surf.nl:sram:scim:extension:Group", default={})
+    sram_group_extension: Optional[SRAM_Group_Extension] = \
+        Field(alias="urn:mace:surf.nl:sram:scim:extension:Group", default={})
     meta: Meta = None
 
 
@@ -102,5 +97,6 @@ class GroupResource(BaseModel):
     displayName: str = None
     members: List[Union[Member, None]] = None
     schemas: List[Union[str, None]] = None
-    sram_group_extension: Optional[SRAM_Group_Extension] = Field(alias="urn:mace:surf.nl:sram:scim:extension:Group", default={})
+    sram_group_extension: Optional[SRAM_Group_Extension] = \
+        Field(alias="urn:mace:surf.nl:sram:scim:extension:Group", default={})
     meta: Meta = None
