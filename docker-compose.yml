@@ -5,6 +5,7 @@ services:
     build: .
     command: bash -c "uvicorn main:app --host 0.0.0.0 --port 8000 --reload"
     volumes:
-      - ./app:/app
+      - ./code:/code
+      - ./data:/data
     ports:
       - "8000:8000"

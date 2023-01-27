@@ -5,12 +5,14 @@ FROM python:3.10
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
-WORKDIR /app
+WORKDIR /code
 
 RUN pip install pipenv
 
-COPY . /app
+COPY . /code
 RUN pipenv lock
 RUN pipenv install --dev --system
+
+VOLUME [ "/data" ]
 
 EXPOSE 8000
