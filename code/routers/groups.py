@@ -16,10 +16,11 @@ router = APIRouter(
 
 
 @router.get("")
-async def get_all_groups() -> ListResponse:
+async def get_all_groups(startIndex=1, count=100) -> ListResponse:
     """ Read all Groups """
 
-    resources = get_group_resources() or []
+    resources = (get_group_resources() or [])[startIndex-1:][:count]
+    
 
     return ListResponse(
         Resources=resources,

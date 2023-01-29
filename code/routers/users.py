@@ -15,11 +15,11 @@ router = APIRouter(
 
 
 @router.get("")
-async def get_all_users() -> ListResponse:
+async def get_all_users(startIndex=1, count=100) -> ListResponse:
     """ Read all Users """
 
-    resources = get_user_resources() or []
-
+    resources = (get_user_resources() or [])[startIndex-1:][:count]
+    
     return ListResponse(
         Resources=resources,
         itemsPerPage=len(resources),
