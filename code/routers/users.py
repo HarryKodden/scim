@@ -15,14 +15,14 @@ router = APIRouter(
 
 
 @router.get("")
-async def get_all_users(startIndex=1, count=100, filter=None) -> ListResponse:
+async def get_all_users(startindex: int = 1, count: int = 100, filter=None) -> ListResponse:
     """ Read all Users """
 
-    startIndex = max(1, startIndex)
-    count = max(0, count)
+    startindex = int(max(1, startindex))
+    count = max(0, int(count))
 
-    totalResults = (get_user_resources(filter) or [])
-    resources = totalResults[startIndex-1:][:count]
+    totalresults = (get_user_resources(filter) or [])
+    resources = totalresults[startindex-1:][:count]
 
     return ListResponse(
         Resources=resources,
@@ -30,8 +30,8 @@ async def get_all_users(startIndex=1, count=100, filter=None) -> ListResponse:
         schemas=[
             "urn:ietf:params:scim:api:messages:2.0:ListResponse"
         ],
-        startIndex=startIndex,
-        totalResults=len(totalResults)
+        startIndex=startindex,
+        totalResults=len(totalresults)
     )
 
 
