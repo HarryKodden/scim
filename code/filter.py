@@ -1,27 +1,30 @@
 # filter.py
 
 import json
-import ast
 
 from typing import Any
-from scim2_filter_parser import parser, lexer, ast as scim2ast
+from ast import NodeVisitor
+from scim2_filter_parser import parser, lexer
+from scim2_filter_parser.ast import flatten
 
 import logging
 logger = logging.getLogger(__name__)
 
 
-class Evaluator(ast.NodeVisitor):
+class Evaluator(NodeVisitor):
     """
     Evaluate resource against a SCIM AST
     """
 
-    def __init__(self, resource: Any, *args, **kwargs):
+    def __init__(self, ast, resource: Any, *args, **kwargs):
         logger.debug("[EVALUATE] Intializing: {resource}")
+        self.ast = ast
         self.resource = json.loads(resource.json())
+
         super().__init__(*args, **kwargs)
 
-    def evaluate(self, scim_ast) -> bool:
-        return self.visit(scim_ast)
+    def evaluate(self) -> bool:
+        return self.visit(self.ast)
 
     def visit_Filter(self, node):
         logger.debug(
@@ -108,16 +111,15 @@ class Filter:
     def __init__(self, query: str):
         logger.debug(f"Query: {query}...")
 
-        self.tree = None
+        self.ast = None
 
         if query:
             try:
-                self.tree = parser.SCIMParser().parse(
+                self.ast = parser.SCIMParser().parse(
                     lexer.SCIMLexer().tokenize(query)
                 )
-                logger.debug(self.tree)
 
-                for depth, node in scim2ast.flatten(self.tree):
+                for depth, node in flatten(self.ast):
                     logger.debug(f"{'    ' * depth} {node}")
 
             except Exception as e:
@@ -128,8 +130,7 @@ class Filter:
         """
         logger.debug(f" Evaulate: {resource}...")
 
-        if self.tree:
-            logger.debug("...")
-            return Evaluator(resource).evaluate(self.tree)
+        if self.ast:
+            return Evaluator(self.ast, resource).evaluate()
 
         return True
