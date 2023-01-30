@@ -1,13 +1,16 @@
+# routers/groups.py
+
+from fastapi import APIRouter, Body, status, HTTPException, Query
+
 from schema import ListResponse, Group
+from routers import get_all_resources
 from typing import Any
 
 from data.groups import \
-    get_group_resources, \
     get_group_resource, \
     put_group_resource, \
     del_group_resource
 
-from fastapi import APIRouter, Body, status, HTTPException
 
 router = APIRouter(
     prefix="/Groups",
@@ -16,24 +19,13 @@ router = APIRouter(
 
 
 @router.get("")
-async def get_all_groups(startindex: int =1, count: int =100, filter=None) -> ListResponse:
+async def get_all_groups(
+    startindex: int | None = Query(default=1, alias='startIndex'),
+    count: int | None = Query(default=100, alias='count'),
+    query: str | None = Query(default='', alias='filter')
+) -> ListResponse:
     """ Read all Groups """
-
-    startindex = max(1, startindex)
-    count = max(0, count)
-
-    totalresults = (get_group_resources(filter) or [])
-    resources = totalresults[startindex-1:][:count]
-
-    return ListResponse(
-        Resources=resources,
-        itemsPerPage=len(resources),
-        schemas=[
-            "urn:ietf:params:scim:api:messages:2.0:ListResponse"
-        ],
-        startIndex=startindex,
-        totalResults=len(totalresults)
-    )
+    return get_all_resources('Group', startindex, count, query)
 
 
 @router.post("", status_code=status.HTTP_201_CREATED)

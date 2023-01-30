@@ -1,6 +1,6 @@
-import uvicorn
-
 # main.py
+
+import uvicorn
 
 from fastapi import Depends, FastAPI
 from routers import users, groups

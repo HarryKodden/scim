@@ -10,6 +10,7 @@ flake8 = "*"
 fastapi = "*"
 uvicorn = "*"
 pydantic = "*"
+scim2-filter-parser = "*"
 
 [requires]
 python_version = "3.10"

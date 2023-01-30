@@ -1,8 +1,10 @@
+# data/groups.py
+
 import os
 
 from datetime import datetime
 from schema import GroupResource, Group, Meta
-from filter import process_filter
+from filter import Filter
 
 from data import generate_uuid, PATH_GROUPS, read, write
 
@@ -19,12 +21,12 @@ def get_group_resource(id: str) -> GroupResource:
     return GroupResource(**data)
 
 
-def get_group_resources(filter=None) -> [GroupResource]:
+def get_group_resources(filter: Filter) -> [GroupResource]:
     result: GroupResource = []
 
     for id in os.listdir(PATH_GROUPS):
         resource = get_group_resource(id)
-        if process_filter(filter, resource):
+        if filter.match(resource):
             result.append(resource)
 
     return result

@@ -1,3 +1,5 @@
+# data/__init__.py
+
 import uuid
 import json
 
@@ -5,7 +7,6 @@ from typing import Any
 from pathlib import Path
 
 import logging
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 PATH_USERS = "/data/Users"

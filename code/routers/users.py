@@ -1,9 +1,12 @@
+# routers/users.py
+
+from fastapi import APIRouter, Body, status, HTTPException, Query
+
 from schema import ListResponse, User
 from typing import Any
+from routers import get_all_resources
 
-from fastapi import APIRouter, Body, status, HTTPException
 from data.users import \
-    get_user_resources, \
     get_user_resource, \
     put_user_resource, \
     del_user_resource
@@ -15,24 +18,13 @@ router = APIRouter(
 
 
 @router.get("")
-async def get_all_users(startindex: int = 1, count: int = 100, filter=None) -> ListResponse:
-    """ Read all Users """
-
-    startindex = int(max(1, startindex))
-    count = max(0, int(count))
-
-    totalresults = (get_user_resources(filter) or [])
-    resources = totalresults[startindex-1:][:count]
-
-    return ListResponse(
-        Resources=resources,
-        itemsPerPage=len(resources),
-        schemas=[
-            "urn:ietf:params:scim:api:messages:2.0:ListResponse"
-        ],
-        startIndex=startindex,
-        totalResults=len(totalresults)
-    )
+async def get_all_users(
+    startindex: int | None = Query(default=1, alias='startIndex'),
+    count: int | None = Query(default=100, alias='count'),
+    query: str | None = Query(default='', alias='filter')
+) -> ListResponse:
+    """ Read all Groups """
+    return get_all_resources('User', startindex, count, query)
 
 
 @router.post("", status_code=status.HTTP_201_CREATED)

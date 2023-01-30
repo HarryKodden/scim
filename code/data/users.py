@@ -1,8 +1,10 @@
+# data/users.py
+
 import os
 
 from datetime import datetime
 from schema import UserResource, User, Meta
-from filter import process_filter
+from filter import Filter
 
 from data import generate_uuid, PATH_USERS, read, write
 
@@ -19,12 +21,12 @@ def get_user_resource(id: str) -> UserResource:
     return UserResource(**data)
 
 
-def get_user_resources(filter=None) -> [UserResource]:
+def get_user_resources(filter: Filter) -> [UserResource]:
     result: UserResource = []
 
     for id in os.listdir(PATH_USERS):
         resource = get_user_resource(id)
-        if process_filter(filter, resource):
+        if filter.match(resource):
             result.append(resource)
 
     return result
