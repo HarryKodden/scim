@@ -5,6 +5,8 @@ verify_ssl = true
 
 [dev-packages]
 flake8 = "*"
+httpx = "*"
+pytest = "*"
 
 [packages]
 fastapi = "*"
