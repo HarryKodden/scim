@@ -2,6 +2,7 @@
 
 import os
 
+from typing import Any
 from datetime import datetime
 from schema import UserResource, User, Meta
 from filter import Filter
@@ -21,13 +22,13 @@ def get_user_resource(id: str) -> UserResource:
     return UserResource(**data)
 
 
-def get_user_resources(filter: Filter) -> [UserResource]:
-    result: UserResource = []
+def get_user_resources(filter: Filter) -> [Any]:
+    result: Any = []
 
     for id in os.listdir(PATH_USERS):
         resource = get_user_resource(id)
         if filter.match(resource):
-            result.append(resource)
+            result.append(resource.dict(exclude_none=True))
 
     return result
 

@@ -2,6 +2,7 @@
 
 import os
 
+from typing import Any
 from datetime import datetime
 from schema import GroupResource, Group, Meta
 from filter import Filter
@@ -22,13 +23,13 @@ def get_group_resource(id: str) -> GroupResource:
     return GroupResource(**data)
 
 
-def get_group_resources(filter: Filter) -> [GroupResource]:
-    result: GroupResource = []
+def get_group_resources(filter: Filter) -> [Any]:
+    result: Any = []
 
     for id in os.listdir(PATH_GROUPS):
         resource = get_group_resource(id)
         if filter.match(resource):
-            result.append(resource)
+            result.append(resource.dict(exclude_none=True))
 
     return result
 
