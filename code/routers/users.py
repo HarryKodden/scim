@@ -11,13 +11,13 @@ from data.users import \
     put_user_resource, \
     del_user_resource
 
+import logging
+logger = logging.getLogger(__name__)
+
 router = APIRouter(
     prefix="/Users",
     tags=["SCIM Users"],
 )
-
-import logging
-logger = logging.getLogger(__name__)
 
 
 @router.get("")

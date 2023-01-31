@@ -3,6 +3,7 @@ import pytest
 
 from fastapi.testclient import TestClient
 
+
 @pytest.fixture(scope="module")
 def test_app():
     from main import app
@@ -22,6 +23,7 @@ def test_get_users(test_app):
 
     response = test_app.get("/Users", headers=headers)
     assert response.status_code == 200
+
 
 def test_delete_users(test_app):
     headers = {

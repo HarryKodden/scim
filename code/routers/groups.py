@@ -11,6 +11,8 @@ from data.groups import \
     put_group_resource, \
     del_group_resource
 
+import logging
+logger = logging.getLogger(__name__)
 
 router = APIRouter(
     prefix="/Groups",
