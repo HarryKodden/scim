@@ -17,7 +17,7 @@ class Email(BaseModel):
 
 class Member(BaseModel):
     ref: ClassVar[str] = Field(alias="$ref")
-    displayName: str
+    displayName: str = None
     value: str
 
 
@@ -43,7 +43,7 @@ class ListResponse(BaseModel):
 class SRAM_User_Extension(BaseModel):
     eduPersonScopedAffiliation: str = None
     eduPersonUniqueId: str = None
-    voPersonExternalAffiliation: List[str] = []
+    voPersonExternalAffiliation: str = None
     voPersonExternalId: str = None
 
 

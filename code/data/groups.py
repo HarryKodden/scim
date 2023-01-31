@@ -7,6 +7,7 @@ from schema import GroupResource, Group, Meta
 from filter import Filter
 
 from data import generate_uuid, PATH_GROUPS, read, write
+from data.users import get_user_resource
 
 
 def del_group_resource(id: str) -> None:
@@ -56,6 +57,13 @@ def put_group_resource(id: str, group: Group) -> GroupResource:
 
     if group.members:
         resource.members = group.members
+
+    for member in resource.members:
+        user = get_user_resource(member.value)
+        if not user:
+            raise Exception(f"Member: {member.value} not existing")
+
+        member.displayName = user.displayName
 
     if group.sram_group_extension:
         resource.sram_group_extension = group.sram_group_extension

@@ -16,6 +16,9 @@ router = APIRouter(
     tags=["SCIM Users"],
 )
 
+import logging
+logger = logging.getLogger(__name__)
+
 
 @router.get("")
 async def get_all_users(
