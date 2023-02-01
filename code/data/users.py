@@ -28,7 +28,7 @@ def get_user_resources(filter: Filter) -> [Any]:
     for id in os.listdir(PATH_USERS):
         resource = get_user_resource(id)
         if filter.match(resource):
-            result.append(resource.dict(exclude_none=True))
+            result.append(resource.dict(by_alias=True, exclude_none=True))
 
     return result
 
@@ -51,6 +51,8 @@ def put_user_resource(id: str, user: User) -> UserResource:
 
         resource = UserResource(
             id=id,
+            userName=user.userName,
+            active=user.active,
             meta=Meta(
                 resourceType='User',
                 location=f"/Users/{id}"
@@ -58,30 +60,13 @@ def put_user_resource(id: str, user: User) -> UserResource:
         )
 
     resource.active = user.active
-
-    if user.name:
-        resource.name = user.name
-
-    if user.displayName:
-        resource.displayName = user.displayName
-
-    if user.externalId:
-        resource.externalId = user.externalId
-
-    if user.emails:
-        resource.emails = user.emails
-
-    if user.userName:
-        resource.userName = user.userName
-
-    if user.sram_user_extension:
-        resource.sram_user_extension = user.sram_user_extension
-
-    if user.x509Certificates:
-        resource.x509Certificates = user.x509Certificates
-
+    resource.userName = user.userName
+    resource.displayName = user.displayName
+    resource.externalId = user.externalId
+    resource.emails = user.emails
+    resource.sram_user_extension = user.sram_user_extension
+    resource.x509Certificates = user.x509Certificates
     resource.meta.lastModified = datetime.now()
-
     resource.schemas = [
         "urn:ietf:params:scim:schemas:core:2.0:user"
     ]

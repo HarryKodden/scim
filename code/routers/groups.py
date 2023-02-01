@@ -14,17 +14,19 @@ from data.groups import \
 import logging
 logger = logging.getLogger(__name__)
 
+ENDPOINT = "/Groups"
+
 router = APIRouter(
-    prefix="/Groups",
+    prefix=ENDPOINT,
     tags=["SCIM Groups"],
 )
 
 
 @router.get("")
 async def get_all_groups(
-    startindex: int | None = Query(default=1, alias='startIndex'),
-    count: int | None = Query(default=100, alias='count'),
-    query: str | None = Query(default='', alias='filter')
+    startindex: int = Query(default=1, alias='startIndex'),
+    count: int = Query(default=100, alias='count'),
+    query: str = Query(default='', alias='filter')
 ) -> ListResponse:
     """ Read all Groups """
     return get_all_resources('Group', startindex, count, query)
@@ -60,7 +62,7 @@ async def create_group(
     """ Create a Group """
 
     resource = put_group_resource(None, group)
-    return resource.dict(exclude_none=True)
+    return resource.dict(by_alias=True, exclude_none=True)
 
 
 @router.get("/{id}")
@@ -70,7 +72,7 @@ async def get_group(id: str) -> Any:
     if not resource:
         raise HTTPException(status_code=404, detail=f"Group {id} not found")
 
-    return resource.dict(exclude_none=True)
+    return resource.dict(by_alias=True, exclude_none=True)
 
 
 @router.put("/{id}")
@@ -79,7 +81,7 @@ async def update_group(id: str, group: Group):
     resource = put_group_resource(id, group)
     if not resource:
         raise HTTPException(status_code=404, detail=f"Group {id} not found")
-    return resource.dict(exclude_none=True)
+    return resource.dict(by_alias=True, exclude_none=True)
 
 
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)

@@ -4,6 +4,11 @@ from datetime import datetime
 from typing import ClassVar, Union, List, Optional, Dict
 from pydantic import BaseModel, Field
 
+CORE_SCHEMA_USER = "urn:ietf:params:scim:schemas:core:2.0:User"
+CORE_SCHEMA_GROUP = "urn:ietf:params:scim:schemas:core:2.0:Group"
+SRAM_SCHEMA_USER = "urn:mace:surf.nl:sram:scim:extension:User"
+SRAM_SCHEMA_GROUP = "urn:mace:surf.nl:sram:scim:extension:Group"
+
 
 class Name(BaseModel):
     familyName: str
@@ -46,57 +51,70 @@ class SRAM_User_Extension(BaseModel):
     voPersonExternalAffiliation: str = None
     voPersonExternalId: str = None
 
+    class Config:
+        title = "SRAM User Extension"
+
 
 class SRAM_Group_Extension(BaseModel):
     description: str = None
     labels: Optional[List[str]]
     urn: str = None
 
+    class Config:
+        title = "SRAM Group Extension"
+
 
 class User(BaseModel):
-    externalId: str = None
-    active: bool = None
-    name: Name = None
-    displayName: str = None
-    emails: List[Union[Email, None]] = None
-    userName: str = None
-    sram_user_extension: Optional[SRAM_User_Extension] = \
-        Field(alias="urn:mace:surf.nl:sram:scim:extension:User", default={})
-    x509Certificates: List[Union[Certificate, None]] = None
-    schemas: List[Union[str, None]] = None
-
-
-class UserResource(BaseModel):
-    id: str = None
-    externalId: str = None
+    userName: str
     active: bool = True
+    externalId: str = None
     name: Name = None
     displayName: str = None
     emails: List[Union[Email, None]] = None
-    userName: str = None
     sram_user_extension: Optional[SRAM_User_Extension] = \
-        Field(alias="urn:mace:surf.nl:sram:scim:extension:User", default={})
+        Field(alias=SRAM_SCHEMA_USER, default=None)
     x509Certificates: List[Union[Certificate, None]] = None
     schemas: List[Union[str, None]] = None
+
+
+class UserResource(User):
+    id: str = None
     meta: Meta = None
+
+    class Config:
+        title = "User"
 
 
 class Group(BaseModel):
+    displayName: str
     externalId: str = None
-    displayName: str = None
     members: List[Union[Member, None]] = None
-    schemas: List[Union[str, None]] = None
     sram_group_extension: Optional[SRAM_Group_Extension] = \
-        Field(alias="urn:mace:surf.nl:sram:scim:extension:Group", default={})
-    meta: Meta = None
+        Field(alias=SRAM_SCHEMA_GROUP, default=None)
+    schemas: List[Union[str, None]] = None
 
 
-class GroupResource(BaseModel):
+class GroupResource(Group):
     id: str = None
-    externalId: str = None
-    displayName: str = None
-    members: List[Union[Member, None]] = None
-    schemas: List[Union[str, None]] = None
-    sram_group_extension: Optional[SRAM_Group_Extension] = \
-        Field(alias="urn:mace:surf.nl:sram:scim:extension:Group", default={})
     meta: Meta = None
+
+    class Config:
+        title = "Group"
+
+
+class SchemaExtension(BaseModel):
+    required: bool = False
+    schema_name: str = Field(alias="schema")
+
+
+class ResourceType(BaseModel):
+    id: str
+    name: str
+    description: str
+    endpoint: str
+    meta: Meta
+    schema_name: str = Field(alias="schema")
+    schemaExtensions: List[Union[SchemaExtension, None]] = None
+    schemas: List[Union[str, None]] = [
+        "urn:ietf:params:scim:schemas:core:2.0:ResourceType"
+    ]

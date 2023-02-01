@@ -29,7 +29,7 @@ def get_group_resources(filter: Filter) -> [Any]:
     for id in os.listdir(PATH_GROUPS):
         resource = get_group_resource(id)
         if filter.match(resource):
-            result.append(resource.dict(exclude_none=True))
+            result.append(resource.dict(by_alias=True, exclude_none=True))
 
     return result
 
@@ -44,33 +44,25 @@ def put_group_resource(id: str, group: Group) -> GroupResource:
 
         resource = GroupResource(
             id=id,
+            displayName=group.displayName,
             meta=Meta(
                 resourceType='Group',
                 location=f"/Groups/{id}"
             )
         )
 
-    if group.displayName:
-        resource.displayName = group.displayName
-
-    if group.externalId:
-        resource.externalId = group.externalId
-
-    if group.members:
-        resource.members = group.members
-
-    for member in resource.members:
+    resource.displayName = group.displayName
+    resource.externalId = group.externalId
+    resource.members = group.members
+    for member in resource.members or []:
         user = get_user_resource(member.value)
         if not user:
             raise Exception(f"Member: {member.value} not existing")
 
         member.displayName = user.displayName
 
-    if group.sram_group_extension:
-        resource.sram_group_extension = group.sram_group_extension
-
+    resource.sram_group_extension = group.sram_group_extension
     resource.meta.lastModified = datetime.now()
-
     resource.schemas = [
         "urn:ietf:params:scim:schemas:core:2.0:Group"
     ]

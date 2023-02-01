@@ -14,17 +14,19 @@ from data.users import \
 import logging
 logger = logging.getLogger(__name__)
 
+ENDPOINT = "/Users"
+
 router = APIRouter(
-    prefix="/Users",
+    prefix=ENDPOINT,
     tags=["SCIM Users"],
 )
 
 
 @router.get("")
 async def get_all_users(
-    startindex: int | None = Query(default=1, alias='startIndex'),
-    count: int | None = Query(default=100, alias='count'),
-    query: str | None = Query(default='', alias='filter')
+    startindex: int = Query(default=1, alias='startIndex'),
+    count: int = Query(default=100, alias='count'),
+    query: str = Query(default='', alias='filter')
 ) -> ListResponse:
     """ Read all Groups """
     return get_all_resources('User', startindex, count, query)
@@ -63,7 +65,7 @@ async def create_user(
     """ Create a User """
 
     resource = put_user_resource(None, user)
-    return resource.dict(exclude_none=True)
+    return resource.dict(by_alias=True, exclude_none=True)
 
 
 @router.get("/{id}")
@@ -73,7 +75,7 @@ async def get_user(id: str) -> Any:
     if not resource:
         raise HTTPException(status_code=404, detail=f"User {id} not found")
 
-    return resource.dict(exclude_none=True)
+    return resource.dict(by_alias=True, exclude_none=True)
 
 
 @router.put("/{id}")
