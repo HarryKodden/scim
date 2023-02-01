@@ -14,10 +14,8 @@ from data.groups import \
 import logging
 logger = logging.getLogger(__name__)
 
-ENDPOINT = "/Groups"
-
 router = APIRouter(
-    prefix=ENDPOINT,
+    prefix="/Groups",
     tags=["SCIM Groups"],
 )
 

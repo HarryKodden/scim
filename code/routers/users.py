@@ -14,10 +14,8 @@ from data.users import \
 import logging
 logger = logging.getLogger(__name__)
 
-ENDPOINT = "/Users"
-
 router = APIRouter(
-    prefix=ENDPOINT,
+    prefix="/Users",
     tags=["SCIM Users"],
 )
 

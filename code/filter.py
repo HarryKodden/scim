@@ -16,14 +16,15 @@ class Evaluator(NodeVisitor):
     Evaluate resource against a SCIM AST
     """
 
-    def __init__(self, ast, resource: Any, *args, **kwargs):
+    def __init__(self, ast, *args, **kwargs):
         logger.debug("[EVALUATE] Intializing: {resource}")
         self.ast = ast
-        self.resource = json.loads(resource.json())
+        self.resource = None
 
         super().__init__(*args, **kwargs)
 
-    def evaluate(self) -> bool:
+    def evaluate(self, resource: Any) -> bool:
+        self.resource = json.loads(resource.json())
         return self.visit(self.ast)
 
     def visit_Filter(self, node):
@@ -76,6 +77,9 @@ class Evaluator(NodeVisitor):
 
     def visit_AttrPath(self, node):
         logger.debug(f"[EVALUATE] Visit AttrPath: {node.attr_name}")
+        if not self.resource:
+            raise Exception("No resource provided")
+
         return self.resource.get(node.attr_name)
 
     def visit_CompValue(self, node):
@@ -131,6 +135,6 @@ class Filter:
         logger.debug(f" Evaulate: {resource}...")
 
         if self.ast:
-            return Evaluator(self.ast, resource).evaluate()
+            return Evaluator(self.ast).evaluate(resource)
 
         return True

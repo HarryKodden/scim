@@ -78,8 +78,8 @@ class User(BaseModel):
 
 
 class UserResource(User):
-    id: str = None
-    meta: Meta = None
+    id: str
+    meta: Meta
 
     class Config:
         title = "User"
@@ -95,8 +95,8 @@ class Group(BaseModel):
 
 
 class GroupResource(Group):
-    id: str = None
-    meta: Meta = None
+    id: str
+    meta: Meta
 
     class Config:
         title = "Group"
@@ -118,3 +118,46 @@ class ResourceType(BaseModel):
     schemas: List[Union[str, None]] = [
         "urn:ietf:params:scim:schemas:core:2.0:ResourceType"
     ]
+
+
+Schemas = {
+    CORE_SCHEMA_USER: UserResource,
+    CORE_SCHEMA_GROUP: GroupResource,
+    SRAM_SCHEMA_USER: SRAM_User_Extension,
+    SRAM_SCHEMA_GROUP: SRAM_Group_Extension,
+}
+
+resourceTypes = [
+    ResourceType(
+        name="User",
+        id="User",
+        description="Defined resource types for the User schema",
+        endpoint="/Users",
+        meta=Meta(
+            location="/ResourceTypes/User",
+            resourceType="ResourceType"
+        ),
+        schemaExtensions=[
+            SchemaExtension(
+                schema=SRAM_SCHEMA_USER
+            )
+        ],
+        schema=CORE_SCHEMA_USER,
+    ),
+    ResourceType(
+        name="Group",
+        id="Group",
+        description="Defined resource types for the Group schema",
+        endpoint="/Groups",
+        meta=Meta(
+            location="/ResourceTypes/Group",
+            resourceType="ResourceType"
+        ),
+        schemaExtensions=[
+            SchemaExtension(
+                schema=SRAM_SCHEMA_GROUP
+            )
+        ],
+        schema=CORE_SCHEMA_GROUP,
+    ),
+]
