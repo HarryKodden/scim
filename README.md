@@ -9,13 +9,13 @@ docker build -t scim .
 ## Starting the application
 
 ```bash
-docker run -ti -p 8000:8000 sample
+docker run -p 8000:8000 scim
 ```
 
 go to your browser and open window at:
 
 ```bash
-http://localhost:8000/apidoc
+http://localhost:8000
 ```
 
 ## Environment variables

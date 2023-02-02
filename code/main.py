@@ -21,13 +21,13 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI(
     title="SCIM Sample",
-    docs_url='/apidoc',
-    redoc_url='/redoc',
-    # openapi_url=None,
+    docs_url='/',
+    redoc_url=None,
     dependencies=[Depends(api_key_auth)],
     responses={
-        403: {"description": "Operation forbidden"},
+        401: {"description": "Operation forbidden"},
         404: {"description": "Not found"},
+        422: {"description": "Unprocessable input"},
     },
 )
 
@@ -54,7 +54,7 @@ async def validation_exception_handler(
 ):
     exc_str = f'{exc}'.replace('\n', ' ').replace('   ', ' ')
     logging.error(f"{request}: {exc_str}")
-    content = {'status_code': 10422, 'message': exc_str, 'data': None}
+    content = {'status_code': 10422, 'message': exc_str}
     return JSONResponse(
         content=content,
         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY
