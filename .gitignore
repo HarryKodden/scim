@@ -129,5 +129,6 @@ dmypy.json
 .pyre/
 
 data/*
+docker-compose.yml
 
 Pipfile.lock

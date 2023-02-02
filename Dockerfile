@@ -9,10 +9,12 @@ WORKDIR /code
 
 RUN pip install pipenv
 
-COPY . /code
-RUN pipenv lock
-RUN pipenv install --dev --system
+COPY code .
+COPY Pipfile .
 
-VOLUME [ "/data" ]
+RUN pipenv lock
+RUN pipenv install --system
 
 EXPOSE 8000
+
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0"] 
