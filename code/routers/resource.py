@@ -21,7 +21,7 @@ async def get_resource_types() -> ListResponse:
     resources = []
 
     for r in resourceTypes:
-        logger.info(r)
+        logger.debug(r)
         resources.append(r.dict(by_alias=True))
 
     return ListResponse(

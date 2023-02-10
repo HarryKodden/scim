@@ -1,22 +1,20 @@
 # data/groups.py
 
-import os
-
 from typing import Any
 from datetime import datetime
 from schema import GroupResource, Group, Meta
 from filter import Filter
 
-from data import generate_uuid, PATH_GROUPS, read, write
+from data import generate_uuid, iterate, read, write, delete
 from data.users import get_user_resource
 
 
 def del_group_resource(id: str) -> None:
-    os.unlink(f"{PATH_GROUPS}/{id}")
+    delete("Groups", id)
 
 
 def get_group_resource(id: str) -> GroupResource:
-    data = read(f"{PATH_GROUPS}/{id}")
+    data = read("Groups", id)
     if not data:
         return None
 
@@ -26,7 +24,7 @@ def get_group_resource(id: str) -> GroupResource:
 def get_group_resources(filter: Filter) -> [Any]:
     result: Any = []
 
-    for id in os.listdir(PATH_GROUPS):
+    for id in iterate("Groups"):
         resource = get_group_resource(id)
         if filter.match(resource):
             result.append(resource.dict(by_alias=True, exclude_none=True))
@@ -67,9 +65,6 @@ def put_group_resource(id: str, group: Group) -> GroupResource:
         "urn:ietf:params:scim:schemas:core:2.0:Group"
     ]
 
-    write(
-        f"{PATH_GROUPS}/{id}",
-        resource.json()
-    )
+    write("Groups", id, resource.json())
 
     return resource

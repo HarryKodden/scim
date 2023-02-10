@@ -12,6 +12,7 @@ pytest = "*"
 fastapi = "*"
 uvicorn = "*"
 pydantic = "*"
+pymongo = "*"
 scim2-filter-parser = "*"
 
 [requires]

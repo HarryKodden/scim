@@ -22,8 +22,8 @@ http://localhost:8000
 
 This image uses environment variables for configuration.
 
-| Available variables | Description                      | Example               | Default |
-| ------------------- | -------------------------------- | --------------------- | ------- |
-| `DATA_PATH`         | File system path name            | DATA_PATH=/mnt/scim   | /tmp    |
-| `API_KEY`           | The API key to authenticate with | API_KEY=jdjdjdjdehc04 | secret  |
-| `LOGLEVEL`          | The application logging level    | ERROR                 | INFO    |
+| Available variables | Description                                      | Example                                                       | Default |
+| ------------------- | ------------------------------------------------ | ------------------------------------------------------------- | ------- |
+| `DATA_PATH`         | File system path name or Mongo connection string | DATA_PATH=/mnt/scim <br> DATA_PATH=mongodb://localhost:27017/ | /tmp    |
+| `API_KEY`           | The API key to authenticate with                 | API_KEY=jdjdjdjdehc04                                         | secret  |
+| `LOGLEVEL`          | The application logging level                    | ERROR                                                         | INFO    |

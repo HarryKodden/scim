@@ -44,7 +44,7 @@ async def get_schema(id: str) -> Any:
     """ Return Schemas """
 
     resource = Schemas.get(id)
-    logger.info(resource)
+    logger.debug(resource)
     if not resource:
         raise HTTPException(status_code=404, detail=f"Schema {id} not found")
 
