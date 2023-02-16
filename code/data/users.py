@@ -69,6 +69,6 @@ def put_user_resource(id: str, user: User) -> UserResource:
         "urn:ietf:params:scim:schemas:core:2.0:user"
     ]
 
-    write("Users", id, resource.json())
+    write("Users", id, resource.json(by_alias=True, exclude_none=True))
 
     return resource

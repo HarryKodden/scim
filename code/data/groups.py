@@ -65,6 +65,6 @@ def put_group_resource(id: str, group: Group) -> GroupResource:
         "urn:ietf:params:scim:schemas:core:2.0:Group"
     ]
 
-    write("Groups", id, resource.json())
+    write("Groups", id, resource.json(by_alias=True, exclude_none=True))
 
     return resource
