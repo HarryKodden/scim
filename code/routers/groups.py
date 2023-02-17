@@ -3,7 +3,7 @@
 from fastapi import APIRouter, Body, status, HTTPException, Query
 
 from schema import ListResponse, Group
-from routers import get_all_resources
+from routers import BASE_PATH, get_all_resources
 from typing import Any
 
 from data.groups import \
@@ -15,7 +15,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 router = APIRouter(
-    prefix="/Groups",
+    prefix=BASE_PATH+"/Groups",
     tags=["SCIM Groups"],
 )
 

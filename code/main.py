@@ -6,7 +6,7 @@ from fastapi import Depends, Request, FastAPI, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
-from routers import resource, schema, users, groups
+from routers import BASE_PATH, resource, schema, users, groups
 from data import init_data
 from auth import api_key_auth
 
@@ -18,10 +18,9 @@ level = logging.INFO \
 logging.basicConfig(level=level)
 logger = logging.getLogger(__name__)
 
-
 app = FastAPI(
     title="SCIM Sample",
-    docs_url='/',
+    docs_url=BASE_PATH,
     redoc_url=None,
     dependencies=[Depends(api_key_auth)],
     responses={

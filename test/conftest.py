@@ -13,7 +13,8 @@ def setup_data():
 
 @pytest.fixture(scope="module")
 def test_app(setup_data):
-    from main import app
+    from main import app, BASE_PATH
 
     client = TestClient(app)
+    client.base_url += BASE_PATH
     yield client

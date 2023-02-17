@@ -2,6 +2,7 @@
 
 import json
 
+from routers import BASE_PATH
 from typing import Any
 from fastapi import APIRouter, HTTPException
 from schema import ListResponse, Schemas
@@ -9,10 +10,8 @@ from schema import ListResponse, Schemas
 import logging
 logger = logging.getLogger(__name__)
 
-URI = "/Schemas"
-
 router = APIRouter(
-    prefix=URI,
+    prefix=BASE_PATH+"/Schemas",
     tags=["SCIM Schemas"],
 )
 

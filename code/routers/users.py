@@ -4,7 +4,7 @@ from fastapi import APIRouter, Body, status, HTTPException, Query
 
 from schema import ListResponse, User
 from typing import Any
-from routers import get_all_resources
+from routers import BASE_PATH, get_all_resources
 
 from data.users import \
     get_user_resource, \
@@ -15,7 +15,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 router = APIRouter(
-    prefix="/Users",
+    prefix=BASE_PATH+"/Users",
     tags=["SCIM Users"],
 )
 
@@ -48,7 +48,12 @@ async def create_user(
                 }
             ],
             "userName": "string",
-            "urn:mace:surf.nl:sram:scim:extension:User": {},
+            "urn:mace:surf.nl:sram:scim:extension:User": {
+                "eduPersonScopedAffiliation": "string",
+                "eduPersonUniqueId": "string",
+                "voPersonExternalAffiliation": "string",
+                "voPersonExternalId": "string"
+            },
             "x509Certificates": [
                 {
                     "value": "string"

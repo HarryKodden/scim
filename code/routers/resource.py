@@ -2,6 +2,7 @@
 
 from fastapi import APIRouter, HTTPException
 
+from routers import BASE_PATH
 from typing import Any
 from schema import ListResponse, resourceTypes
 
@@ -9,7 +10,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 router = APIRouter(
-    prefix="/ResourceTypes",
+    prefix=BASE_PATH+"/ResourceTypes",
     tags=["SCIM Resource Types"],
 )
 
