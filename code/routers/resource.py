@@ -4,7 +4,7 @@ from fastapi import APIRouter, HTTPException
 
 from routers import BASE_PATH
 from typing import Any
-from schema import ListResponse, resourceTypes
+from schema import SCIM_API_MESSAGES, ListResponse, resourceTypes
 
 import logging
 logger = logging.getLogger(__name__)
@@ -29,7 +29,7 @@ async def get_resource_types() -> ListResponse:
         Resources=resources,
         itemsPerPage=len(resources),
         schemas=[
-            "urn:ietf:params:scim:api:messages:2.0:ListResponse"
+            SCIM_API_MESSAGES+":ListResponse"
         ],
         startIndex=1,
         totalResults=len(resources)

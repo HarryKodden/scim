@@ -2,7 +2,7 @@
 
 from fastapi import HTTPException
 
-from schema import ListResponse
+from schema import SCIM_API_MESSAGES, ListResponse
 from filter import Filter
 
 from data.users import get_user_resources
@@ -44,7 +44,7 @@ def get_all_resources(
         Resources=resources,
         itemsPerPage=len(resources),
         schemas=[
-            "urn:ietf:params:scim:api:messages:2.0:ListResponse"
+            SCIM_API_MESSAGES+":ListResponse"
         ],
         startIndex=startindex,
         totalResults=len(totalresults)

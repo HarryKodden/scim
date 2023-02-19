@@ -4,10 +4,15 @@ from datetime import datetime
 from typing import ClassVar, Union, List, Optional, Dict
 from pydantic import BaseModel, Field
 
-CORE_SCHEMA_USER = "urn:ietf:params:scim:schemas:core:2.0:User"
-CORE_SCHEMA_GROUP = "urn:ietf:params:scim:schemas:core:2.0:Group"
-SRAM_SCHEMA_USER = "urn:mace:surf.nl:sram:scim:extension:User"
-SRAM_SCHEMA_GROUP = "urn:mace:surf.nl:sram:scim:extension:Group"
+CORE_SCHEMA = "urn:ietf:params:scim:schemas:core:2.0"
+CORE_SCHEMA_USER = CORE_SCHEMA+":User"
+CORE_SCHEMA_GROUP = CORE_SCHEMA+":Group"
+
+SRAM_SCHEMA = "urn:mace:surf.nl:sram:scim:extension"
+SRAM_SCHEMA_USER = SRAM_SCHEMA+":User"
+SRAM_SCHEMA_GROUP = SRAM_SCHEMA+":Group"
+
+SCIM_API_MESSAGES = "urn:ietf:params:scim:api:messages:2.0"
 
 
 class Name(BaseModel):
@@ -116,7 +121,7 @@ class ResourceType(BaseModel):
     schema_name: str = Field(alias="schema")
     schemaExtensions: List[Union[SchemaExtension, None]] = None
     schemas: List[Union[str, None]] = [
-        "urn:ietf:params:scim:schemas:core:2.0:ResourceType"
+        CORE_SCHEMA+":ResourceType"
     ]
 
 

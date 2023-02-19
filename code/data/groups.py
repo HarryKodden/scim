@@ -2,9 +2,8 @@
 
 from typing import Any
 from datetime import datetime
-from schema import GroupResource, Group, Meta
+from schema import CORE_SCHEMA_GROUP, SRAM_SCHEMA_GROUP, GroupResource, Group, Meta
 from filter import Filter
-
 from data import generate_uuid, iterate, read, write, delete
 from data.users import get_user_resource
 
@@ -62,7 +61,8 @@ def put_group_resource(id: str, group: Group) -> GroupResource:
     resource.sram_group_extension = group.sram_group_extension
     resource.meta.lastModified = datetime.now()
     resource.schemas = [
-        "urn:ietf:params:scim:schemas:core:2.0:Group"
+        CORE_SCHEMA_GROUP,
+        SRAM_SCHEMA_GROUP
     ]
 
     write("Groups", id, resource.json(by_alias=True, exclude_none=True))

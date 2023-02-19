@@ -2,7 +2,7 @@
 
 from typing import Any
 from datetime import datetime
-from schema import UserResource, User, Meta
+from schema import CORE_SCHEMA_USER, SRAM_SCHEMA_USER, UserResource, User, Meta
 from filter import Filter
 
 from data import generate_uuid, iterate, read, write, delete
@@ -58,6 +58,7 @@ def put_user_resource(id: str, user: User) -> UserResource:
         )
 
     resource.active = user.active
+    resource.name = user.name
     resource.userName = user.userName
     resource.displayName = user.displayName
     resource.externalId = user.externalId
@@ -66,7 +67,8 @@ def put_user_resource(id: str, user: User) -> UserResource:
     resource.x509Certificates = user.x509Certificates
     resource.meta.lastModified = datetime.now()
     resource.schemas = [
-        "urn:ietf:params:scim:schemas:core:2.0:user"
+       CORE_SCHEMA_USER,
+       SRAM_SCHEMA_USER
     ]
 
     write("Users", id, resource.json(by_alias=True, exclude_none=True))
