@@ -56,7 +56,7 @@ def put_group_resource(id: str, group: Group) -> GroupResource:
         if not user:
             raise Exception(f"Member: {member.value} not existing")
 
-        member.displayName = user.displayName
+        member.display = user.displayName
 
     resource.sram_group_extension = group.sram_group_extension
     resource.meta.lastModified = datetime.now()

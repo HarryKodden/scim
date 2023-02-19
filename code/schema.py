@@ -27,7 +27,7 @@ class Email(BaseModel):
 
 class Member(BaseModel):
     ref: ClassVar[str] = Field(alias="$ref")
-    displayName: str = None
+    display: str = None
     value: str
 
 
