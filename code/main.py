@@ -7,7 +7,6 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
 from routers import BASE_PATH, resource, schema, users, groups
-from data import init_data
 from auth import api_key_auth
 
 import os
@@ -20,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI(
     title="SCIM Sample",
-    docs_url=BASE_PATH,
+    docs_url=BASE_PATH if BASE_PATH.startswith('/') else '/',
     redoc_url=None,
     dependencies=[Depends(api_key_auth)],
     responses={
@@ -38,8 +37,7 @@ app.include_router(groups.router)
 
 @app.on_event("startup")
 def startup():
-    init_data()
-
+    pass
 
 @app.on_event("shutdown")
 def shutdown():
