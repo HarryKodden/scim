@@ -10,4 +10,5 @@ from data.plugins.file import FilePlugin
 from data.plugins.mongo import MongoPlugin
 from data.plugins.mysql import MySQLPlugin
 
-plugin = FilePlugin(os.environ.get("DATA_PATH", "/tmp"))
+#plugin = FilePlugin(os.environ.get("DATA_PATH", "/tmp"))
+plugin = MongoPlugin("mongodb://mongo:secret@mongo")

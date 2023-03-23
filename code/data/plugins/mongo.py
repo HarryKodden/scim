@@ -38,7 +38,7 @@ class MongoPlugin(Plugin):
           {"$set": json.loads(details)}
         )
       else:
-        pymongo.MongoClient(
+        MongoClient(
           self.connection
         )["scim"][resource_type].insert_one(
           {"_id": id} | json.loads(details)
