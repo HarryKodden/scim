@@ -8,29 +8,30 @@ from pathlib import Path
 
 class FilePlugin(Plugin):
 
-    def __init__(self, path: str):
+    def __init__(self, resource_type: str, path: str):
       self.path = path
+      self.resource_type = resource_type
       self.description = 'FILE STORAGE'
 
       Path(f"{self.path}/Users").mkdir(parents=True, exist_ok=True)
       Path(f"{self.path}/Groups").mkdir(parents=True, exist_ok=True)
 
-    def iterate(self, resource_type: str) -> Any:
-      for id in os.listdir(f"{self.path}/{resource_type}"):
+    def __iter__(self) -> Any:
+      for id in os.listdir(f"{self.path}/{self.resource_type}"):
         yield id
 
-    def delete(self, resource_type: str, id: int) -> None:
-      os.unlink(f"{self.path}/{resource_type}/{id}")
+    def __delete__(self, id: str) -> None:
+      os.unlink(f"{self.path}/{self.resource_type}/{id}")
 
-    def read(self, resource_type: str, id: int) -> Any:
+    def __getitem__(self, id: str) -> Any:
       try:
-        with open(f"{self.path}/{resource_type}/{id}", "rb") as f:
+        with open(f"{self.path}/{self.resource_type}/{id}", "rb") as f:
           return json.loads(f.read())
       except Exception:
         return None
 
-    def write(self, resource_type: str, id: int, details: Any) -> None:
-      with open(f"{self.path}/{resource_type}/{id}", "wb") as f:
+    def __setitem__(self, id: str, details: Any) -> None:
+      with open(f"{self.path}/{self.resource_type}/{id}", "wb") as f:
         f.write(
           json.dumps(
             json.loads(details),

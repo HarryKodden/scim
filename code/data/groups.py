@@ -4,15 +4,15 @@ from typing import Any
 from datetime import datetime
 from schema import CORE_SCHEMA_GROUP, SRAM_SCHEMA_GROUP, GroupResource, Group, Meta
 from filter import Filter
-from data import generate_uuid, plugin
+from data import generate_uuid, Groups
 from data.users import get_user_resource
 
 def del_group_resource(id: str) -> None:
-    delete("Groups", id)
+    del(Groups[id])
 
 
 def get_group_resource(id: str) -> GroupResource:
-    data = plugin.read("Groups", id)
+    data = Groups[id]
     if not data:
         return None
 
@@ -22,7 +22,7 @@ def get_group_resource(id: str) -> GroupResource:
 def get_group_resources(filter: Filter) -> [Any]:
     result: Any = []
 
-    for id in plugin.iterate("Groups"):
+    for id in Groups:
         resource = get_group_resource(id)
         if filter.match(resource):
             result.append(resource.dict(by_alias=True, exclude_none=True))
@@ -64,6 +64,6 @@ def put_group_resource(id: str, group: Group) -> GroupResource:
         SRAM_SCHEMA_GROUP
     ]
 
-    plugin.write("Groups", id, resource.json(by_alias=True, exclude_none=True))
+    Groups[id] = resource.json(by_alias=True, exclude_none=True)
 
     return resource

@@ -8,15 +8,15 @@ class Plugin(object):
     def __init__(self):
         self.description = 'UNKNOWN'
 
-    def iterate(self, resource_type: str) -> Any:
+    def __iter__(self) -> Any:
         raise NotImplementedError
 
-    def delete(self, resource_type: str, id: int) -> None:
+    def __delete__(self, id: str) -> None:
         raise NotImplementedError
 
-    def read(self, resource_type: str, id: int) -> Any:
+    def __getitem__(self, id: str) -> Any:
         raise NotImplementedError
 
-    def write(self, resource_type: str, id: int, details: Any) -> None:
+    def __setitem__(self, details: Any) -> None:
         raise NotImplementedError
 

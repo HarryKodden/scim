@@ -5,15 +5,15 @@ from datetime import datetime
 from schema import CORE_SCHEMA_USER, SRAM_SCHEMA_USER, UserResource, User, Meta
 from filter import Filter
 
-from data import generate_uuid, plugin
+from data import generate_uuid, Users
 
 
 def del_user_resource(id: str) -> None:
-    plugin.delete("Users", id)
+    del(Users[id])
 
 
 def get_user_resource(id: str) -> UserResource:
-    data = plugin.read("Users", id)
+    data = Users[id]
     if not data:
         return None
 
@@ -23,7 +23,7 @@ def get_user_resource(id: str) -> UserResource:
 def get_user_resources(filter: Filter) -> [Any]:
     result: Any = []
 
-    for id in plugin.iterate("Users"):
+    for id in Users:
         resource = get_user_resource(id)
         if filter.match(resource):
             result.append(resource.dict(by_alias=True, exclude_none=True))
@@ -71,6 +71,6 @@ def put_user_resource(id: str, user: User) -> UserResource:
        SRAM_SCHEMA_USER
     ]
 
-    plugin.write("Users", id, resource.json(by_alias=True, exclude_none=True))
+    Users[id] = resource.json(by_alias=True, exclude_none=True)
 
     return resource

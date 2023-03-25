@@ -6,41 +6,42 @@ from data.plugins import Plugin
 
 class MongoPlugin(Plugin):
 
-    def __init__(self, connection: str):
+    def __init__(self, resource_type: str, connection: str):
+      self.resource_type = resource_type
       self.connection = connection
-      self.description = 'MONGO'
+      self.description = f"MYSQL-{resource_type}"
 
-    def iterate(self, resource_type: str) -> Any:
+    def __iter__(self) -> Any:
       for record in MongoClient(
         self.connection
-      )["scim"][resource_type].find({}):
+      )["scim"][self.resource_type].find({}):
         yield record.pop("_id")
 
-    def delete(self, resource_type: str, id: int) -> None:
+    def __del__(self, id: str) -> None:
       MongoClient(
         self.connection
-      )["scim"][resource_type].delete_one({"_id": id})
+      )["scim"][self.resource_type].delete_one({"_id": id})
 
-    def read(self, resource_type: str, id: int) -> Any:
+    def __getitem__(self, id: str) -> Any:
       record = MongoClient(
         self.connection
-      )["scim"][resource_type].find_one({"_id": id})
+      )["scim"][self.resource_type].find_one({"_id": id})
       if record:
         record["id"] = record.pop("_id")
       return record
 
-    def write(self, resource_type: str, id: int, details: Any) -> None:
-      if self.read(resource_type, id):
+    def __setitem(self, id: str, details: Any) -> None:
+      if self[id]:
         MongoClient(
           self.connection
-        )["scim"][resource_type].update_one(
+        )["scim"][self.resource_type].update_one(
           {"_id": id},
           {"$set": json.loads(details)}
         )
       else:
         MongoClient(
           self.connection
-        )["scim"][resource_type].insert_one(
+        )["scim"][self.resource_type].insert_one(
           {"_id": id} | json.loads(details)
         )
 
