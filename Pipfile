@@ -13,7 +13,7 @@ fastapi = "*"
 uvicorn = "*"
 pydantic = "*"
 pymongo = "*"
-mysql-connector-python = "*"
+sqlalchemy = "*"
 scim2-filter-parser = "*"
 
 [requires]

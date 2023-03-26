@@ -8,9 +8,10 @@ def generate_uuid() -> str:
 
 from data.plugins.file import FilePlugin
 from data.plugins.mongo import MongoPlugin
-from data.plugins.mysql import MySQLPlugin
+from data.plugins.sql import SQLPlugin
 
 #plugin = FilePlugin(os.environ.get("DATA_PATH", "/tmp"))
 #plugin = MongoPlugin("mongodb://mongo:secret@mongo")
-Users = MySQLPlugin("Users", "mysql", "root", "secret", "mysql")
-Groups = MySQLPlugin("Groups", "mysql", "root", "secret", "mysql")
+
+Users = SQLPlugin("Users")
+Groups = SQLPlugin("Groups")
