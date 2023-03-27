@@ -1,3 +1,6 @@
+
+![CI Workflow](https://github.com/harrykodden/scim-sample/actions/workflows/ci.yml/badge.svg)
+
 # scim-sample
 
 ## Build the image
