@@ -8,15 +8,28 @@ on:
 
 jobs:
   build:
+    strategy:
+      matrix:
+        include:
+          - python_version: "3.7"
+          - python_version: "3.8"
+          - python_version: "3.9"
+          - python_version: "3.10"
 
+    name: "Python ${{ matrix.python_version }}"
     runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      contents: write
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
+
+
     - name: Set up Python
       uses: actions/setup-python@v2
       with:
-        python-version: '3.10'
+        python-version: ${{ matrix.python_version }}
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
@@ -28,4 +41,26 @@ jobs:
         pipenv run flake8
     - name: Run tests
       run: |
-        pytest
+        pytest --cov
+
+    - name: Store coverage file
+      uses: actions/upload-artifact@v3
+      with:
+        name: coverage
+        path: .coverage.${{ matrix.python_version }}
+
+    - name: Display coverage
+      id: coverage_comment
+      uses: py-cov-action/python-coverage-comment-action@v3
+      with:
+        GITHUB_TOKEN: ${{ github.token }}
+        GITHUB_PR_RUN_ID: ${{ inputs.GITHUB_PR_RUN_ID }}
+        MINIMUM_GREEN: 100
+        MINIMUM_ORANGE: 70
+        MERGE_COVERAGE_FILES: false
+        ANNOTATE_MISSING_LINES: false
+        ANNOTATION_TYPE: warning
+        COMMENT_ARTIFACT_NAME: python-coverage-comment-action
+        COMMENT_FILENAME: python-coverage-comment-action.txt
+        COMMENT_TEMPLATE: The coverage rate is `{{ coverage.info.percent_covered | pct }}`{{ marker }}
+        COVERAGE_DATA_BRANCH: python-coverage-comment-action-data
