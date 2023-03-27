@@ -9,6 +9,7 @@ from data.users import get_user_resources
 from data.groups import get_group_resources
 
 import os
+
 BASE_PATH = os.environ.get('BASE_PATH', '')
 
 reader = {
