@@ -1,6 +1,5 @@
 
-![CI Workflow](https://github.com/harrykodden/scim-sample/actions/workflows/ci.yml/badge.svg)
-
+![CI Workflow](https://github.com/harrykodden/scim-sample/actions/workflows/ci.yml/badge.svg) ![cov](https://raw.githubusercontent.com/HarryKodden/scim-sample/python-coverage-comment-action-data/badge.svg)
 # scim-sample
 
 ## Build the image
