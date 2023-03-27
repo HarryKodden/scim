@@ -39,6 +39,7 @@ app.include_router(groups.router)
 def startup():
     pass
 
+
 @app.on_event("shutdown")
 def shutdown():
     pass

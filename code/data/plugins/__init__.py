@@ -1,5 +1,6 @@
 from typing import Any
 
+
 class Plugin(object):
     """Base class that each plugin must inherit from. within this class
     you must define the methods that all of your plugins must implement
@@ -19,4 +20,3 @@ class Plugin(object):
 
     def __setitem__(self, id: str, details: Any) -> None:
         raise NotImplementedError
-

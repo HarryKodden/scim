@@ -2,7 +2,8 @@
 
 from typing import Any
 from datetime import datetime
-from schema import CORE_SCHEMA_GROUP, SRAM_SCHEMA_GROUP, GroupResource, Group, Meta
+from schema import CORE_SCHEMA_GROUP, SRAM_SCHEMA_GROUP, \
+    GroupResource, Group, Meta
 from filter import Filter
 from data import generate_uuid, Groups
 from data.users import get_user_resource
@@ -12,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 def del_group_resource(id: str) -> None:
-    del(Groups[id])
+    del Groups[id]
 
 
 def get_group_resource(id: str) -> GroupResource:

@@ -9,7 +9,7 @@ from data import generate_uuid, Users
 
 
 def del_user_resource(id: str) -> None:
-    del(Users[id])
+    del Users[id]
 
 
 def get_user_resource(id: str) -> UserResource:
