@@ -17,6 +17,6 @@ class Plugin(object):
     def __getitem__(self, id: str) -> Any:
         raise NotImplementedError
 
-    def __setitem__(self, details: Any) -> None:
+    def __setitem__(self, id: str, details: Any) -> None:
         raise NotImplementedError
 

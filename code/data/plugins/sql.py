@@ -1,84 +1,137 @@
 import os
 import json
 
-from typing import Any
+from typing import Any, Callable
 from data.plugins import Plugin
 
 import sqlalchemy as db
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import Session
+
+from contextlib import contextmanager, AbstractContextManager
+
+from sqlalchemy.dialects.postgresql import JSON
+
+import logging
+logger = logging.getLogger(__name__)
+
 
 class SQLPlugin(Plugin):
 
-    def __init__(self, resource_type: str, address: str = 'sqlite:///test.sqlite'):
+    def __init__(
+      self,
+      resource_type: str,
+      database_url: str = os.environ.get("DATABASE_URL", "sqlite:///scim.sqlite")
+    ):
 
       self.resource_type = resource_type
       self.description = f"SQL-{resource_type}"
 
-      engine = db.create_engine(address)
-      self.Session = sessionmaker(engine)
+      engine = db.create_engine(database_url)
 
-      self.connection = engine.connect()
-
-      metadata = db.MetaData()
-
-      self.table = db.Table(
-        self.resource_type,
-        metadata,
-        db.Column('id', db.String(255)),
-        db.Column('details', db.Text, nullable=False)
+      self._session_factory = db.orm.scoped_session(
+        db.orm.sessionmaker(
+            autocommit=False,
+            autoflush=False,
+            bind=engine,
+        ),
       )
 
-      metadata.create_all(engine)
+      with self.Transaction() as session:
+
+        metadata = db.MetaData()
+
+        self.table = db.Table(
+          self.resource_type,
+          metadata,
+          db.Column('id', db.String(255), primary_key=True),
+          db.Column('details', JSON, nullable=False)
+        )
+
+        metadata.create_all(engine)
+
+    @contextmanager
+    def Transaction(self) -> Callable[..., AbstractContextManager[Session]]:
+
+      session: Session = self._session_factory()
+      try:
+          yield session
+      except Exception:
+          logger.exception("Session rollback because of exception")
+          session.rollback()
+          raise
+      finally:
+          session.flush()
+          session.commit()
+          session.close()
 
     def __iter__(self) -> Any:
-      rows = self.connection.execute(
-        db.select(self.table) 
-      ).fetchall()
+      logger.debug(f"[__iter__]: {self.description}")
+
+      with self.Transaction() as session:
+        rows = session.execute(
+          db.select(self.table.columns.id) 
+        ).fetchall()
       
-      for row in rows:
-        yield row['id']
-  
-    def __delete__(self, id: str) -> None:
-      with self.Session() as session:
-          self.db.cursor().execute(
-            f"DELETE FROM {self.resource_type} WHERE id = '{id}'"
-          )
-          session.commit()
+
+        logger.debug(f"Nr rows found: {len(rows)}")
+          
+        for row in rows:
+          yield row[0]
+    
+    def __delitem__(self, id: str) -> None:
+      logger.debug(f"[__delitem__]: {self.description}, id:{id}")
+
+      with self.Transaction() as session:
+        session.delete(
+          self.table
+        ).where(
+          self.table.columns.id == id
+        )
 
     def __getitem__(self, id: str) -> Any:
+      logger.debug(f"[__getitem__]: {self.description}, id:{id}")
+
       try:
-        rows = self.connection.execute(
-          db.select([self.table.columns.details]).where(id == id)
-        ).fetchall()
+        with self.Transaction() as session:
 
-        if len(rows) != 1:
-          raise Exception(f"No match for id: {id}")
+          rows = session.execute(
+            db.select(
+              self.table.columns.details
+            ).where(
+              self.table.columns.id == id
+            )
+          ).fetchall()
+          
+          if len(rows) != 1:
+            raise Exception(f"No match for id: {id}")
 
-        return(rows[0]) | { 'id': id }
-      except Exception:
+          return json.loads(rows[0][0]) | {'id': id}
+
+      except Exception as e:
+        logger.debug(f"[__getitem__]: error {str(e)}")
         return None
 
     def __setitem__(self, id: str, details: Any) -> None:
+      logger.debug(f"[__setitem__]: {self.description}, id:{id}, details: {details}")
 
-      with self.Session() as session:
+      with self.Transaction() as session:
+
         if self[id]:
-          self.connection.execute(
-            self.db.update(
-              self.table
-            ).values(
-              details = json.dumps(details)
-            ).where(
-              id==id
-            )
+          stmt = db.update(
+            self.table
+          ).values(
+            details=details
+          ).where(
+            self.table.columns.id==id
           )
-        else: 
-          self.connection.execute(
-            self.db.insert(
-              self.table
-            ).values(
-              id=id,
-              details=json.dumps(details)
-            )
+        else:
+          stmt = db.insert(
+            self.table
+          ).values(
+            id=id,
+            details=details
           )
 
-          session.commit()
+        logger.debug(f"[SQL]: {stmt}")
+
+        session.execute(stmt)

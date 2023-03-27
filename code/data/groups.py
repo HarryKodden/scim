@@ -7,6 +7,10 @@ from filter import Filter
 from data import generate_uuid, Groups
 from data.users import get_user_resource
 
+import logging
+logger = logging.getLogger(__name__)
+
+
 def del_group_resource(id: str) -> None:
     del(Groups[id])
 

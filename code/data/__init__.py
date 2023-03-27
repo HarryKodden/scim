@@ -10,8 +10,14 @@ from data.plugins.file import FilePlugin
 from data.plugins.mongo import MongoPlugin
 from data.plugins.sql import SQLPlugin
 
-#plugin = FilePlugin(os.environ.get("DATA_PATH", "/tmp"))
-#plugin = MongoPlugin("mongodb://mongo:secret@mongo")
+#Users = SQLPlugin('Users')
+#Groups = SQLPlugin('Groups')
 
-Users = SQLPlugin("Users")
-Groups = SQLPlugin("Groups")
+Users = SQLPlugin('Users', database_url=os.environ.get("MYSQL_URL"))
+Groups = SQLPlugin('Groups', database_url=os.environ.get("MYSQL_URL"))
+
+#Users = MongoPlugin("Users")
+#Groups = MongoPlugin("Groups")
+
+#Users = FilePlugin("Users")
+#Groups = FilePlugin("Groups")
