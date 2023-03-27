@@ -24,7 +24,10 @@ This image uses environment variables for configuration.
 
 | Available variables | Description                                      | Example                                   | Default |
 | ------------------- | ------------------------------------------------ | ----------------------------------------- | ------- |
-| `BASE_PATH`         | The base path of all API endpoints               | /api/v2                                   | /       | 
-| `DATA_PATH`         | File system path name or Mongo connection string | /mnt/scim <br>**or:**<br> mongodb://localhost:27017/ | /tmp    |
-| `API_KEY`           | The API key to authenticate with                 | API_KEY=jdjdjdjdehc04                     | secret  |
 | `LOGLEVEL`          | The application logging level                    | ERROR                                     | INFO    |
+| `API_KEY`           | The API key to authenticate with                 | API_KEY=jdjdjdjdehc04                     | secret  |
+| `BASE_PATH`         | The base path of all API endpoints               | /api/v2                                   | /       | 
+| `DATA_PATH`         | File system path name | /mnt/scim | /tmp    |
+| `MONGO_DB`         | Mongo connection string | mongodb://user:password@mongo_host | mongodb://localhost:27017/    |
+| `DATABASE_URL`         | SQL Database connection string | postgresql://user:password@postrgres_host:5432/mydb **or** mysql+pymysql://user:password@mysql_host/mydb | sqlite:///scim.sqlite    |
+

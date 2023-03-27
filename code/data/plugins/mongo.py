@@ -13,7 +13,7 @@ class MongoPlugin(Plugin):
 
     def __init__(
       self,
-      resource_type: str, mongo_db: str = os.environ.get("MONGO_DB", "mongodb://mongo:secret@mongo")
+      resource_type: str, mongo_db: str = os.environ.get("MONGO_DB", "mongodb://localhost:27017/")
     ):
       self.connection = MongoClient(mongo_db)["scim"][resource_type]
       self.description = f"MONGO-{resource_type}"
