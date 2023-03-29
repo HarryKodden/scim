@@ -22,8 +22,19 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       -
-        name: Build and push
+        name: Build amd64 image
         uses: docker/build-push-action@v4
+        env:
+          DOCKER_TARGET_PLATFORM: linux/amd
         with:
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/scim:latest
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/amd64/scim:latest
+      -
+        name: Build arm64 image
+        uses: docker/build-push-action@v4
+        env:
+          DOCKER_TARGET_PLATFORM: linux/arm
+        with:
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/arm64/scim:latest
+
