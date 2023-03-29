@@ -1,5 +1,7 @@
 # Pull base image
-FROM python:3.10
+ARG BUILDPLATFORM
+
+FROM --platform=$BUILDPLATFORM python:3.10
 
 # Set environment varibles
 ENV PYTHONDONTWRITEBYTECODE 1
