@@ -22,19 +22,11 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       -
-        name: Build amd64 image
-        uses: docker/build-push-action@v4
-        env:
-          DOCKER_TARGET_PLATFORM: linux/amd
-        with:
-          push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/scim:amd64
-      -
-        name: Build arm64 image
-        uses: docker/build-push-action@v4
-        env:
-          DOCKER_TARGET_PLATFORM: linux/arm
-        with:
-          push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/scim:arm64
+        name: Docker Buildx (push)
+        run: |
+          docker buildx build \
+            --platform linux/amd64,linux/arm64 \
+            --output "type=image,push=true" \
+            --tag ${{ secrets.DOCKERHUB_USERNAME }}/scim \
+            --file ./Dockerfile
 
