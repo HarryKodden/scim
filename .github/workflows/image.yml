@@ -28,7 +28,7 @@ jobs:
           DOCKER_TARGET_PLATFORM: linux/amd
         with:
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/amd64/scim:latest
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/scim:amd64
       -
         name: Build arm64 image
         uses: docker/build-push-action@v4
@@ -36,5 +36,5 @@ jobs:
           DOCKER_TARGET_PLATFORM: linux/arm
         with:
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/arm64/scim:latest
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/scim:arm64
 
