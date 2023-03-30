@@ -2,7 +2,21 @@
 ![CI Workflow](https://github.com/harrykodden/scim-sample/actions/workflows/ci.yml/badge.svg) ![cov](https://raw.githubusercontent.com/HarryKodden/scim-sample/python-coverage-comment-action-data/badge.svg)
 # scim-sample
 
+## Docker image
+
+Public image available at:
+https://hub.docker.com/r/harrykodden/scim
+
+You do not need to build the docker image yourself. You can just pull the prepared image which is available for both **linux/amd** and **linux/arm** architectures.
+
+
+```bash
+docker pull harrykodden/scim
+```
+
 ## Build the image
+
+Alternatively, you can build the image yourself:
 
 ```bash
 docker build -t scim .
@@ -11,7 +25,22 @@ docker build -t scim .
 ## Starting the application
 
 ```bash
+docker run -p 8000:8000 harrykodden/scim
+```
+
+or if you build it yourself:
+
+```bash
 docker run -p 8000:8000 scim
+```
+
+This will show like:
+
+```log
+INFO:     Started server process [1]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
 ```
 
 go to your browser and open window at:
