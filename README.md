@@ -79,29 +79,20 @@ For example after a provisiong the data for **Users** contains:
 
 |id|details|
 |--|-------|
-|613277a6-aa52-440e-b604-9bbd14343558|"{\"userName\": \"hkodden5\", \"active\": true, \"externalId\": \"44cb3ba1-7a58-49af-961d-9a1253a26181@sram.surf.nl\", \"name\": {\"familyName\": \"Kodden\", \"givenName\": \"Harry\"}, \"displayName\": \"Harry Kodden\", \"emails\": [{\"primary\": true, \"value\": \"harry.kodden@surf.nl\"}] ...}"|
+|613277a6-aa52-440e-b604-9bbd14343558|{\"userName\": \"hkodden5\", \"active\": true, \"externalId\": \"44cb3ba1-7a58-49af-961d-9a1253a26181@sram.surf.nl\", \"name\": {\"familyName\": \"Kodden\", \"givenName\": \"Harry\"}, \"displayName\": \"Harry Kodden\", \"emails\": [{\"primary\": true, \"value\": \"harry.kodden@surf.nl\"}] ...}|
 
 Then you would like to retrieve specific values out of the JSON data.
-
-You could do that for example by creating a view like this:
-
-```sql
-CREATE OR REPLACE VIEW MyUsers (id, details) AS select id, details->>"$" from Users;
-CREATE OR REPLACE VIEW MyGroups (id, details) AS select id, details->>"$" from Groups;
-```
-
-Having these SQL Views in place, we can directly lookup specific values from the provisioned data.
 For example, we want to lookup the userName.
 
 ```sql
-select id, details->>'$.userName' as userName from MyUsers where id = '613277a6-aa52-440e-b604-9bbd14343558';
+select id, details->'$.userName' as userName from Users where id = '613277a6-aa52-440e-b604-9bbd14343558';
 ```
 
 will result in:
 
 | id | userName|
 |--| -- |
-|613277a6-aa52-440e-b604-9bbd14343558|hkodden5|
+|613277a6-aa52-440e-b604-9bbd14343558|"hkodden5"|
 
 
 
