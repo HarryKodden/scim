@@ -103,7 +103,7 @@ class SQLPlugin(Plugin):
                 if len(rows) != 1:
                     raise Exception(f"No match for id: {id}")
 
-                return json.loads(rows[0][0]) | {'id': id}
+                return rows[0][0] | {'id': id}
 
         except Exception as e:
             logger.debug(f"[__getitem__]: error {str(e)}")
@@ -120,7 +120,7 @@ class SQLPlugin(Plugin):
                 stmt = db.update(
                     self.table
                 ).values(
-                    details=details
+                    details=json.loads(details)
                 ).where(
                     self.table.columns.id == id
                 )
@@ -129,7 +129,7 @@ class SQLPlugin(Plugin):
                     self.table
                 ).values(
                     id=id,
-                    details=details
+                    details=json.loads(details)
                 )
 
             logger.debug(f"[SQL]: {stmt}")
