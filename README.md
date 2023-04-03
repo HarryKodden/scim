@@ -11,7 +11,7 @@
 | code/data/plugins/file.py         |       32 |        3 |     91% | 31, 47-48 |
 | code/data/users.py                |       43 |        9 |     79% |18, 27-29, 35-39, 46 |
 | code/filter.py                    |       94 |       73 |     22% |20-24, 27-28, 31-43, 46-76, 79-83, 86-94, 97-111, 121-130, 135-140 |
-| code/main.py                      |       30 |        6 |     80% |45, 53-56, 62 |
+| code/main.py                      |       30 |        6 |     80% |46, 54-57, 63 |
 | code/routers/\_\_init\_\_.py      |       20 |        3 |     85% | 29, 39-40 |
 | code/routers/groups.py            |       32 |        2 |     94% |    71, 81 |
 | code/routers/resource.py          |       20 |        1 |     95% |        47 |
