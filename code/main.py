@@ -22,6 +22,7 @@ app = FastAPI(
     docs_url=BASE_PATH if BASE_PATH.startswith('/') else '/',
     redoc_url=None,
     dependencies=[Depends(api_key_auth)],
+    openapi_url=BASE_PATH + '/openapi.json',
     responses={
         401: {"description": "Operation forbidden"},
         404: {"description": "Not found"},
