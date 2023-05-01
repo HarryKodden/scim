@@ -54,10 +54,15 @@ class JumpCloud(object):
 
 
     def users(self):
-      records = self.api(f"/api/systemusers")
-      for u in records.get('results', []):
-        logger.info(f"[users]: {u}...")
-        yield u['id']
+      for record in self.api(f"/api/systemusers").get('results', []) or []:
+        logger.info(f"[user record]: {record}...")
+        yield record['id']
+  
+
+    def groups(self):
+      for record in self.api(f"/api/v2/usergroups") or []:
+        logger.info(f"[group record]: {record}...")
+        yield record['id']
   
 
     def lookup_user(self, username):
@@ -71,7 +76,7 @@ class JumpCloud(object):
 
 
     def lookup_group(self, groupname):
-      record = self.api(f"/api/systemusers?filter=usergroups:$eq:{groupname}")
+      record = self.api(f"/api/v2/usergroups?filter=usergroups:$eq:{groupname}")
       if not record:
         return None
       if record['totalCount'] != 1:
@@ -110,7 +115,7 @@ class JumpCloud(object):
         '509Certificates': [],
         'meta': {
           'location': f"/Users/{id}",
-          'resourceType': 'Users'
+          'resourceType': 'User'
         }
       } # | record['attributes']
 
@@ -134,11 +139,15 @@ class JumpCloud(object):
       return {
         'id': id,
         'displayName': record['name'],
-        'members': []
+        'members': [],
+        'meta': {
+          'location': f"/Groups/{id}",
+          'resourceType': 'Group'
+        }      
       } | record['attributes']
 
 
-    def write_user(self, details):
+    def write_user(self, id, details):
       
       ssh_keys = []
       for k in details.pop('509Certificates'):
@@ -248,9 +257,9 @@ class JumpCloud(object):
       return self
 
 
-    def write_group(self, groupname, members):
+    def write_group(self, id, members):
 
-      record = self.lookup_group(groupname)
+      record = self.lookup_group(id)
 
       if not record:
         logger.debug("Group {} does not yet exist".format(name))
