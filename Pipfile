@@ -10,6 +10,7 @@ pytest = "*"
 pytest-cov = "*"
 
 [packages]
+requests = "*"
 fastapi = "*"
 uvicorn = "*"
 pydantic = "*"
