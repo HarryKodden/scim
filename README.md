@@ -52,16 +52,16 @@ http://localhost:8000
 
 This image uses environment variables for configuration.
 
-| Available variables | Description                           | Example                                                                                                  | Default                       |
-| ------------------- | ------------------------------------- | -------------------------------------------------------------------------------------------------------- | ----------------------------- |
-| `LOGLEVEL`          | The application logging level         | ERROR                                                                                                    | INFO                          |
-| `API_KEY`           | The API key to authenticate with      | mysecret                                                                                                 | secret                        |
-| `BASE_PATH`         | The base path of all API endpoints    | /api/v2                                                                                                  | /                             |
-| `DATA_PATH`         | File system path name                 | /mnt/scim                                                                                                | /tmp                          |
-| `MONGO_DB`          | Mongo connection string               | mongodb://user:password@mongo_host                                                                       | mongodb://localhost:27017/    |
-| `DATABASE_URL`      | SQL Database connection string        | postgresql://user:password@postrgres_host:5432/mydb **or** mysql+pymysql://user:password@mysql_host/mydb | sqlite:///scim.sqlite         |
-| `JUMPCLOUD_URL`     | The API endpoint for JumpCloud        | https://console.jumpcloud.com                                                                            | https://console.jumpcloud.com |
-| `JUMPCLOUD_KEY`     | The API Key for your JumpCloud tenant | _value of API key obtained from JumpCloud_<br /><br />**Mandatory when JUMPCLOUD_URL is set**            | None                          |
+| Available variables | Description                           | Example                                                                                                             | Default                       |
+| ------------------- | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------- | ----------------------------- |
+| `LOGLEVEL`          | The application logging level         | ERROR                                                                                                               | INFO                          |
+| `API_KEY`           | The API key to authenticate with      | mysecret                                                                                                            | secret                        |
+| `BASE_PATH`         | The base path of all API endpoints    | /api/v2                                                                                                             | /                             |
+| `DATA_PATH`         | File system path name                 | /mnt/scim                                                                                                           | /tmp                          |
+| `MONGO_DB`          | Mongo connection string               | mongodb://user:password@mongo_host                                                                                  | mongodb://localhost:27017/    |
+| `DATABASE_URL`      | SQL Database connection string        | postgresql://user:password@postrgres_host:5432/mydb<br />**or**<br /> mysql+pymysql://user:password@mysql_host/mydb | sqlite:///scim.sqlite         |
+| `JUMPCLOUD_URL`     | The API endpoint for JumpCloud        | https://console.jumpcloud.com                                                                                       | https://console.jumpcloud.com |
+| `JUMPCLOUD_KEY`     | The API Key for your JumpCloud tenant | _value of API key obtained from JumpCloud_<br /><br />**Mandatory when JUMPCLOUD_URL is set**                       | None                          |
 
 ## Handling data
 
