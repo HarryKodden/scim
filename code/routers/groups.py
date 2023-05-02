@@ -59,8 +59,11 @@ async def create_group(
 ) -> Any:
     """ Create a Group """
 
-    resource = put_group_resource(None, group)
-    return resource.dict(by_alias=True, exclude_none=True)
+    try:
+        resource = put_group_resource(None, group)
+        return resource.dict(by_alias=True, exclude_none=True)
+    except Exception as e:
+        raise HTTPException(status_code=404, detail=f"Error: {str(e)}")
 
 
 @router.get("/{id}")
@@ -76,10 +79,13 @@ async def get_group(id: str) -> Any:
 @router.put("/{id}")
 async def update_group(id: str, group: Group):
     """ Update a Group """
-    resource = put_group_resource(id, group)
-    if not resource:
-        raise HTTPException(status_code=404, detail=f"Group {id} not found")
-    return resource.dict(by_alias=True, exclude_none=True)
+    try:
+        resource = put_group_resource(id, group)
+        if not resource:
+            raise Exception(f"Group {id} not found")
+        return resource.dict(by_alias=True, exclude_none=True)
+    except Exception as e:
+        raise HTTPException(status_code=404, detail=f"Error: {str(e)}")
 
 
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)

@@ -5,7 +5,7 @@ from datetime import datetime
 from schema import CORE_SCHEMA_USER, SRAM_SCHEMA_USER, UserResource, User, Meta
 from filter import Filter
 
-from data import generate_uuid, Users
+from data import Users
 
 
 def del_user_resource(id: str) -> None:
@@ -45,7 +45,7 @@ def put_user_resource(id: str, user: User) -> UserResource:
         if not resource:
             return None
     else:
-        id = generate_uuid()
+        id = Users.id()
 
         resource = UserResource(
             id=id,

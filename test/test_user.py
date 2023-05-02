@@ -22,6 +22,12 @@ def test_create_user(test_app):
 
     data = {
       "userName": "testuser",
+      "emails": [
+        {
+          "primary": True,
+          "value": "noboby@nowhere"
+        }
+      ],
       "active": True
     }
 
@@ -60,6 +66,12 @@ def test_delete_user(test_app):
 
     data = {
       "userName": "testuser",
+      "emails": [
+        {
+          "primary": True,
+          "value": "noboby@nowhere"
+        }
+      ],
       "active": True
     }
 

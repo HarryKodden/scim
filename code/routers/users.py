@@ -67,8 +67,11 @@ async def create_user(
 ) -> Any:
     """ Create a User """
 
-    resource = put_user_resource(None, user)
-    return resource.dict(by_alias=True, exclude_none=True)
+    try:
+        resource = put_user_resource(None, user)
+        return resource.dict(by_alias=True, exclude_none=True)
+    except Exception as e:
+        raise HTTPException(status_code=404, detail=f"Error: {str(e)}")
 
 
 @router.get("/{id}")
@@ -84,10 +87,15 @@ async def get_user(id: str) -> Any:
 @router.put("/{id}")
 async def update_user(id: str, user: User):
     """ Update a User """
-    resource = put_user_resource(id, user)
-    if not resource:
-        raise HTTPException(status_code=404, detail=f"User {id} not found")
-    return resource.dict(exclude_none=True)
+
+    try:
+        resource = put_user_resource(id, user)
+        if not resource:
+            raise Exception(f"User {id} not found")
+
+        return resource.dict(exclude_none=True)
+    except Exception as e:
+        raise HTTPException(status_code=404, detail=f"Error: {str(e)}")
 
 
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
