@@ -18,7 +18,7 @@ develop: all
 	#docker run --rm --link mongo:mongo --link mysql:mysql -p 8000:80 -ti -v $$PWD/code:/code --entrypoint /usr/local/bin/uvicorn ${IMAGE} main:app --reload --host 0.0.0.0 --port 80
 	docker run --rm -p 8000:80 -ti -v $$PWD/code:/code \
 		-e JUMPCLOUD_URL=https://console.jumpcloud.com \
-		-e JUMPCLOUD_KEY=a72a11cd16ba4b76ea73d3803e06ef79dbcc9bb6 \
+		-e JUMPCLOUD_KEY=${JUMPCLOUD_KEY} \
 		--entrypoint /usr/local/bin/uvicorn ${IMAGE} main:app --reload --host 0.0.0.0 --port 80
 
 push: all
