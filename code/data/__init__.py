@@ -1,12 +1,6 @@
 # data/__init__.py
 
 import os
-import uuid
-
-
-def generate_uuid() -> str:
-    return str(uuid.uuid4())
-
 
 # Backend option: Mongo DB
 mongo_db = os.environ.get("MONGO_DB", None)

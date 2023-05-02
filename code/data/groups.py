@@ -5,7 +5,7 @@ from datetime import datetime
 from schema import CORE_SCHEMA_GROUP, SRAM_SCHEMA_GROUP, \
     GroupResource, Group, Meta
 from filter import Filter
-from data import generate_uuid, Groups
+from data import Groups
 from data.users import get_user_resource
 
 import logging
@@ -36,12 +36,19 @@ def get_group_resources(filter: Filter) -> [Any]:
 
 
 def put_group_resource(id: str, group: Group) -> GroupResource:
+    for member in group.members or []:
+        user = get_user_resource(member.value)
+        if not user:
+            raise Exception(f"Member: '{member.value}'' not existing")
+
+        member.display = user.displayName
+
     if id:
         resource = get_group_resource(id)
         if not resource:
             return None
     else:
-        id = generate_uuid()
+        id = Groups.id()
 
         resource = GroupResource(
             id=id,
@@ -55,13 +62,6 @@ def put_group_resource(id: str, group: Group) -> GroupResource:
     resource.displayName = group.displayName
     resource.externalId = group.externalId
     resource.members = group.members
-    for member in resource.members or []:
-        user = get_user_resource(member.value)
-        if not user:
-            raise Exception(f"Member: {member.value} not existing")
-
-        member.display = user.displayName
-
     resource.sram_group_extension = group.sram_group_extension
     resource.meta.lastModified = datetime.now()
     resource.schemas = [

@@ -1,4 +1,5 @@
 from typing import Any
+import uuid
 
 
 class Plugin(object):
@@ -8,6 +9,9 @@ class Plugin(object):
 
     def __init__(self):
         self.description = 'UNKNOWN'
+
+    def id(self) -> str:
+        return str(uuid.uuid4())
 
     def __iter__(self) -> Any:
         raise NotImplementedError
