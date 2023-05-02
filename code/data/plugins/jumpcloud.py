@@ -216,6 +216,7 @@ class JumpCloud(object):
         self.api(
             f'/api/systemusers/{id}',
             method='PUT',
+            data=data
         )
 
         # Check our src keys, add the one that do not yet exist...
