@@ -166,6 +166,7 @@ class JumpCloud(object):
 
         return {
             'id': id,
+            'displayName': record.get('name', None),
             'members': members,
             'meta': {
                 'location': f"/Groups/{id}",
