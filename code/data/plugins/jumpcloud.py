@@ -166,7 +166,6 @@ class JumpCloud(object):
 
         return {
             'id': id,
-            'displayName': record['name'],
             'members': members,
             'meta': {
                 'location': f"/Groups/{id}",
@@ -308,16 +307,14 @@ class JumpCloud(object):
             )
 
     def update_group(self, id, details):
-        name = details.pop('displayName')
         members = details.pop('members', [])
 
         self.api(
             f"/api/v2/usergroups/{id}",
             method='PUT',
             data={
-                'name': name,
                 'attributes': {
-                        "details": json.dumps(details)
+                    "details": json.dumps(details)
                 }
             }
         )
@@ -325,10 +322,10 @@ class JumpCloud(object):
         self.update_members(id, members)
 
     def delete_user(self, id):
-        self.api("/api/systemusers/{}".format(id), method='DELETE')
+        self.api(f"/api/systemusers/{id}", method='DELETE')
 
     def delete_group(self, id):
-        self.api("/api/v2/usergroups/{}".format(id), method='DELETE')
+        self.api(f"/api/v2/usergroups/{id}", method='DELETE')
 
 
 class JumpCloudPlugin(Plugin):
