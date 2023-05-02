@@ -68,7 +68,7 @@ async def create_user(
     """ Create a User """
 
     try:
-        resource = put_user_resource(id, user)
+        resource = put_user_resource(None, user)
         return resource.dict(by_alias=True, exclude_none=True)
     except Exception as e:
         raise HTTPException(status_code=404, detail=f"Error: {str(e)}")

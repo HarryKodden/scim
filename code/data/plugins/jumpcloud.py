@@ -39,7 +39,7 @@ class JumpCloud(object):
 
             r = requests.request(
                 method,
-                url="{self.url}{request}",
+                url=f"{self.url}{request}",
                 headers=headers,
                 data=data
             )
@@ -75,11 +75,13 @@ class JumpCloud(object):
             '/api/systemusers',
             method='POST',
             data={
-                'username': str(uuid.uuid4()),
+                'username': f"U{str(uuid.uuid4())}"[:30],
                 'activated': False,
-                'email': 'noreply@none'
+                'email': f'noreply@{str(uuid.uuid4())}'
             }
         )
+
+        logger.info(f"[CREATE USER] {record}")
 
         return record.get('id')
 
@@ -190,23 +192,16 @@ class JumpCloud(object):
         if not username or username == '':
             raise Exception("Missing username")
 
-        email = None
-        for e in details.pop('emails', []):
-            if e.get('primary', False):
-                email = e.get('value', None)
-
-            if email:
-                break
-
-        if not email or email == '':
-            raise Exception(f"Missing email for uer {username}")
-
         data = {
-            'username': username,
-            'email': email
+            'username': username
         }
 
-        name = details.pop('name')
+        for e in details.pop('emails', []):
+            if e.get('primary', False):
+                data['email'] = e.get('value', '')
+                break
+
+        name = details.pop('name', None)
         if name:
             data['firstname'] = name.get('givenName', '')
             data['lastname'] = name.get('familyName', '')
