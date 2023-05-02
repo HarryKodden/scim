@@ -134,7 +134,7 @@ class JumpCloud(object):
 
         for custom in record.get('attributes', []):
             if custom['name'] == 'details':
-                result |= json.loads(custom['valuue'])
+                result |= json.loads(custom['value'])
 
         for sshkey in self.api(f"/api/systemusers/{id}/sshkeys"):
             logger.debug(f"[sshkeys] sshkey: {sshkey}")
