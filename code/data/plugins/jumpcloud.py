@@ -24,7 +24,7 @@ class JumpCloud(object):
 
     def api(self, request, method='GET', data=None):
 
-        print("API: {} {} ...".format(method, request))
+        logger.debug("API: {} {} ...".format(method, request))
 
         try:
             headers = {
@@ -61,16 +61,22 @@ class JumpCloud(object):
         return None
 
     def users(self):
+        logger.debug("[iterate user] ...")
+
         for record in self.api("/api/systemusers").get('results', []) or []:
-            logger.info(f"[user record]: {record}...")
+            logger.debug(f"[... user record]: {record}...")
             yield record['id']
 
     def groups(self):
+        logger.debug("[iterate group] ...")
+
         for record in self.api("/api/v2/usergroups") or []:
-            logger.info(f"[group record]: {record}...")
+            logger.debug(f"[... group record]: {record}...")
             yield record['id']
 
     def create_user(self) -> str:
+        logger.debug("[create_user] ...")
+
         record = self.api(
             '/api/systemusers',
             method='POST',
@@ -81,11 +87,13 @@ class JumpCloud(object):
             }
         )
 
-        logger.info(f"[CREATE USER] {record}")
+        logger.debug(f"[CREATE USER] {record}")
 
         return record.get('id')
 
     def create_group(self) -> str:
+        logger.debug("[create_group] ...")
+
         record = self.api(
             '/api/v2/usergroups',
             method='POST',
@@ -93,6 +101,8 @@ class JumpCloud(object):
                 'name': str(uuid.uuid4())
             }
         )
+
+        logger.debug(f"[CREATE GROUP] {record}")
 
         return record.get('id')
 
@@ -145,7 +155,7 @@ class JumpCloud(object):
                 }
             )
 
-        logger.info(result)
+        logger.debug(result)
 
         return result
 
@@ -164,7 +174,7 @@ class JumpCloud(object):
                 }
             )
 
-        return {
+        result = {
             'id': id,
             'displayName': record.get('name', None),
             'members': members,
@@ -174,7 +184,13 @@ class JumpCloud(object):
             }
         } | json.loads(record.get('attributes', {}).get('details', '{}'))
 
+        logger.debug(f"[read_group result] {result}")
+
+        return result
+
     def update_user(self, id, details):
+        logger.debug(f"[update_user] id: {id}...")
+
         new_keys = []
         for key in details.pop('509Certificates', []):
             try:
@@ -252,6 +268,8 @@ class JumpCloud(object):
             )
 
     def read_members(self, id):
+        logger.debug(f"[read_members] id: {id}...")
+
         members = []
 
         skip = 0
@@ -272,6 +290,7 @@ class JumpCloud(object):
         return members
 
     def update_members(self, id, new_members):
+        logger.debug(f"[update_members] id: {id}...")
         old_members = self.read_members(id)
 
         # Add new members...
@@ -297,7 +316,7 @@ class JumpCloud(object):
 
         # No longer members...
         for member in old_members:
-            logger.debug("Deleting {member} from group {id}")
+            logger.debug(f"Deleting {member} from group {id}")
 
             self.api(
                 f"/api/v2/usergroups/{id}/members",
@@ -308,16 +327,30 @@ class JumpCloud(object):
             )
 
     def update_group(self, id, details):
+        logger.debug(f"[ UPDATE GROUP ] Update group {id}")
+
         members = details.pop('members', [])
+
+        record = self.api(f"/api/v2/usergroups/{id}")
+        if not record:
+            raise Exception(f"Group '{id}' not found !")
+
+        if 'attributes' not in record:
+            record['attributes'] = {}
+
+        record['attributes']['details'] = json.dumps(details)
+
+        # Try to rename the group to something meaningful...
+        try:
+            record['name'] = \
+                details['urn:mace:surf.nl:sram:scim:extension:Group']['urn']
+        except Exception:
+            pass
 
         self.api(
             f"/api/v2/usergroups/{id}",
             method='PUT',
-            data={
-                'attributes': {
-                    "details": json.dumps(details)
-                }
-            }
+            data=record
         )
 
         self.update_members(id, members)
