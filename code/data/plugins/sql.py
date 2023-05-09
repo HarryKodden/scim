@@ -80,11 +80,15 @@ class SQLPlugin(Plugin):
         logger.debug(f"[__delitem__]: {self.description}, id:{id}")
 
         with self.Transaction() as session:
-            session.delete(
+            stmt = db.delete(
                 self.table
             ).where(
                 self.table.columns.id == id
             )
+
+            logger.debug(f"[SQL]: {stmt}")
+
+            session.execute(stmt)
 
     def __getitem__(self, id: str) -> Any:
         logger.debug(f"[__getitem__]: {self.description}, id:{id}")
