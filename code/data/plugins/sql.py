@@ -118,24 +118,22 @@ class SQLPlugin(Plugin):
             f"[__setitem__]: {self.description}, id:{id}, details: {details}"
         )
 
+        if self[id]:
+            stmt = db.update(
+                self.table
+            ).values(
+                details=json.loads(details)
+            ).where(
+                self.table.columns.id == id
+            )
+        else:
+            stmt = db.insert(
+                self.table
+            ).values(
+                id=id,
+                details=json.loads(details)
+            )
+
         with self.Transaction() as session:
-
-            if self[id]:
-                stmt = db.update(
-                    self.table
-                ).values(
-                    details=json.loads(details)
-                ).where(
-                    self.table.columns.id == id
-                )
-            else:
-                stmt = db.insert(
-                    self.table
-                ).values(
-                    id=id,
-                    details=json.loads(details)
-                )
-
             logger.debug(f"[SQL]: {stmt}")
-
             session.execute(stmt)

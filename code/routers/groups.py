@@ -3,7 +3,7 @@
 from fastapi import APIRouter, Body, status, HTTPException, Query
 
 from schema import ListResponse, Group
-from routers import BASE_PATH, get_all_resources
+from routers import BASE_PATH, get_all_resources, resource_exists
 from typing import Any
 
 from data.groups import \
@@ -59,6 +59,16 @@ async def create_group(
 ) -> Any:
     """ Create a Group """
 
+    if group.externalId:
+        if resource_exists(
+            "Group",
+            f"externalId eq \"{group.externalId}\""
+        ):
+            raise HTTPException(
+                status_code=409,
+                detail="Group already exists with same externalId"
+            )
+
     try:
         resource = put_group_resource(None, group)
         return resource.dict(by_alias=True, exclude_none=True)
@@ -79,6 +89,17 @@ async def get_group(id: str) -> Any:
 @router.put("/{id}")
 async def update_group(id: str, group: Group):
     """ Update a Group """
+
+    if group.externalId:
+        if resource_exists(
+            "Group",
+            f"externalId eq \"{group.externalId}\" and id ne \"id\""
+        ):
+            raise HTTPException(
+                status_code=409,
+                detail="Group already exists with same externalId"
+            )
+
     try:
         resource = put_group_resource(id, group)
         if not resource:

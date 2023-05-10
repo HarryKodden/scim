@@ -80,6 +80,7 @@ class Evaluator(NodeVisitor):
         if not self.resource:
             raise Exception("No resource provided")
 
+        logger.debug(f"CHECK ATTR: {self.resource.get(node.attr_name)}")
         return self.resource.get(node.attr_name)
 
     def visit_CompValue(self, node):

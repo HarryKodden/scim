@@ -4,8 +4,7 @@ from fastapi import APIRouter, Body, status, HTTPException, Query
 
 from schema import ListResponse, User
 from typing import Any
-from routers import BASE_PATH, get_all_resources
-
+from routers import BASE_PATH, get_all_resources, resource_exists
 from data.users import \
     get_user_resource, \
     put_user_resource, \
@@ -67,6 +66,15 @@ async def create_user(
 ) -> Any:
     """ Create a User """
 
+    if resource_exists(
+        "User",
+        f"userName eq \"{user.userName}\""
+    ):
+        raise HTTPException(
+            status_code=409,
+            detail="userName already exists"
+        )
+
     try:
         resource = put_user_resource(None, user)
         return resource.dict(by_alias=True, exclude_none=True)
@@ -87,6 +95,25 @@ async def get_user(id: str) -> Any:
 @router.put("/{id}")
 async def update_user(id: str, user: User):
     """ Update a User """
+
+    if resource_exists(
+        "User",
+        f"userName eq \"{user.userName}\" and id ne \"id\""
+    ):
+        raise HTTPException(
+            status_code=409,
+            detail="userName already exists"
+        )
+
+    if user.externalId:
+        if resource_exists(
+                "User",
+                f"externalId eq \"{user.externalId}\" and id ne \"id\""
+        ):
+            raise HTTPException(
+                status_code=409,
+                detail="User already exists with same externalId"
+            )
 
     try:
         resource = put_user_resource(id, user)

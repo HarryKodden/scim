@@ -2,6 +2,7 @@
 
 from fastapi import HTTPException
 
+
 from schema import SCIM_API_MESSAGES, ListResponse
 from filter import Filter
 
@@ -11,6 +12,7 @@ from data.groups import get_group_resources
 import os
 
 BASE_PATH = os.environ.get('BASE_PATH', '')
+
 
 reader = {
     'User': get_user_resources,
@@ -50,3 +52,7 @@ def get_all_resources(
         startIndex=startindex,
         totalResults=len(totalresults)
     )
+
+
+def resource_exists(resource_type, query) -> bool:
+    return (get_all_resources(resource_type, 1, 1, query).totalResults > 0)
