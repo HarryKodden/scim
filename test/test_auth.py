@@ -1,5 +1,3 @@
-# import test_auth.py
-
 
 def test_auth(test_app):
     headers = {

@@ -33,6 +33,13 @@ def test_create_user(test_app):
 
     response = test_app.post("/Users", json=data, headers=headers)
     assert response.status_code == 201
+    user = UserResource(**response.json())
+
+    response = test_app.post("/Users", json=data, headers=headers)
+    assert response.status_code == 409  # Duplicate !
+
+    response = test_app.delete(f"/Users/{user.id}", headers=headers)
+    assert response.status_code == 204
 
 
 def test_update_user(test_app):
@@ -42,6 +49,12 @@ def test_update_user(test_app):
 
     data = {
       "userName": "testuser",
+      "emails": [
+        {
+          "primary": True,
+          "value": "noboby@nowhere"
+        }
+      ],
       "active": True
     }
 
@@ -51,12 +64,12 @@ def test_update_user(test_app):
 
     response = test_app.get(f"/Users/{user.id}", headers=headers)
     assert response.status_code == 200
-    user = UserResource(**response.json())
-    user.userName = 'testuser2'
 
-    data = user.json()
-    response = test_app.put(f"/Users/{user.id}", data=data, headers=headers)
-    assert response.status_code == 200
+    response = test_app.post("/Users", json=data, headers=headers)
+    assert response.status_code == 409
+
+    response = test_app.delete(f"/Users/{user.id}", headers=headers)
+    assert response.status_code == 204
 
 
 def test_delete_user(test_app):
@@ -65,7 +78,7 @@ def test_delete_user(test_app):
     }
 
     data = {
-      "userName": "testuser",
+      "userName": "testuser3",
       "emails": [
         {
           "primary": True,
