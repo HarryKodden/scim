@@ -60,12 +60,12 @@
             <button type="button" class="exc show_exc button_toggle_exc" value="exc" data-shortcut="x" title="Toggle lines excluded">0<span class="text"> excluded</span></button>
         </h2>
         <p class="text">
-            <a id="prevFileLink" class="nav" href="d_86aabf9308b6d9b1___init___py.html">&#xab; prev</a> &nbsp; &nbsp;
+            <a id="prevFileLink" class="nav" href="d_86aabf9308b6d9b1_config_py.html">&#xab; prev</a> &nbsp; &nbsp;
             <a id="indexLink" class="nav" href="index.html">&Hat; index</a> &nbsp; &nbsp;
             <a id="nextFileLink" class="nav" href="d_86aabf9308b6d9b1_resource_py.html">&#xbb; next</a>
             &nbsp; &nbsp; &nbsp;
-            <a class="nav" href="https://coverage.readthedocs.io/en/7.2.5">coverage.py v7.2.5</a>,
-            created at 2023-05-10 11:15 +0000
+            <a class="nav" href="https://coverage.readthedocs.io/en/7.2.7">coverage.py v7.2.7</a>,
+            created at 2023-07-10 10:53 +0000
         </p>
         <aside class="hidden">
             <button type="button" class="button_next_chunk" data-shortcut="j"/>
@@ -153,7 +153,7 @@
     <p class="pln"><span class="n"><a id="t71" href="#t71">71</a></span><span class="t">&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t72" href="#t72">72</a></span><span class="t">    <span class="key">try</span><span class="op">:</span>&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t73" href="#t73">73</a></span><span class="t">        <span class="nam">resource</span> <span class="op">=</span> <span class="nam">put_group_resource</span><span class="op">(</span><span class="key">None</span><span class="op">,</span> <span class="nam">group</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
-    <p class="run"><span class="n"><a id="t74" href="#t74">74</a></span><span class="t">        <span class="key">return</span> <span class="nam">resource</span><span class="op">.</span><span class="nam">dict</span><span class="op">(</span><span class="nam">by_alias</span><span class="op">=</span><span class="key">True</span><span class="op">,</span> <span class="nam">exclude_none</span><span class="op">=</span><span class="key">True</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run"><span class="n"><a id="t74" href="#t74">74</a></span><span class="t">        <span class="key">return</span> <span class="nam">resource</span><span class="op">.</span><span class="nam">model_dump</span><span class="op">(</span><span class="nam">by_alias</span><span class="op">=</span><span class="key">True</span><span class="op">,</span> <span class="nam">exclude_none</span><span class="op">=</span><span class="key">True</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
     <p class="mis show_mis"><span class="n"><a id="t75" href="#t75">75</a></span><span class="t">    <span class="key">except</span> <span class="nam">Exception</span> <span class="key">as</span> <span class="nam">e</span><span class="op">:</span>&nbsp;</span><span class="r"></span></p>
     <p class="mis show_mis"><span class="n"><a id="t76" href="#t76">76</a></span><span class="t">        <span class="key">raise</span> <span class="nam">HTTPException</span><span class="op">(</span><span class="nam">status_code</span><span class="op">=</span><span class="num">404</span><span class="op">,</span> <span class="nam">detail</span><span class="op">=</span><span class="str">f"Error: {str(e)}"</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t77" href="#t77">77</a></span><span class="t">&nbsp;</span><span class="r"></span></p>
@@ -165,7 +165,7 @@
     <p class="run"><span class="n"><a id="t83" href="#t83">83</a></span><span class="t">    <span class="key">if</span> <span class="key">not</span> <span class="nam">resource</span><span class="op">:</span>&nbsp;</span><span class="r"></span></p>
     <p class="mis show_mis"><span class="n"><a id="t84" href="#t84">84</a></span><span class="t">        <span class="key">raise</span> <span class="nam">HTTPException</span><span class="op">(</span><span class="nam">status_code</span><span class="op">=</span><span class="num">404</span><span class="op">,</span> <span class="nam">detail</span><span class="op">=</span><span class="str">f"Group {id} not found"</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t85" href="#t85">85</a></span><span class="t">&nbsp;</span><span class="r"></span></p>
-    <p class="run"><span class="n"><a id="t86" href="#t86">86</a></span><span class="t">    <span class="key">return</span> <span class="nam">resource</span><span class="op">.</span><span class="nam">dict</span><span class="op">(</span><span class="nam">by_alias</span><span class="op">=</span><span class="key">True</span><span class="op">,</span> <span class="nam">exclude_none</span><span class="op">=</span><span class="key">True</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run"><span class="n"><a id="t86" href="#t86">86</a></span><span class="t">    <span class="key">return</span> <span class="nam">resource</span><span class="op">.</span><span class="nam">model_dump</span><span class="op">(</span><span class="nam">by_alias</span><span class="op">=</span><span class="key">True</span><span class="op">,</span> <span class="nam">exclude_none</span><span class="op">=</span><span class="key">True</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t87" href="#t87">87</a></span><span class="t">&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t88" href="#t88">88</a></span><span class="t">&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t89" href="#t89">89</a></span><span class="t"><span class="op">@</span><span class="nam">router</span><span class="op">.</span><span class="nam">put</span><span class="op">(</span><span class="str">"/{id}"</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
@@ -186,7 +186,7 @@
     <p class="run"><span class="n"><a id="t104" href="#t104">104</a></span><span class="t">        <span class="nam">resource</span> <span class="op">=</span> <span class="nam">put_group_resource</span><span class="op">(</span><span class="nam">id</span><span class="op">,</span> <span class="nam">group</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t105" href="#t105">105</a></span><span class="t">        <span class="key">if</span> <span class="key">not</span> <span class="nam">resource</span><span class="op">:</span>&nbsp;</span><span class="r"></span></p>
     <p class="mis show_mis"><span class="n"><a id="t106" href="#t106">106</a></span><span class="t">            <span class="key">raise</span> <span class="nam">Exception</span><span class="op">(</span><span class="str">f"Group {id} not found"</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
-    <p class="run"><span class="n"><a id="t107" href="#t107">107</a></span><span class="t">        <span class="key">return</span> <span class="nam">resource</span><span class="op">.</span><span class="nam">dict</span><span class="op">(</span><span class="nam">by_alias</span><span class="op">=</span><span class="key">True</span><span class="op">,</span> <span class="nam">exclude_none</span><span class="op">=</span><span class="key">True</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run"><span class="n"><a id="t107" href="#t107">107</a></span><span class="t">        <span class="key">return</span> <span class="nam">resource</span><span class="op">.</span><span class="nam">model_dump</span><span class="op">(</span><span class="nam">by_alias</span><span class="op">=</span><span class="key">True</span><span class="op">,</span> <span class="nam">exclude_none</span><span class="op">=</span><span class="key">True</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
     <p class="mis show_mis"><span class="n"><a id="t108" href="#t108">108</a></span><span class="t">    <span class="key">except</span> <span class="nam">Exception</span> <span class="key">as</span> <span class="nam">e</span><span class="op">:</span>&nbsp;</span><span class="r"></span></p>
     <p class="mis show_mis"><span class="n"><a id="t109" href="#t109">109</a></span><span class="t">        <span class="key">raise</span> <span class="nam">HTTPException</span><span class="op">(</span><span class="nam">status_code</span><span class="op">=</span><span class="num">404</span><span class="op">,</span> <span class="nam">detail</span><span class="op">=</span><span class="str">f"Error: {str(e)}"</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t110" href="#t110">110</a></span><span class="t">&nbsp;</span><span class="r"></span></p>
@@ -201,12 +201,12 @@
 <footer>
     <div class="content">
         <p>
-            <a id="prevFileLink" class="nav" href="d_86aabf9308b6d9b1___init___py.html">&#xab; prev</a> &nbsp; &nbsp;
+            <a id="prevFileLink" class="nav" href="d_86aabf9308b6d9b1_config_py.html">&#xab; prev</a> &nbsp; &nbsp;
             <a id="indexLink" class="nav" href="index.html">&Hat; index</a> &nbsp; &nbsp;
             <a id="nextFileLink" class="nav" href="d_86aabf9308b6d9b1_resource_py.html">&#xbb; next</a>
             &nbsp; &nbsp; &nbsp;
-            <a class="nav" href="https://coverage.readthedocs.io/en/7.2.5">coverage.py v7.2.5</a>,
-            created at 2023-05-10 11:15 +0000
+            <a class="nav" href="https://coverage.readthedocs.io/en/7.2.7">coverage.py v7.2.7</a>,
+            created at 2023-07-10 10:53 +0000
         </p>
     </div>
 </footer>
