@@ -27,7 +27,7 @@ class Email(BaseModel):
 
 class Member(BaseModel):
     ref: ClassVar[str] = Field(alias="$ref")
-    display: str = None
+    display: str
     value: str
 
 
@@ -43,7 +43,7 @@ class Meta(BaseModel):
 
 
 class ListResponse(BaseModel):
-    Resources: List[Dict] = None
+    Resources: Optional[List[Dict]] = None
     itemsPerPage: int
     schemas: List[str]
     startIndex: int
@@ -51,19 +51,19 @@ class ListResponse(BaseModel):
 
 
 class SRAM_User_Extension(BaseModel):
-    eduPersonScopedAffiliation: str = None
-    eduPersonUniqueId: str = None
-    voPersonExternalAffiliation: str = None
-    voPersonExternalId: str = None
+    eduPersonScopedAffiliation: Optional[str] = None
+    eduPersonUniqueId: Optional[str] = None
+    voPersonExternalAffiliation: Optional[str] = None
+    voPersonExternalId: Optional[str] = None
 
     class Config:
         title = "SRAM User Extension"
 
 
 class SRAM_Group_Extension(BaseModel):
-    description: str = None
+    description: Optional[str]
     labels: Optional[List[str]]
-    urn: str = None
+    urn: Optional[str]
 
     class Config:
         title = "SRAM Group Extension"
@@ -72,14 +72,14 @@ class SRAM_Group_Extension(BaseModel):
 class User(BaseModel):
     userName: str
     active: bool = True
-    externalId: str = None
-    name: Name = None
-    displayName: str = None
-    emails: List[Union[Email, None]] = None
+    externalId: Optional[str] = None
+    name: Optional[Name] = None
+    displayName: Optional[str] = None
+    emails: Optional[List[Union[Email, None]]] = None
     sram_user_extension: Optional[SRAM_User_Extension] = \
         Field(alias=SRAM_SCHEMA_USER, default=None)
-    x509Certificates: List[Union[Certificate, None]] = None
-    schemas: List[Union[str, None]] = None
+    x509Certificates: Optional[List[Union[Certificate, None]]] = None
+    schemas: Optional[List[Union[str, None]]] = None
 
 
 class UserResource(User):
@@ -119,7 +119,7 @@ class ResourceType(BaseModel):
     endpoint: str
     meta: Meta
     schema_name: str = Field(alias="schema")
-    schemaExtensions: List[Union[SchemaExtension, None]] = None
+    schemaExtensions: Optional[List[Union[SchemaExtension, None]]] = None
     schemas: List[Union[str, None]] = [
         CORE_SCHEMA+":ResourceType"
     ]
