@@ -23,7 +23,7 @@ async def get_resource_types() -> ListResponse:
 
     for r in resourceTypes:
         logger.debug(r)
-        resources.append(r.dict(by_alias=True))
+        resources.append(r.model_dump(by_alias=True))
 
     return ListResponse(
         Resources=resources,
@@ -42,6 +42,6 @@ async def get_resource(id: str) -> Any:
 
     for resource in resourceTypes:
         if resource.id == id:
-            return resource.dict(by_alias=True)
+            return resource.model_dump(by_alias=True)
 
     raise HTTPException(status_code=404, detail=f"Resource {id} not found")

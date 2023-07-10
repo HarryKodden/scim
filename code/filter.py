@@ -24,7 +24,7 @@ class Evaluator(NodeVisitor):
         super().__init__(*args, **kwargs)
 
     def evaluate(self, resource: Any) -> bool:
-        self.resource = json.loads(resource.json())
+        self.resource = json.loads(resource.model_dump_json())
         return self.visit(self.ast)
 
     def visit_Filter(self, node):

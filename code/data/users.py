@@ -26,7 +26,9 @@ def get_user_resources(filter: Filter) -> [Any]:
     for id in Users:
         resource = get_user_resource(id)
         if filter.match(resource):
-            result.append(resource.dict(by_alias=True, exclude_none=True))
+            result.append(
+                resource.model_dump(by_alias=True, exclude_none=True)
+            )
 
     return result
 
@@ -67,10 +69,10 @@ def put_user_resource(id: str, user: User) -> UserResource:
     resource.x509Certificates = user.x509Certificates
     resource.meta.lastModified = datetime.now()
     resource.schemas = [
-       CORE_SCHEMA_USER,
-       SRAM_SCHEMA_USER
+        CORE_SCHEMA_USER,
+        SRAM_SCHEMA_USER
     ]
 
-    Users[id] = resource.json(by_alias=True, exclude_none=True)
+    Users[id] = resource.model_dump_json(by_alias=True, exclude_none=True)
 
     return resource

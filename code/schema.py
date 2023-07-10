@@ -92,8 +92,8 @@ class UserResource(User):
 
 class Group(BaseModel):
     displayName: str
-    externalId: str = None
-    members: List[Union[Member, None]] = None
+    externalId: Optional[str] = None
+    members: Optional[List[Union[Member, None]]] = None
     sram_group_extension: Optional[SRAM_Group_Extension] = \
         Field(alias=SRAM_SCHEMA_GROUP, default=None)
     schemas: List[Union[str, None]] = None

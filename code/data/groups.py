@@ -30,7 +30,9 @@ def get_group_resources(filter: Filter) -> [Any]:
     for id in Groups:
         resource = get_group_resource(id)
         if filter.match(resource):
-            result.append(resource.dict(by_alias=True, exclude_none=True))
+            result.append(
+                resource.model_dump(by_alias=True, exclude_none=True)
+            )
 
     return result
 
@@ -69,6 +71,6 @@ def put_group_resource(id: str, group: Group) -> GroupResource:
         SRAM_SCHEMA_GROUP
     ]
 
-    Groups[id] = resource.json(by_alias=True, exclude_none=True)
+    Groups[id] = resource.model_dump_json(by_alias=True, exclude_none=True)
 
     return resource

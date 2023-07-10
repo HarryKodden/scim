@@ -1,7 +1,5 @@
 # routers/schema.py
 
-import json
-
 from routers import BASE_PATH
 from typing import Any
 from fastapi import APIRouter, HTTPException
@@ -24,7 +22,7 @@ async def get_schemas() -> ListResponse:
 
     for schema in Schemas.keys():
         resources.append(
-            json.loads(Schemas[schema].schema_json(by_alias=True))
+            Schemas[schema].model_json_schema(by_alias=True)
         )
 
     return ListResponse(
@@ -47,4 +45,4 @@ async def get_schema(id: str) -> Any:
     if not resource:
         raise HTTPException(status_code=404, detail=f"Schema {id} not found")
 
-    return json.loads(resource.schema_json(by_alias=True))
+    return resource.model_json_schema(by_alias=True)

@@ -35,7 +35,7 @@ def test_duplicate_group(test_app):
 
     data = {
       "displayName": "testgroup123",
-      "externalId": "123"
+      "externalId": "124"
     }
 
     response = test_app.post("/Groups", json=data, headers=headers)
@@ -44,7 +44,7 @@ def test_duplicate_group(test_app):
 
     data = {
       "displayName": "testgroup456",
-      "externalId": "123"
+      "externalId": "124"
     }
     response = test_app.post("/Groups", json=data, headers=headers)
     assert response.status_code == 409
@@ -71,7 +71,7 @@ def test_update_group(test_app):
     group = GroupResource(**response.json())
     group.displayName = 'testgroup2'
 
-    data = group.json()
+    data = group.model_dump_json()
     response = test_app.put(f"/Groups/{group.id}", data=data, headers=headers)
     assert response.status_code == 200
 

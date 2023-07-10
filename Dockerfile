@@ -13,7 +13,7 @@ COPY code .
 COPY Pipfile .
 
 RUN pipenv lock
-RUN pipenv install --system
+RUN pipenv install --system -d
 
 EXPOSE 8000
 
