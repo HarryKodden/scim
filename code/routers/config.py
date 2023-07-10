@@ -1,10 +1,7 @@
 # routers/provider.py
 
-import json
-
 from typing import Any
-from fastapi import APIRouter, HTTPException
-from schema import ListResponse, Schemas
+from fastapi import APIRouter
 
 import logging
 logger = logging.getLogger(__name__)
@@ -27,19 +24,22 @@ async def get_config() -> Any:
         "maxResults": 200,
         "supported": True
       },
-      "documentationUri": "https://github.com/HarryKodden/scim-sample",
+      "documentationUri": "https://github.com/HarryKodden/scim",
       "authenticationSchemes": [
         {
           "name": "OAuth Bearer Token",
-          "description": "Authentication scheme using the OAuth Bearer Token Standard",
-          "specUri": "http://www.rfc-editor.org/info/rfc6750",
+          "description": """
+            Authentication scheme
+            using the OAuth Bearer Token Standard
+          """,
+          "specUri": "https://www.rfc-editor.org/info/rfc6750",
           "type": "oauthbearertoken",
           "primary": False
         },
         {
           "name": "APIKey Header",
           "description": "Authentication scheme using the APIKey Header",
-          "specUri": "???",
+          "specUri": "https://www.rfc-editor.org/rfc/rfc7235",
           "type": "apikey",
           "primary": True
         }
