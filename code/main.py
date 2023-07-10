@@ -6,7 +6,7 @@ from fastapi import Depends, Request, FastAPI, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
-from routers import BASE_PATH, resource, schema, users, groups
+from routers import BASE_PATH, config, resource, schema, users, groups
 from auth import api_key_auth
 
 import os
@@ -30,6 +30,7 @@ app = FastAPI(
     },
 )
 
+app.include_router(config.router)
 app.include_router(resource.router)
 app.include_router(schema.router)
 app.include_router(users.router)
