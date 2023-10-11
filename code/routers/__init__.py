@@ -1,17 +1,62 @@
 # routers/__init__.py
 
-from fastapi import HTTPException
+import time
+import json
 
+from fastapi import HTTPException, Request, Response
+from fastapi.routing import APIRoute
 
 from schema import SCIM_API_MESSAGES, ListResponse
+
 from filter import Filter
+from typing import Callable, Any
 
 from data.users import get_user_resources
 from data.groups import get_group_resources
 
 import os
+import logging
+
+logger = logging.getLogger(__name__)
 
 BASE_PATH = os.environ.get('BASE_PATH', '')
+SCIM_CONTENT_TYPE = 'application/scim+json'
+
+
+class SCIM_Response(Response):
+    media_type = SCIM_CONTENT_TYPE
+
+    def render(self, content: Any) -> bytes:
+        return json.dumps(content).encode()
+
+
+class SCIM_Route(APIRoute):
+    def get_route_handler(self) -> Callable:
+        original_route_handler = super().get_route_handler()
+
+        def verify_content_type(direction, headers):
+            if 'content-type' in headers and \
+               'content-length' in headers and \
+               int(headers['content-length']) > 0:
+                if headers['content-type'] != SCIM_CONTENT_TYPE:
+                    logger.error(
+                        f"content-type in {direction} "
+                        f"should be: {SCIM_CONTENT_TYPE}")
+
+        async def custom_route_handler(request: Request) -> Response:
+            before = time.time()
+
+            verify_content_type('request', request.headers)
+
+            response: Response = await original_route_handler(request)
+            duration = time.time() - before
+            response.headers["X-Response-Time"] = str(duration)
+
+            verify_content_type('response', response.headers)
+
+            return response
+
+        return custom_route_handler
 
 
 reader = {

@@ -3,7 +3,8 @@
 from fastapi import APIRouter, Body, status, HTTPException, Query
 
 from schema import ListResponse, Group
-from routers import BASE_PATH, get_all_resources, resource_exists
+from routers import BASE_PATH, get_all_resources, resource_exists, \
+    SCIM_Route, SCIM_Response
 from typing import Any
 
 from data.groups import \
@@ -15,12 +16,13 @@ import logging
 logger = logging.getLogger(__name__)
 
 router = APIRouter(
+    route_class=SCIM_Route,
     prefix=BASE_PATH+"/Groups",
     tags=["SCIM Groups"],
 )
 
 
-@router.get("")
+@router.get("", response_class=SCIM_Response)
 async def get_all_groups(
     startindex: int = Query(default=1, alias='startIndex'),
     count: int = Query(default=100, alias='count'),
@@ -30,7 +32,11 @@ async def get_all_groups(
     return get_all_resources('Group', startindex, count, query)
 
 
-@router.post("", status_code=status.HTTP_201_CREATED)
+@router.post(
+    "",
+    status_code=status.HTTP_201_CREATED,
+    response_class=SCIM_Response
+)
 async def create_group(
     group: Group = Body(
         example={
@@ -76,7 +82,7 @@ async def create_group(
         raise HTTPException(status_code=404, detail=f"Error: {str(e)}")
 
 
-@router.get("/{id}")
+@router.get("/{id}", response_class=SCIM_Response)
 async def get_group(id: str) -> Any:
     """ Read a Group """
     resource = get_group_resource(id)
@@ -86,7 +92,7 @@ async def get_group(id: str) -> Any:
     return resource.model_dump(by_alias=True, exclude_none=True)
 
 
-@router.put("/{id}")
+@router.put("/{id}", response_class=SCIM_Response)
 async def update_group(id: str, group: Group):
     """ Update a Group """
 

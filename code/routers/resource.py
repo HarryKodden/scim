@@ -1,9 +1,9 @@
 # routers/schema.py
 
 from fastapi import APIRouter, HTTPException
-
-from routers import BASE_PATH
+from routers import BASE_PATH, SCIM_Response
 from typing import Any
+
 from schema import SCIM_API_MESSAGES, ListResponse, resourceTypes
 
 import logging
@@ -15,7 +15,7 @@ router = APIRouter(
 )
 
 
-@router.get("")
+@router.get("", response_class=SCIM_Response)
 async def get_resource_types() -> ListResponse:
     """ Return Resource Types """
 
@@ -36,7 +36,7 @@ async def get_resource_types() -> ListResponse:
     )
 
 
-@router.get("/{id}")
+@router.get("/{id}", response_class=SCIM_Response)
 async def get_resource(id: str) -> Any:
     """ Return Resource Type """
 

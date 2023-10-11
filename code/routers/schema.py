@@ -1,8 +1,8 @@
 # routers/schema.py
 
-from routers import BASE_PATH
-from typing import Any
 from fastapi import APIRouter, HTTPException
+from routers import BASE_PATH, SCIM_Response
+from typing import Any
 from schema import SCIM_API_MESSAGES, ListResponse, Schemas
 
 import logging
@@ -14,7 +14,7 @@ router = APIRouter(
 )
 
 
-@router.get("")
+@router.get("", response_class=SCIM_Response)
 async def get_schemas() -> ListResponse:
     """ Return Schemas """
 
@@ -36,7 +36,7 @@ async def get_schemas() -> ListResponse:
     )
 
 
-@router.get("/{id}")
+@router.get("/{id}", response_class=SCIM_Response)
 async def get_schema(id: str) -> Any:
     """ Return Schemas """
 

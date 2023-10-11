@@ -4,7 +4,8 @@ from fastapi import APIRouter, Body, status, HTTPException, Query
 
 from schema import ListResponse, User
 from typing import Any
-from routers import BASE_PATH, get_all_resources, resource_exists
+from routers import BASE_PATH, get_all_resources, resource_exists, \
+    SCIM_Route, SCIM_Response
 from data.users import \
     get_user_resource, \
     put_user_resource, \
@@ -14,12 +15,13 @@ import logging
 logger = logging.getLogger(__name__)
 
 router = APIRouter(
+    route_class=SCIM_Route,
     prefix=BASE_PATH+"/Users",
     tags=["SCIM Users"],
 )
 
 
-@router.get("")
+@router.get("", response_class=SCIM_Response)
 async def get_all_users(
     startindex: int = Query(default=1, alias='startIndex'),
     count: int = Query(default=100, alias='count'),
@@ -29,7 +31,11 @@ async def get_all_users(
     return get_all_resources('User', startindex, count, query)
 
 
-@router.post("", status_code=status.HTTP_201_CREATED)
+@router.post(
+    "",
+    status_code=status.HTTP_201_CREATED,
+    response_class=SCIM_Response
+)
 async def create_user(
     user: User = Body(
         example={
@@ -82,7 +88,7 @@ async def create_user(
         raise HTTPException(status_code=404, detail=f"Error: {str(e)}")
 
 
-@router.get("/{id}")
+@router.get("/{id}", response_class=SCIM_Response)
 async def get_user(id: str) -> Any:
     """ Read a User """
     resource = get_user_resource(id)
@@ -92,7 +98,7 @@ async def get_user(id: str) -> Any:
     return resource.model_dump(by_alias=True, exclude_none=True)
 
 
-@router.put("/{id}")
+@router.put("/{id}", response_class=SCIM_Response)
 async def update_user(id: str, user: User):
     """ Update a User """
 
