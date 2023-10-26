@@ -73,4 +73,4 @@ def put_group_resource(id: str, group: Group) -> GroupResource:
 
     Groups[id] = resource.model_dump_json(by_alias=True, exclude_none=True)
 
-    return resource
+    return get_group_resource(id)

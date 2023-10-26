@@ -5,15 +5,16 @@ FROM python:3.10
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
-WORKDIR /code
-
 RUN pip install pipenv
 
-COPY code .
 COPY Pipfile .
 
 RUN pipenv lock
 RUN pipenv install --system -d
+
+WORKDIR /code
+
+COPY code .
 
 EXPOSE 8000
 

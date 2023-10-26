@@ -12,13 +12,12 @@ from auth import api_key_auth
 import os
 import logging
 
-level = logging.INFO \
-    if os.environ.get('LOGLEVEL', 'INFO') == 'INFO' else logging.ERROR
-logging.basicConfig(level=level)
+LOGLEVEL = os.environ.get('LOGLEVEL', 'ERROR').upper()
+logging.basicConfig(level=LOGLEVEL)
 logger = logging.getLogger(__name__)
 
 app = FastAPI(
-    title="SCIM Sample",
+    title="SCIM",
     docs_url=BASE_PATH if BASE_PATH.startswith('/') else '/',
     redoc_url=None,
     dependencies=[Depends(api_key_auth)],

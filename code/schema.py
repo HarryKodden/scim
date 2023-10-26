@@ -1,7 +1,7 @@
 # schema.py
 
 from datetime import datetime
-from typing import ClassVar, Union, List, Optional, Dict
+from typing import ClassVar, Union, List, Optional, Dict, Literal
 from pydantic import BaseModel, Field
 
 CORE_SCHEMA = "urn:ietf:params:scim:schemas:core:2.0"
@@ -13,6 +13,19 @@ SRAM_SCHEMA_USER = SRAM_SCHEMA+":User"
 SRAM_SCHEMA_GROUP = SRAM_SCHEMA+":Group"
 
 SCIM_API_MESSAGES = "urn:ietf:params:scim:api:messages:2.0"
+
+SCIM_CONTENT_TYPE = 'application/scim+json'
+
+
+class Operation(BaseModel):
+    op: Literal["add", "remove", "replace"]
+    path: Optional[str] = None
+    value: object
+
+
+class Operations(BaseModel):
+    schemas: List[str]
+    operations: List[Operation]
 
 
 class Name(BaseModel):

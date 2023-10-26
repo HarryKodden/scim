@@ -56,12 +56,17 @@ This image uses environment variables for configuration.
 | ------------------- | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------- | ----------------------------- |
 | `LOGLEVEL`          | The application logging level         | ERROR                                                                                                               | INFO                          |
 | `API_KEY`           | The API key to authenticate with      | mysecret                                                                                                            | secret                        |
+| `PAGE_SIZE`         | The maximum number of resources returned in 1 response.  | 10  | 100 |
 | `BASE_PATH`         | The base path of all API endpoints    | /api/v2                                                                                                             | /                             |
 | `DATA_PATH`         | File system path name                 | /mnt/scim                                                                                                           | /tmp                          |
 | `MONGO_DB`          | Mongo connection string               | mongodb://user:password@mongo_host                                                                                  | mongodb://localhost:27017/    |
 | `DATABASE_URL`      | SQL Database connection string        | postgresql://user:password@postrgres_host:5432/mydb<br />**or**<br /> mysql+pymysql://user:password@mysql_host/mydb | sqlite:///scim.sqlite         |
 | `JUMPCLOUD_URL`     | The API endpoint for JumpCloud        | https://console.jumpcloud.com                                                                                       | https://console.jumpcloud.com |
 | `JUMPCLOUD_KEY`     | The API Key for your JumpCloud tenant | _value of API key obtained from JumpCloud_<br /><br />**Mandatory when JUMPCLOUD_URL is set**                       | None                          |
+| `FORWARD_SCIM_URL`     | Forward SCIM request to upstream SCIM server | https://example.com/v2/api |
+ None                          |
+| `FORWARD_SCIM_KEY`     | API KEY for **FORWARD_SCIM_URL** scim server. if not provided, **API_KEY** will be used | https://example.com/v2/api |
+ None                          |
 
 ## Handling data
 

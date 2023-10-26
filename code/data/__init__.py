@@ -15,6 +15,12 @@ data_path = os.environ.get("DATA_PATH", "/tmp")
 jumpcloud_url = os.environ.get("JUMPCLOUD_URL", None)
 jumpcloud_key = os.environ.get("JUMPCLOUD_KEY", None)
 
+# Backend option: SCIM Forward
+scim_forward_url = os.environ.get("SCIM_FORWARD_URL", None)
+scim_forward_key = os.environ.get(
+    "SCIM_FORWARD_KEY",
+    os.environ.get("API_KEY", "secret")
+)
 
 if mongo_db:
     from data.plugins.mongo import MongoPlugin
@@ -31,6 +37,11 @@ elif jumpcloud_url:
 
     Users = JumpCloudPlugin('Users', jumpcloud_url, jumpcloud_key)
     Groups = JumpCloudPlugin('Groups', jumpcloud_url, jumpcloud_key)
+elif scim_forward_url:
+    from data.plugins.scim import SCIM_Forward_Plugin
+
+    Users = SCIM_Forward_Plugin('Users', scim_forward_url, scim_forward_key)
+    Groups = SCIM_Forward_Plugin('Groups', scim_forward_url, scim_forward_key)
 else:
     from data.plugins.file import FilePlugin
 

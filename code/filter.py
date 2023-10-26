@@ -17,13 +17,13 @@ class Evaluator(NodeVisitor):
     """
 
     def __init__(self, ast, *args, **kwargs):
-        logger.debug("[EVALUATE] Intializing: {resource}")
         self.ast = ast
         self.resource = None
 
         super().__init__(*args, **kwargs)
 
     def evaluate(self, resource: Any) -> bool:
+        logger.debug(f"[EVALUATE]: {resource}")
         self.resource = json.loads(resource.model_dump_json())
         return self.visit(self.ast)
 
@@ -96,20 +96,19 @@ class Evaluator(NodeVisitor):
 
     def visit_LogExpr(self, node):
         logger.debug("[EVALUATE] Visit LogExpr...")
-        q1 = self.visit(node.expr1)
-        q2 = self.visit(node.expr2)
         op = node.op.upper()
-        if q1 and q2:
-            if op == "AND":
-                return q1 & q2
-            elif op == "OR":
-                return q1 | q2
-        elif q1:
-            return q1
-        elif q2:
-            return q2
-        else:
-            return None
+
+        if op not in ["OR", "AND"]:
+            raise Exception(f"Illegal logical operation: {op}")
+
+        q1 = self.visit(node.expr1)
+        if q1 and op == "OR":
+            return True
+        if not q1 and op == "AND":
+            return False
+
+        q2 = self.visit(node.expr2)
+        return q2
 
 
 class Filter:

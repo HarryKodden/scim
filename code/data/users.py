@@ -75,4 +75,4 @@ def put_user_resource(id: str, user: User) -> UserResource:
 
     Users[id] = resource.model_dump_json(by_alias=True, exclude_none=True)
 
-    return resource
+    return get_user_resource(id)

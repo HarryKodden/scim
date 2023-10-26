@@ -2,9 +2,10 @@
 
 from fastapi import APIRouter, Body, status, HTTPException, Query
 
-from schema import ListResponse, User
+from schema import ListResponse, User, Operations
 from typing import Any
-from routers import BASE_PATH, get_all_resources, resource_exists, \
+from routers import BASE_PATH, PAGE_SIZE, \
+    get_all_resources, resource_exists, patch_resource, \
     SCIM_Route, SCIM_Response
 from data.users import \
     get_user_resource, \
@@ -24,7 +25,7 @@ router = APIRouter(
 @router.get("", response_class=SCIM_Response)
 async def get_all_users(
     startindex: int = Query(default=1, alias='startIndex'),
-    count: int = Query(default=100, alias='count'),
+    count: int = Query(default=PAGE_SIZE, alias='count'),
     query: str = Query(default='', alias='filter')
 ) -> ListResponse:
     """ Read all Groups """
@@ -81,6 +82,16 @@ async def create_user(
             detail="userName already exists"
         )
 
+    if user.externalId:
+        if resource_exists(
+            "User",
+            f"externalId eq \"{user.externalId}\""
+        ):
+            raise HTTPException(
+                status_code=409,
+                detail="User already exists with same externalId"
+            )
+
     try:
         resource = put_user_resource(None, user)
         return resource.model_dump(by_alias=True, exclude_none=True)
@@ -100,11 +111,11 @@ async def get_user(id: str) -> Any:
 
 @router.put("/{id}", response_class=SCIM_Response)
 async def update_user(id: str, user: User):
-    """ Update a User """
+    """ Update a User Resource """
 
     if resource_exists(
         "User",
-        f"userName eq \"{user.userName}\" and id ne \"id\""
+        f"userName eq \"{user.userName}\" and id ne \"{id}\""
     ):
         raise HTTPException(
             status_code=409,
@@ -114,7 +125,7 @@ async def update_user(id: str, user: User):
     if user.externalId:
         if resource_exists(
                 "User",
-                f"externalId eq \"{user.externalId}\" and id ne \"id\""
+                f"externalId eq \"{user.externalId}\" and id ne \"{id}\""
         ):
             raise HTTPException(
                 status_code=409,
@@ -133,7 +144,20 @@ async def update_user(id: str, user: User):
 
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_user(id: str):
-    """ Delete a User """
+    """ Delete a User Resource """
     resource = get_user_resource(id)
     if resource:
         del_user_resource(id)
+
+
+@router.patch("/{id}", response_class=SCIM_Response)
+async def patch_user(id: str, operations: Operations):
+    """ Patch a User Resource """
+    try:
+        resource = get_user_resource(id)
+        if not resource:
+            raise Exception(f"User {id} not found")
+        resource = patch_resource(resource, operations)
+        return resource.model_dump(by_alias=True, exclude_none=True)
+    except Exception as e:
+        raise HTTPException(status_code=404, detail=f"Error: {str(e)}")

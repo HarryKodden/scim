@@ -2,8 +2,9 @@
 
 from fastapi import APIRouter, Body, status, HTTPException, Query
 
-from schema import ListResponse, Group
-from routers import BASE_PATH, get_all_resources, resource_exists, \
+from schema import ListResponse, Group, Operations
+from routers import BASE_PATH, PAGE_SIZE, \
+    get_all_resources, resource_exists, patch_resource, \
     SCIM_Route, SCIM_Response
 from typing import Any
 
@@ -25,7 +26,7 @@ router = APIRouter(
 @router.get("", response_class=SCIM_Response)
 async def get_all_groups(
     startindex: int = Query(default=1, alias='startIndex'),
-    count: int = Query(default=100, alias='count'),
+    count: int = Query(default=PAGE_SIZE, alias='count'),
     query: str = Query(default='', alias='filter')
 ) -> ListResponse:
     """ Read all Groups """
@@ -94,12 +95,12 @@ async def get_group(id: str) -> Any:
 
 @router.put("/{id}", response_class=SCIM_Response)
 async def update_group(id: str, group: Group):
-    """ Update a Group """
+    """ Update a Group Resource"""
 
     if group.externalId:
         if resource_exists(
             "Group",
-            f"externalId eq \"{group.externalId}\" and id ne \"id\""
+            f"externalId eq \"{group.externalId}\" and id ne \"{id}\""
         ):
             raise HTTPException(
                 status_code=409,
@@ -117,7 +118,20 @@ async def update_group(id: str, group: Group):
 
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_group(id: str):
-    """ Delete a Group """
+    """ Delete a Group Resource"""
     resource = get_group_resource(id)
     if resource:
         del_group_resource(id)
+
+
+@router.patch("/{id}", response_class=SCIM_Response)
+async def patch_group(id: str, operations: Operations):
+    """ Patch a Group Resource """
+    try:
+        resource = get_group_resource(id)
+        if not resource:
+            raise Exception(f"Group {id} not found")
+        resource = patch_resource(resource, operations)
+        return resource.model_dump(by_alias=True, exclude_none=True)
+    except Exception as e:
+        raise HTTPException(status_code=404, detail=f"Error: {str(e)}")

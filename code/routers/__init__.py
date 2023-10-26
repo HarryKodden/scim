@@ -6,7 +6,7 @@ import json
 from fastapi import HTTPException, Request, Response
 from fastapi.routing import APIRoute
 
-from schema import SCIM_API_MESSAGES, ListResponse
+from schema import SCIM_API_MESSAGES, SCIM_CONTENT_TYPE, ListResponse
 
 from filter import Filter
 from typing import Callable, Any
@@ -20,7 +20,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 BASE_PATH = os.environ.get('BASE_PATH', '')
-SCIM_CONTENT_TYPE = 'application/scim+json'
+PAGE_SIZE = int(os.environ.get('PAGE_SIZE', 100))
 
 
 class SCIM_Response(Response):
@@ -97,6 +97,11 @@ def get_all_resources(
         startIndex=startindex,
         totalResults=len(totalresults)
     )
+
+
+def patch_resource(resource, operations):
+    # TODO: Apply operations on resource...
+    return resource
 
 
 def resource_exists(resource_type, query) -> bool:
