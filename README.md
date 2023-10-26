@@ -5,20 +5,20 @@
 | Name                              |    Stmts |     Miss |   Cover |   Missing |
 |---------------------------------- | -------: | -------: | ------: | --------: |
 | code/auth.py                      |       12 |        0 |    100% |           |
-| code/data/\_\_init\_\_.py         |       21 |        9 |     57% |20-23, 25-28, 30-33 |
+| code/data/\_\_init\_\_.py         |       27 |       12 |     56% |26-29, 31-34, 36-39, 41-44 |
 | code/data/groups.py               |       42 |        6 |     86% |22, 42-46, 51 |
 | code/data/plugins/\_\_init\_\_.py |       15 |        5 |     67% |11, 17, 20, 23, 26 |
 | code/data/plugins/file.py         |       32 |        2 |     94% |     47-48 |
 | code/data/users.py                |       43 |        8 |     81% |18, 37-41, 46-48 |
-| code/filter.py                    |       95 |       41 |     57% |40, 57-76, 81, 89, 91, 93, 98-112, 130-131, 141 |
-| code/main.py                      |       31 |        6 |     81% |47, 55-58, 64 |
-| code/routers/\_\_init\_\_.py      |       49 |        3 |     94% | 76, 86-87 |
+| code/filter.py                    |       92 |       38 |     59% |40, 57-76, 81, 89, 91, 93, 98-111, 129-130, 140 |
+| code/main.py                      |       31 |        6 |     81% |46, 54-57, 63 |
+| code/routers/\_\_init\_\_.py      |       51 |        4 |     92% |76, 86-87, 104 |
 | code/routers/config.py            |        8 |        1 |     88% |        19 |
-| code/routers/groups.py            |       44 |        8 |     82% |81-82, 90, 100-104, 112, 114-115 |
+| code/routers/groups.py            |       54 |       16 |     70% |82-83, 91, 101-105, 113, 115-116, 130-137 |
 | code/routers/resource.py          |       20 |        1 |     95% |        47 |
 | code/routers/schema.py            |       20 |        1 |     95% |        46 |
-| code/routers/users.py             |       45 |       15 |     67% |87-88, 96, 105-131 |
-| code/schema.py                    |       86 |        0 |    100% |           |
+| code/routers/users.py             |       58 |       25 |     57% |86-90, 98-99, 107, 116-142, 156-163 |
+| code/schema.py                    |       94 |        0 |    100% |           |
 | test/conftest.py                  |       11 |        0 |    100% |           |
 | test/test\_auth.py                |        8 |        0 |    100% |           |
 | test/test\_docs.py                |        3 |        0 |    100% |           |
@@ -26,7 +26,7 @@
 | test/test\_resource.py            |       10 |        0 |    100% |           |
 | test/test\_schema.py              |       10 |        0 |    100% |           |
 | test/test\_user.py                |       37 |        0 |    100% |           |
-|                         **TOTAL** |  **686** |  **106** | **85%** |           |
+|                         **TOTAL** |  **722** |  **125** | **83%** |           |
 
 
 ## Setup coverage badge
