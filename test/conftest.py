@@ -4,11 +4,13 @@ import pytest
 
 from fastapi.testclient import TestClient
 
+import logging
+logging.getLogger('asyncio').setLevel(logging.WARNING)
+
 
 @pytest.fixture(scope="session")
 def setup_data():
-    from main import startup
-    startup()
+    pass
 
 
 @pytest.fixture(scope="module")

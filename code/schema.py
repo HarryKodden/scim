@@ -40,7 +40,7 @@ class Email(BaseModel):
 
 class Member(BaseModel):
     ref: ClassVar[str] = Field(alias="$ref")
-    display: str
+    display: Optional[str] = None
     value: str
 
 
@@ -69,8 +69,8 @@ class SRAM_User_Extension(BaseModel):
     voPersonExternalAffiliation: Optional[str] = None
     voPersonExternalId: Optional[str] = None
 
-    class Config:
-        title = "SRAM User Extension"
+#   class Config:
+#       title = "SRAM User Extension"
 
 
 class SRAM_Group_Extension(BaseModel):
@@ -78,8 +78,8 @@ class SRAM_Group_Extension(BaseModel):
     labels: Optional[List[str]]
     urn: Optional[str]
 
-    class Config:
-        title = "SRAM Group Extension"
+#   class Config:
+#       title = "SRAM Group Extension"
 
 
 class User(BaseModel):
@@ -99,8 +99,8 @@ class UserResource(User):
     id: str
     meta: Meta
 
-    class Config:
-        title = "User"
+#   class Config:
+#       title = "User"
 
 
 class Group(BaseModel):
@@ -116,8 +116,8 @@ class GroupResource(Group):
     id: str
     meta: Meta
 
-    class Config:
-        title = "Group"
+#   class Config:
+#       title = "Group"
 
 
 class SchemaExtension(BaseModel):

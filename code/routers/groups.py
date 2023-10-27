@@ -40,7 +40,7 @@ async def get_all_groups(
 )
 async def create_group(
     group: Group = Body(
-        example={
+        examples={
             "displayName": "Student",
             "externalId": "273aca56-d86a-4f05-a159-51856b5cb1b3@sram.surf.nl",
             "members": [

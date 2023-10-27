@@ -36,16 +36,6 @@ app.include_router(users.router)
 app.include_router(groups.router)
 
 
-@app.on_event("startup")
-def startup():
-    pass
-
-
-@app.on_event("shutdown")
-def shutdown():
-    pass
-
-
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(
     request: Request,

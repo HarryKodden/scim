@@ -39,7 +39,7 @@ async def get_all_users(
 )
 async def create_user(
     user: User = Body(
-        example={
+        examples={
             "externalId": "string",
             "active": True,
             "name": {
@@ -96,6 +96,7 @@ async def create_user(
         resource = put_user_resource(None, user)
         return resource.model_dump(by_alias=True, exclude_none=True)
     except Exception as e:
+        logger.error(f"[CREATE_USER] {str(e)}")
         raise HTTPException(status_code=404, detail=f"Error: {str(e)}")
 
 
