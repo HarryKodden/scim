@@ -51,7 +51,7 @@ class Certificate(BaseModel):
 class Meta(BaseModel):
     created: datetime = Field(default_factory=datetime.utcnow)
     lastModified: datetime = Field(default_factory=datetime.utcnow)
-    location: str
+    location: Optional[str] = None
     resourceType: str
 
 
