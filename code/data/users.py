@@ -79,7 +79,7 @@ def put_user_resource(id: str, user: User) -> UserResource:
         SRAM_SCHEMA_USER
     ]
 
-    mapping = json.loads(os.environ.get('USER_MAPPING', ""))
+    mapping = json.loads(os.environ.get('USER_MAPPING', "{}"))
     for k, v in mapping.items():
         logger.debug(f"[MAPPING] {k} := {v}")
 
