@@ -2,6 +2,8 @@
 
 from fastapi import APIRouter, Body, status, HTTPException, Query
 
+import traceback
+
 from schema import ListResponse, User, Patch
 from typing import Any
 from routers import BASE_PATH, PAGE_SIZE, \
@@ -96,7 +98,7 @@ async def create_user(
         resource = put_user_resource(None, user)
         return resource.model_dump(by_alias=True, exclude_none=True)
     except Exception as e:
-        logger.error(f"[CREATE_USER] {str(e)}")
+        logger.error(f"[CREATE_USER] {str(e)}, {traceback.format_exc()}")
         raise HTTPException(status_code=404, detail=f"Error: {str(e)}")
 
 
