@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter, Body, status, HTTPException, Query
 
-from schema import ListResponse, User, Operations
+from schema import ListResponse, User, Patch
 from typing import Any
 from routers import BASE_PATH, PAGE_SIZE, \
     get_all_resources, resource_exists, patch_resource, \
@@ -151,13 +151,19 @@ async def delete_user(id: str):
 
 
 @router.patch("/{id}", response_class=SCIM_Response)
-async def patch_user(id: str, operations: Operations):
+async def patch_user(id: str, patch: Patch):
     """ Patch a User Resource """
     try:
-        resource = get_user_resource(id)
-        if not resource:
+        user = get_user_resource(id)
+        if not user:
             raise Exception(f"User {id} not found")
-        resource = patch_resource(resource, operations)
-        return resource.model_dump(by_alias=True, exclude_none=True)
+
+        resource = patch_resource(
+            user.model_dump(by_alias=True, exclude_none=True),
+            patch.operations
+        )
+
+        user = put_user_resource(id, User(**resource))
+        return user.model_dump(by_alias=True, exclude_none=True)
     except Exception as e:
         raise HTTPException(status_code=404, detail=f"Error: {str(e)}")

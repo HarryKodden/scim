@@ -100,7 +100,19 @@ def get_all_resources(
 
 
 def patch_resource(resource, operations):
-    # TODO: Apply operations on resource...
+
+    def patch(path, value):
+        logger.debug(f"[PATCH] {path} := {value}")
+
+        resource[path] = value
+
+    for operation in operations:
+        if operation.op == 'remove':
+            resource.pop(operation.path)
+        else:
+            patch(operation.path, operation.value)
+
+    logger.debug(f"[PATCH RESULT] {resource}")
     return resource
 
 

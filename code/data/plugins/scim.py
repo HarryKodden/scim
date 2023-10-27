@@ -34,7 +34,7 @@ class SCIM_Forward_Plugin(object):
             if data:
                 headers['Content-Type'] = SCIM_CONTENT_TYPE
                 data = json.dumps(data)
-                logger.info(f"[{method}] -- {request} DATA: {data}")
+                logger.debug(f"[{method}] -- {request} DATA: {data}")
 
             r = requests.request(
                 method,

@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter, Body, status, HTTPException, Query
 
-from schema import ListResponse, Group, Operations
+from schema import ListResponse, Group, Patch
 from routers import BASE_PATH, PAGE_SIZE, \
     get_all_resources, resource_exists, patch_resource, \
     SCIM_Route, SCIM_Response
@@ -125,13 +125,19 @@ async def delete_group(id: str):
 
 
 @router.patch("/{id}", response_class=SCIM_Response)
-async def patch_group(id: str, operations: Operations):
+async def patch_group(id: str, patch: Patch):
     """ Patch a Group Resource """
     try:
-        resource = get_group_resource(id)
-        if not resource:
+        group = get_group_resource(id)
+        if not group:
             raise Exception(f"Group {id} not found")
-        resource = patch_resource(resource, operations)
-        return resource.model_dump(by_alias=True, exclude_none=True)
+
+        resource = patch_resource(
+            group.model_dump(by_alias=True, exclude_none=True),
+            patch.operations
+        )
+
+        group = put_group_resource(id, Group(**resource))
+        return group.model_dump(by_alias=True, exclude_none=True)
     except Exception as e:
         raise HTTPException(status_code=404, detail=f"Error: {str(e)}")

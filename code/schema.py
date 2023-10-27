@@ -1,7 +1,7 @@
 # schema.py
 
 from datetime import datetime
-from typing import ClassVar, Union, List, Optional, Dict, Literal
+from typing import ClassVar, Union, List, Optional, Dict, Literal, Any
 from pydantic import BaseModel, Field
 
 CORE_SCHEMA = "urn:ietf:params:scim:schemas:core:2.0"
@@ -20,10 +20,10 @@ SCIM_CONTENT_TYPE = 'application/scim+json'
 class Operation(BaseModel):
     op: Literal["add", "remove", "replace"]
     path: Optional[str] = None
-    value: object
+    value: Any
 
 
-class Operations(BaseModel):
+class Patch(BaseModel):
     schemas: List[str]
     operations: List[Operation]
 
