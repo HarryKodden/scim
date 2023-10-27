@@ -28,7 +28,7 @@ class SCIM_Forward_Plugin(object):
         try:
             headers = {
                 'Accept': SCIM_CONTENT_TYPE,
-                'x-api-key': self.key
+                'Authorization': f"Bearer {self.key}"
             }
 
             if data:

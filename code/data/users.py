@@ -1,11 +1,17 @@
 # data/users.py
 
+import os
+import json
+
 from typing import Any
 from datetime import datetime
 from schema import CORE_SCHEMA_USER, SRAM_SCHEMA_USER, UserResource, User, Meta
 from filter import Filter
 
 from data import Users
+
+import logging
+logger = logging.getLogger(__name__)
 
 
 def del_user_resource(id: str) -> None:
@@ -72,6 +78,18 @@ def put_user_resource(id: str, user: User) -> UserResource:
         CORE_SCHEMA_USER,
         SRAM_SCHEMA_USER
     ]
+
+    mapping = json.loads(os.environ.get('USER_MAPPING', ""))
+    for k, v in mapping.items():
+        logger.debug(f"[MAPPING] {k} := {v}")
+
+        value = user
+        for f in v.split('.'):
+            value = getattr(value, f)
+
+        logger.debug(f"[MAPPING VALUE] {value}")
+
+        setattr(resource, k, value)
 
     Users[id] = resource.model_dump_json(by_alias=True, exclude_none=True)
 

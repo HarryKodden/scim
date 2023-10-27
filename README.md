@@ -65,6 +65,7 @@ This image uses environment variables for configuration.
 | `JUMPCLOUD_KEY`     | The API Key for your JumpCloud tenant                                                   | **value** of API key obtained from JumpCloud_<br /><br />**Mandatory when JUMPCLOUD_URL is set**                       | None                          |
 | `FORWARD_SCIM_URL`  | Forward SCIM request to upstream SCIM server                                            | https://example.com/v2/api                                                                                          | None                          |
 | `FORWARD_SCIM_KEY`  | API KEY for **FORWARD_SCIM_URL** scim server. if not provided, **API_KEY** will be used | https://example.com/v2/api                                                                                          | None                          |
+| `USER_MAPPING`  | A JSON string that specify how attribute values should be mapped to different attributes| '{"userName": "sram_user_extension.eduPersonUniqueId"}'                                                                  | None                          |
 
 ## Handling data
 
