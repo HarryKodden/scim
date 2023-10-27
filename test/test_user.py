@@ -17,7 +17,8 @@ def test_get_users(test_app):
 
 def test_create_user(test_app):
     headers = {
-      'x-api-key': "secret"
+      'x-api-key': "secret",
+      'content-type': 'application/scim+json'
     }
 
     data = {
@@ -44,7 +45,8 @@ def test_create_user(test_app):
 
 def test_update_user(test_app):
     headers = {
-      'x-api-key': "secret"
+      'x-api-key': "secret",
+      'content-type': 'application/scim+json'
     }
 
     data = {
@@ -74,7 +76,8 @@ def test_update_user(test_app):
 
 def test_delete_user(test_app):
     headers = {
-      'x-api-key': "secret"
+      'x-api-key': "secret",
+      'content-type': 'application/scim+json'
     }
 
     data = {

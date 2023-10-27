@@ -17,7 +17,8 @@ def test_get_groups(test_app):
 
 def test_create_group(test_app):
     headers = {
-      'x-api-key': "secret"
+      'x-api-key': "secret",
+      'content-type': 'application/scim+json'
     }
 
     data = {
@@ -30,7 +31,8 @@ def test_create_group(test_app):
 
 def test_duplicate_group(test_app):
     headers = {
-      'x-api-key': "secret"
+      'x-api-key': "secret",
+      'content-type': 'application/scim+json'
     }
 
     data = {
@@ -55,7 +57,8 @@ def test_duplicate_group(test_app):
 
 def test_update_group(test_app):
     headers = {
-      'x-api-key': "secret"
+      'x-api-key': "secret",
+      'content-type': 'application/scim+json'
     }
 
     data = {
