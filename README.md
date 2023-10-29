@@ -11,22 +11,23 @@
 | code/data/plugins/file.py         |       32 |        2 |     94% |     47-48 |
 | code/data/users.py                |       55 |       14 |     75% |24, 43-47, 52-54, 84-92 |
 | code/filter.py                    |       92 |       38 |     59% |40, 57-76, 81, 89, 91, 93, 98-111, 129-130, 140 |
-| code/main.py                      |       28 |        8 |     71% |37-39, 47-50, 56 |
+| code/main.py                      |       34 |        9 |     74% |38-40, 48-51, 76, 80 |
 | code/routers/\_\_init\_\_.py      |       59 |       12 |     80% |76, 86-87, 104-116 |
 | code/routers/config.py            |        8 |        1 |     88% |        19 |
 | code/routers/groups.py            |       56 |       17 |     70% |85-86, 94, 104-108, 116, 118-119, 133-146 |
 | code/routers/resource.py          |       20 |        1 |     95% |        47 |
 | code/routers/schema.py            |       20 |        1 |     95% |        46 |
 | code/routers/users.py             |       62 |       27 |     56% |92-96, 104-106, 114, 123-149, 163-176 |
-| code/schema.py                    |       86 |        0 |    100% |           |
+| code/schema.py                    |       88 |        0 |    100% |           |
 | test/conftest.py                  |       12 |        0 |    100% |           |
 | test/test\_auth.py                |        8 |        0 |    100% |           |
 | test/test\_docs.py                |        3 |        0 |    100% |           |
 | test/test\_group.py               |       44 |        0 |    100% |           |
-| test/test\_resource.py            |       10 |        0 |    100% |           |
-| test/test\_schema.py              |       10 |        0 |    100% |           |
+| test/test\_health.py              |        6 |        0 |    100% |           |
+| test/test\_resource.py            |        9 |        0 |    100% |           |
+| test/test\_schema.py              |        9 |        0 |    100% |           |
 | test/test\_user.py                |       37 |        0 |    100% |           |
-|                         **TOTAL** |  **738** |  **144** | **80%** |           |
+|                         **TOTAL** |  **750** |  **145** | **81%** |           |
 
 
 ## Setup coverage badge
