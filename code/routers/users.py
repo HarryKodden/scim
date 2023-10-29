@@ -1,14 +1,17 @@
 # routers/users.py
 
-from fastapi import APIRouter, Body, status, HTTPException, Query
+from fastapi import APIRouter, Depends, Body, status, HTTPException, Query
 
 import traceback
 
 from schema import ListResponse, User, Patch
 from typing import Any
+from auth import api_key_auth
+
 from routers import BASE_PATH, PAGE_SIZE, \
     get_all_resources, resource_exists, patch_resource, \
     SCIM_Route, SCIM_Response
+
 from data.users import \
     get_user_resource, \
     put_user_resource, \
@@ -21,6 +24,7 @@ router = APIRouter(
     route_class=SCIM_Route,
     prefix=BASE_PATH+"/Users",
     tags=["SCIM Users"],
+    dependencies=[Depends(api_key_auth)]
 )
 
 

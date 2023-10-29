@@ -2,12 +2,11 @@
 
 import uvicorn
 
-from fastapi import Depends, Request, FastAPI, status
+from fastapi import Request, FastAPI, status
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 
 from routers import BASE_PATH, config, resource, schema, users, groups
-from auth import api_key_auth
 
 import os
 import logging
@@ -20,7 +19,6 @@ app = FastAPI(
     title="SCIM",
     docs_url=BASE_PATH if BASE_PATH.startswith('/') else '/',
     redoc_url=None,
-    dependencies=[Depends(api_key_auth)],
     openapi_url=BASE_PATH + '/openapi.json',
     responses={
         401: {"description": "Operation forbidden"},
@@ -34,6 +32,11 @@ app.include_router(resource.router)
 app.include_router(schema.router)
 app.include_router(users.router)
 app.include_router(groups.router)
+
+if len(BASE_PATH) > 1:
+    @app.get("/")
+    async def redirect():
+        return RedirectResponse(url=BASE_PATH)
 
 
 @app.exception_handler(RequestValidationError)

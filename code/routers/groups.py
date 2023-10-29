@@ -1,12 +1,14 @@
 # routers/groups.py
 
-from fastapi import APIRouter, Body, status, HTTPException, Query
+from fastapi import APIRouter, Depends, Body, status, HTTPException, Query
 
 from schema import ListResponse, Group, Patch
+from typing import Any
+from auth import api_key_auth
+
 from routers import BASE_PATH, PAGE_SIZE, \
     get_all_resources, resource_exists, patch_resource, \
     SCIM_Route, SCIM_Response
-from typing import Any
 
 from data.groups import \
     get_group_resource, \
@@ -20,6 +22,7 @@ router = APIRouter(
     route_class=SCIM_Route,
     prefix=BASE_PATH+"/Groups",
     tags=["SCIM Groups"],
+    dependencies=[Depends(api_key_auth)]
 )
 
 
