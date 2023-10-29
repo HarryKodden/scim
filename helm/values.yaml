@@ -10,11 +10,11 @@ image:
   # Overrides the image tag whose default is the chart appVersion.
   tag: "latest"
 
-BASE_PATH: /api/v2
-
 environment:
 - name: LOGLEVEL
   value: ERROR
+- name: BASE_PATH
+  value: /api/v2
 - name: API_KEY
   value: chooseyourownsecret
 # Alternative plugin: File Storage (= default)

@@ -17,6 +17,10 @@ SCIM_API_MESSAGES = "urn:ietf:params:scim:api:messages:2.0"
 SCIM_CONTENT_TYPE = 'application/scim+json'
 
 
+class HealthCheck(BaseModel):
+    status: str = "OK"
+
+
 class Operation(BaseModel):
     op: Literal["add", "remove", "replace"]
     path: Optional[str] = None

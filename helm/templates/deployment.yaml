@@ -40,19 +40,17 @@ spec:
           env:
             {{- toYaml . | nindent 12 }}
           {{- end }}
-            - name: BASE_PATH
-              value: "{{ .Values.BASE_PATH }}"
           ports:
             - name: http
               containerPort: 8000
               protocol: TCP
           livenessProbe:
             httpGet:
-              path: "{{ .Values.BASE_PATH }}"
+              path: "/health"
               port: http
           readinessProbe:
             httpGet:
-              path: "{{ .Values.BASE_PATH }}"
+              path: "/health"
               port: http
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
