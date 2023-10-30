@@ -127,7 +127,7 @@ def test_group_updates(test_app):
 
     assert len(group.members) == 1
 
-    data={
+    data = {
       "operations": [{
           "op": "remove",
           "path": "members"
@@ -135,7 +135,11 @@ def test_group_updates(test_app):
       "schemas": [CORE_SCHEMA_GROUP]
     }
 
-    response = test_app.patch(f"/Groups/{group.id}", json=data, headers=headers)
+    response = test_app.patch(
+      f"/Groups/{group.id}",
+      json=data,
+      headers=headers
+    )
     assert response.status_code == 200
 
     response = test_app.get(f"/Groups/{group.id}", headers=headers)
@@ -144,7 +148,7 @@ def test_group_updates(test_app):
 
     assert len(group.members) == 0
 
-    data={
+    data = {
       "operations": [{
           "op": "add",
           "path": "members",
@@ -158,8 +162,12 @@ def test_group_updates(test_app):
     }
 
     logger.info(json.dumps(data, indent=2))
-    response = test_app.patch(f"/Groups/{group.id}", json=data, headers=headers)
-    #assert response.status_code == 200
+    response = test_app.patch(
+      f"/Groups/{group.id}",
+      json=data,
+      headers=headers
+    )
+    assert response.status_code == 200
 
     response = test_app.get(f"/Groups/{group.id}", headers=headers)
     assert response.status_code == 200
