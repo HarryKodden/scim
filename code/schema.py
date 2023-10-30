@@ -1,7 +1,9 @@
 # schema.py
 
 from datetime import datetime
-from typing import ClassVar, Union, List, Optional, Dict, Literal, Any
+
+from typing import Union, List, Optional, Dict, Literal, Any
+
 from pydantic import BaseModel, Field
 
 CORE_SCHEMA = "urn:ietf:params:scim:schemas:core:2.0"
@@ -43,7 +45,7 @@ class Email(BaseModel):
 
 
 class Member(BaseModel):
-    ref: ClassVar[str] = Field(alias="$ref")
+    ref: Optional[str] = Field(alias="$ref", default=None)
     display: Optional[str] = None
     value: str
 

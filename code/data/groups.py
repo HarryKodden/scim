@@ -41,9 +41,10 @@ def put_group_resource(id: str, group: Group) -> GroupResource:
     for member in group.members or []:
         user = get_user_resource(member.value)
         if not user:
-            raise Exception(f"Member: '{member.value}'' not existing")
+            raise Exception(f"Member: '{member.value}' not existing")
 
         member.display = user.displayName
+        member.ref = f"/Users/{user.id}"
 
     if id:
         resource = get_group_resource(id)
