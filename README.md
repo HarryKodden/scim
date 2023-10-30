@@ -22,13 +22,13 @@
 | test/conftest.py                  |       21 |        0 |    100% |           |
 | test/test\_auth.py                |        8 |        0 |    100% |           |
 | test/test\_docs.py                |        3 |        0 |    100% |           |
-| test/test\_group.py               |       83 |        0 |    100% |           |
+| test/test\_group.py               |       81 |        0 |    100% |           |
 | test/test\_health.py              |        6 |        0 |    100% |           |
 | test/test\_resource.py            |        9 |        0 |    100% |           |
 | test/test\_schema.py              |        9 |        0 |    100% |           |
 | test/test\_user.py                |       48 |        0 |    100% |           |
 | test/test\_validation.py          |       12 |        0 |    100% |           |
-|                         **TOTAL** |  **822** |  **115** | **86%** |           |
+|                         **TOTAL** |  **820** |  **115** | **86%** |           |
 
 
 ## Setup coverage badge
