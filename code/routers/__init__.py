@@ -35,10 +35,8 @@ class SCIM_Route(APIRoute):
         original_route_handler = super().get_route_handler()
 
         def verify_content_type(direction, headers):
-            if 'content-type' in headers and \
-               'content-length' in headers and \
-               int(headers['content-length']) > 0:
-                if headers['content-type'] != SCIM_CONTENT_TYPE:
+            if int(headers.get('content-length', 0)) > 0:
+                if headers.get('content-type', '') != SCIM_CONTENT_TYPE:
                     logger.error(
                         f"content-type in {direction} "
                         f"should be: {SCIM_CONTENT_TYPE}")

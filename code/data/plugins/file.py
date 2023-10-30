@@ -57,8 +57,8 @@ class FilePlugin(Plugin):
             "wb"
         ) as f:
             f.write(
-                  json.dumps(
+                json.dumps(
                     json.loads(details),
                     indent=2
-                  ).encode()
+                ).encode()
             )
