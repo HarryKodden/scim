@@ -1,8 +1,7 @@
 # import test_group.py
 
-from schema import UserResource, GroupResource, CORE_SCHEMA_GROUP
+from schema import UserResource, GroupResource, Group, CORE_SCHEMA_GROUP
 
-import json
 import logging
 logger = logging.getLogger(__name__)
 
@@ -161,7 +160,6 @@ def test_group_updates(test_app):
       "schemas": [CORE_SCHEMA_GROUP]
     }
 
-    logger.info(json.dumps(data, indent=2))
     response = test_app.patch(
       f"/Groups/{group.id}",
       json=data,
@@ -192,11 +190,16 @@ def test_update_group(test_app):
 
     response = test_app.get(f"/Groups/{group.id}", headers=headers)
     assert response.status_code == 200
-    group = GroupResource(**response.json())
-    group.displayName = 'testgroup2'
 
-    data = group.model_dump_json()
-    response = test_app.put(f"/Groups/{group.id}", data=data, headers=headers)
+    data = Group(**response.json())
+    data.displayName = 'testgroup2'
+
+    resource = data.model_dump(by_alias=True, exclude_none=True)
+    response = test_app.put(
+      f"/Groups/{group.id}",
+      json=resource,
+      headers=headers
+    )
     assert response.status_code == 200
 
 
