@@ -15,6 +15,35 @@ def test_get_groups(test_app):
     assert response.status_code == 200
 
 
+def test_get_groups_not_exists(test_app):
+    headers = {
+      'x-api-key': "secret"
+    }
+
+    response = test_app.get("/Groups/xxx", headers=headers)
+    assert response.status_code == 404
+
+
+def test_create_group_non_exisiting_member(test_app):
+    headers = {
+      'x-api-key': "secret",
+      'content-type': 'application/scim+json'
+    }
+
+    data = {
+      "displayName": "testgroup",
+      "members": [
+        {
+          "display": "John Doe",
+          "value": "john"
+        }
+      ]
+    }
+
+    response = test_app.post("/Groups", json=data, headers=headers)
+    assert response.status_code == 404
+
+
 def test_create_group(test_app):
     headers = {
       'x-api-key': "secret",
@@ -53,6 +82,36 @@ def test_duplicate_group(test_app):
 
     response = test_app.delete(f"/Groups/{group.id}", headers=headers)
     assert response.status_code == 204
+
+
+def test_update_group_non_existing_member(test_app):
+    headers = {
+      'x-api-key': "secret",
+      'content-type': 'application/scim+json'
+    }
+
+    data = {
+      "displayName": "testgroup"
+    }
+
+    response = test_app.post("/Groups", json=data, headers=headers)
+    assert response.status_code == 201
+    group = GroupResource(**response.json())
+
+    response = test_app.get(f"/Groups/{group.id}", headers=headers)
+    assert response.status_code == 200
+    group = GroupResource(**response.json())
+
+    group.members = [
+      {
+        "display": "John Doe",
+        "value": "john"
+      }
+    ]
+
+    data = group.model_dump_json()
+    response = test_app.put(f"/Groups/{group.id}", data=data, headers=headers)
+    assert response.status_code == 404
 
 
 def test_update_group(test_app):
