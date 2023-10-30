@@ -1,7 +1,8 @@
 # import test_group.py
 
-from schema import UserResource, GroupResource
+from schema import UserResource, GroupResource, CORE_SCHEMA_GROUP
 
+import json
 import logging
 logger = logging.getLogger(__name__)
 
@@ -51,7 +52,8 @@ def test_create_group(test_app):
     }
 
     data = {
-      "displayName": "testgroup"
+      "displayName": "testgroup",
+      "externalId": "external_id"
     }
 
     response = test_app.post("/Groups", json=data, headers=headers)
@@ -125,11 +127,45 @@ def test_group_updates(test_app):
 
     assert len(group.members) == 1
 
-    group.members = []
+    data={
+      "operations": [{
+          "op": "remove",
+          "path": "members"
+      }],
+      "schemas": [CORE_SCHEMA_GROUP]
+    }
 
-    data = group.model_dump_json()
-    response = test_app.put(f"/Groups/{group.id}", data=data, headers=headers)
+    response = test_app.patch(f"/Groups/{group.id}", json=data, headers=headers)
     assert response.status_code == 200
+
+    response = test_app.get(f"/Groups/{group.id}", headers=headers)
+    assert response.status_code == 200
+    group = GroupResource(**response.json())
+
+    assert len(group.members) == 0
+
+    data={
+      "operations": [{
+          "op": "add",
+          "path": "members",
+          "value": [
+            {
+              "value": user.id
+            }
+          ]
+      }],
+      "schemas": [CORE_SCHEMA_GROUP]
+    }
+
+    logger.info(json.dumps(data, indent=2))
+    response = test_app.patch(f"/Groups/{group.id}", json=data, headers=headers)
+    #assert response.status_code == 200
+
+    response = test_app.get(f"/Groups/{group.id}", headers=headers)
+    assert response.status_code == 200
+    group = GroupResource(**response.json())
+
+    assert len(group.members) == 1
 
 
 def test_update_group(test_app):

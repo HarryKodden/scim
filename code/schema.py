@@ -25,8 +25,8 @@ class HealthCheck(BaseModel):
 
 class Operation(BaseModel):
     op: Literal["add", "remove", "replace"]
-    path: Optional[str] = None
-    value: Any
+    path: str
+    value: Optional[Any] = None
 
 
 class Patch(BaseModel):
@@ -55,8 +55,8 @@ class Certificate(BaseModel):
 
 
 class Meta(BaseModel):
-    created: datetime = Field(default_factory=datetime.utcnow)
-    lastModified: datetime = Field(default_factory=datetime.utcnow)
+    created: datetime = Field(default_factory=datetime.now)
+    lastModified: datetime = Field(default_factory=datetime.now)
     location: Optional[str] = None
     resourceType: str
 
@@ -112,7 +112,7 @@ class UserResource(User):
 class Group(BaseModel):
     displayName: str
     externalId: Optional[str] = None
-    members: Optional[List[Union[Member, None]]] = None
+    members: Optional[List[Union[Member, None]]] = []
     sram_group_extension: Optional[SRAM_Group_Extension] = \
         Field(alias=SRAM_SCHEMA_GROUP, default=None)
     schemas: List[Union[str, None]] = None

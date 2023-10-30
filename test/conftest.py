@@ -22,7 +22,7 @@ def setup_data(request):
 
     request.addfinalizer(finalizer)
 
-    return ''
+    return request
 
 
 @pytest.fixture(scope="module")
