@@ -107,7 +107,7 @@ class SCIM_Forward_Plugin(Plugin):
             members = data.pop('members', [])
             data['members'] = []
 
-        if id:
+        if self[id]:
             self.api(
                 f"/{self.resource_type}/{id}",
                 method='PUT',

@@ -68,7 +68,7 @@ class SQLPlugin(Plugin):
 
         with self.Transaction() as session:
             rows = session.execute(
-              db.select(self.table.columns.id)
+                db.select(self.table.columns.id)
             ).fetchall()
 
             logger.debug(f"Nr rows found: {len(rows)}")
