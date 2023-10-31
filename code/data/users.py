@@ -91,6 +91,8 @@ def put_user_resource(id: str, user: User) -> UserResource:
 
         setattr(resource, k, value)
 
+    id = resource.id
+
     Users[id] = resource.model_dump_json(by_alias=True, exclude_none=True)
 
     return get_user_resource(id)

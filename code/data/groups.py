@@ -87,6 +87,8 @@ def put_group_resource(id: str, group: Group) -> GroupResource:
 
         setattr(resource, k, value)
 
+    id = resource.id
+
     Groups[id] = resource.model_dump_json(by_alias=True, exclude_none=True)
 
     return get_group_resource(id)
