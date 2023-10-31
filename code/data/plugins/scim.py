@@ -3,12 +3,13 @@ import requests
 
 from typing import Any
 from schema import CORE_SCHEMA_GROUP, SCIM_CONTENT_TYPE
+from data.plugins import Plugin
 
 import logging
 logger = logging.getLogger(__name__)
 
 
-class SCIM_Forward_Plugin(object):
+class SCIM_Forward_Plugin(Plugin):
 
     def __init__(
         self,
