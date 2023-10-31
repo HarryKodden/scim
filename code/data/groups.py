@@ -1,5 +1,8 @@
 # data/groups.py
 
+import os
+import json
+
 from typing import Any
 from datetime import datetime
 from schema import CORE_SCHEMA_GROUP, SRAM_SCHEMA_GROUP, \
@@ -71,6 +74,18 @@ def put_group_resource(id: str, group: Group) -> GroupResource:
         CORE_SCHEMA_GROUP,
         SRAM_SCHEMA_GROUP
     ]
+
+    mapping = json.loads(os.environ.get('GROUP_MAPPING', "{}"))
+    for k, v in mapping.items():
+        logger.debug(f"[MAPPING] {k} := {v}")
+
+        value = resource
+        for f in v.split('.'):
+            value = getattr(value, f)
+
+        logger.debug(f"[MAPPING VALUE] {value}")
+
+        setattr(resource, k, value)
 
     Groups[id] = resource.model_dump_json(by_alias=True, exclude_none=True)
 

@@ -83,7 +83,7 @@ def put_user_resource(id: str, user: User) -> UserResource:
     for k, v in mapping.items():
         logger.debug(f"[MAPPING] {k} := {v}")
 
-        value = user
+        value = resource
         for f in v.split('.'):
             value = getattr(value, f)
 
