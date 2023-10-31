@@ -6,10 +6,10 @@
 |---------------------------------- | -------: | -------: | ------: | --------: |
 | code/auth.py                      |       12 |        0 |    100% |           |
 | code/data/\_\_init\_\_.py         |       27 |       12 |     56% |26-29, 31-34, 36-39, 41-44 |
-| code/data/groups.py               |       53 |        7 |     87% | 55, 80-88 |
+| code/data/groups.py               |       54 |        7 |     87% | 55, 80-88 |
 | code/data/plugins/\_\_init\_\_.py |       15 |        5 |     67% |11, 17, 20, 23, 26 |
 | code/data/plugins/file.py         |       32 |        0 |    100% |           |
-| code/data/users.py                |       55 |       13 |     76% |43-47, 52-54, 84-92 |
+| code/data/users.py                |       56 |       13 |     77% |43-47, 52-54, 84-92 |
 | code/filter.py                    |       92 |       37 |     60% |41, 58-77, 82, 90, 92, 94, 99-112, 130-131 |
 | code/main.py                      |       34 |        5 |     85% |38-40, 76, 80 |
 | code/routers/\_\_init\_\_.py      |       59 |        4 |     93% |40, 74, 84-85 |
@@ -28,7 +28,7 @@
 | test/test\_schema.py              |        9 |        0 |    100% |           |
 | test/test\_user.py                |       48 |        0 |    100% |           |
 | test/test\_validation.py          |       12 |        0 |    100% |           |
-|                         **TOTAL** |  **830** |  **121** | **85%** |           |
+|                         **TOTAL** |  **832** |  **121** | **85%** |           |
 
 
 ## Setup coverage badge
