@@ -14,3 +14,8 @@ def test_get_resources(test_app):
 
         response = test_app.get(f"/ResourceTypes/{id}")
         assert response.status_code == 200
+
+
+def test_get_invlaid_resources(test_app):
+    response = test_app.get("/ResourceTypes/foobar")
+    assert response.status_code == 404

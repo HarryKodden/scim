@@ -14,3 +14,8 @@ def test_get_schemas(test_app):
     for id in Schemas.keys():
         response = test_app.get(f"/Schemas/{id}")
         assert response.status_code == 200
+
+
+def test_get_invalid_schemas(test_app):
+    response = test_app.get("Schemas/foobar")
+    assert response.status_code == 404

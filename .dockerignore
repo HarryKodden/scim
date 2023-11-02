@@ -1,2 +1,5 @@
 data
 .git
+Dockerfile
+docker-compose.yml
+Makefile
