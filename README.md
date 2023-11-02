@@ -6,29 +6,30 @@
 |---------------------------------- | -------: | -------: | ------: | --------: |
 | code/auth.py                      |       12 |        0 |    100% |           |
 | code/data/\_\_init\_\_.py         |       27 |       12 |     56% |26-29, 31-34, 36-39, 41-44 |
-| code/data/groups.py               |       54 |        7 |     87% | 55, 80-88 |
+| code/data/groups.py               |       54 |        6 |     89% |     80-88 |
 | code/data/plugins/\_\_init\_\_.py |       15 |        5 |     67% |11, 17, 20, 23, 26 |
 | code/data/plugins/file.py         |       32 |        0 |    100% |           |
-| code/data/users.py                |       56 |       13 |     77% |43-47, 52-54, 84-92 |
-| code/filter.py                    |       92 |       37 |     60% |41, 58-77, 82, 90, 92, 94, 99-112, 130-131 |
+| code/data/users.py                |       56 |       11 |     80% |43-47, 54, 84-92 |
+| code/filter.py                    |       92 |       26 |     72% |41, 60-77, 82, 90, 92, 94, 103, 107, 130-131 |
 | code/main.py                      |       34 |        5 |     85% |38-40, 76, 80 |
 | code/routers/\_\_init\_\_.py      |       59 |        4 |     93% |40, 74, 84-85 |
-| code/routers/config.py            |        8 |        1 |     88% |        19 |
-| code/routers/groups.py            |       56 |        8 |     86% |104-108, 116, 118-119, 136, 145-146 |
+| code/routers/config.py            |        8 |        0 |    100% |           |
+| code/routers/groups.py            |       56 |        5 |     91% |104-108, 136, 145-146 |
 | code/routers/resource.py          |       20 |        0 |    100% |           |
 | code/routers/schema.py            |       20 |        0 |    100% |           |
-| code/routers/users.py             |       62 |       27 |     56% |92-96, 104-106, 114, 123-149, 163-176 |
+| code/routers/users.py             |       62 |       11 |     82% |104-106, 133-137, 145, 148-149, 166, 175-176 |
 | code/schema.py                    |       88 |        0 |    100% |           |
 | test/conftest.py                  |       21 |        0 |    100% |           |
 | test/test\_auth.py                |        8 |        0 |    100% |           |
+| test/test\_config.py              |        3 |        0 |    100% |           |
 | test/test\_docs.py                |        3 |        0 |    100% |           |
-| test/test\_group.py               |       81 |        0 |    100% |           |
+| test/test\_group.py               |       82 |        0 |    100% |           |
 | test/test\_health.py              |        6 |        0 |    100% |           |
 | test/test\_resource.py            |       12 |        0 |    100% |           |
 | test/test\_schema.py              |       12 |        0 |    100% |           |
-| test/test\_user.py                |       48 |        0 |    100% |           |
+| test/test\_user.py                |       65 |        0 |    100% |           |
 | test/test\_validation.py          |       12 |        0 |    100% |           |
-|                         **TOTAL** |  **838** |  **119** | **86%** |           |
+|                         **TOTAL** |  **859** |   **85** | **90%** |           |
 
 
 ## Setup coverage badge
