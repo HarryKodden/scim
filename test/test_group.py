@@ -194,10 +194,16 @@ def test_update_group(test_app):
     data = Group(**response.json())
     data.displayName = 'testgroup2'
 
-    resource = data.model_dump(by_alias=True, exclude_none=True)
+    response = test_app.put(
+      "/Groups/foobar",
+      json=data.model_dump(by_alias=True, exclude_none=True),
+      headers=headers
+    )
+    assert response.status_code == 404
+
     response = test_app.put(
       f"/Groups/{group.id}",
-      json=resource,
+      json=data.model_dump(by_alias=True, exclude_none=True),
       headers=headers
     )
     assert response.status_code == 200
@@ -218,3 +224,9 @@ def test_delete_group(test_app):
     group = GroupResource(**response.json())
     response = test_app.delete(f"/Groups/{group.id}", headers=headers)
     assert response.status_code == 204
+
+
+# PUT GROUP for which a different group holds same externalId
+# PUT group that does not exist
+# PATH group that does not exists
+# PATCH group raise exception

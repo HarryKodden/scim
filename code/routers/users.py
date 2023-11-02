@@ -144,7 +144,7 @@ async def update_user(id: str, user: User):
         if not resource:
             raise Exception(f"User {id} not found")
 
-        return resource.model_dump(exclude_none=True)
+        return resource.model_dump(by_alias=True, exclude_none=True)
     except Exception as e:
         raise HTTPException(status_code=404, detail=f"Error: {str(e)}")
 
