@@ -21,18 +21,20 @@ def test_create_user(test_app):
       'content-type': 'application/scim+json'
     }
 
-    data = {
-      "userName": "testuser",
-      "emails": [
-        {
-          "primary": True,
-          "value": "noboby@nowhere"
-        }
-      ],
-      "active": True
-    }
-
-    response = test_app.post("/Users", json=data, headers=headers)
+    response = test_app.post(
+      "/Users",
+      json={
+        "userName": "testuser",
+        "emails": [
+          {
+            "primary": True,
+            "value": "noboby@nowhere"
+          }
+        ],
+        "active": True
+      },
+      headers=headers
+    )
     assert response.status_code == 201
     user = UserResource(**response.json())
 
@@ -46,7 +48,20 @@ def test_create_user(test_app):
     assert len(listresponse.Resources) == 1
     assert listresponse.Resources[0].get('id') == user.id
 
-    response = test_app.post("/Users", json=data, headers=headers)
+    response = test_app.post(
+      "/Users",
+      json={
+        "userName": "testuser",
+        "emails": [
+          {
+            "primary": True,
+            "value": "noboby@nowhere"
+          }
+        ],
+        "active": True
+      },
+      headers=headers
+    )
     assert response.status_code == 409  # Duplicate !
 
     response = test_app.delete(f"/Users/{user.id}", headers=headers)
@@ -68,26 +83,34 @@ def test_update_user(test_app):
       'content-type': 'application/scim+json'
     }
 
-    data = {
-      "userName": "testuser",
-      "emails": [
-        {
-          "primary": True,
-          "value": "noboby@nowhere"
-        }
-      ],
-      "active": True
-    }
-
-    response = test_app.post("/Users", json=data, headers=headers)
+    response = test_app.post(
+      "/Users",
+      json={
+        "userName": "testuser",
+        "emails": [
+          {
+            "primary": True,
+            "value": "noboby@nowhere"
+          }
+        ],
+        "active": True
+      },
+      headers=headers
+    )
     assert response.status_code == 201
     user = UserResource(**response.json())
     id = user.id
 
-    response = test_app.get("/Users/foobar", headers=headers)
+    response = test_app.get(
+      "/Users/foobar",
+      headers=headers
+    )
     assert response.status_code == 404
 
-    response = test_app.get(f"/Users/{id}", headers=headers)
+    response = test_app.get(
+      f"/Users/{id}",
+      headers=headers
+    )
     assert response.status_code == 200
 
     user = User(**response.json())
@@ -110,35 +133,57 @@ def test_update_user(test_app):
     user = UserResource(**response.json())
     assert user.active is False
 
-    response = test_app.post("/Users", json=data, headers=headers)
+    response = test_app.post(
+      "/Users",
+      json={
+        "userName": "testuser",
+        "emails": [
+          {
+            "primary": True,
+            "value": "noboby@nowhere"
+          }
+        ],
+        "active": True
+      },
+      headers=headers
+    )
     assert response.status_code == 409
 
-    data = {
-      "operations": [{
-          "op": "add",
-          "path": "externalId",
-          "value": "external-1"
-      }],
-      "schemas": [CORE_SCHEMA_USER]
-    }
-    response = test_app.patch(f"/Users/{id}", json=data, headers=headers)
+    response = test_app.patch(
+      f"/Users/{id}",
+      json={
+        "operations": [{
+            "op": "add",
+            "path": "externalId",
+            "value": "external-1"
+        }],
+        "schemas": [CORE_SCHEMA_USER]
+      },
+      headers=headers
+    )
     assert response.status_code == 200
 
-    data = {
-      "userName": "testuser-1",
-      "emails": [
-        {
-          "primary": True,
-          "value": "noboby@nowhere"
-        }
-      ],
-      "externalId": "external-1",
-      "active": True
-    }
-    response = test_app.post("/Users", json=data, headers=headers)
+    response = test_app.post(
+      "/Users",
+      json={
+        "userName": "testuser-1",
+        "emails": [
+          {
+            "primary": True,
+            "value": "noboby@nowhere"
+          }
+        ],
+        "externalId": "external-1",
+        "active": True
+      },
+      headers=headers
+    )
     assert response.status_code == 409
 
-    response = test_app.delete(f"/Users/{id}", headers=headers)
+    response = test_app.delete(
+      f"/Users/{id}",
+      headers=headers
+    )
     assert response.status_code == 204
 
 
@@ -148,19 +193,24 @@ def test_delete_user(test_app):
       'content-type': 'application/scim+json'
     }
 
-    data = {
-      "userName": "testuser",
-      "emails": [
-        {
-          "primary": True,
-          "value": "noboby@nowhere"
-        }
-      ],
-      "active": True
-    }
-
-    response = test_app.post("/Users", json=data, headers=headers)
+    response = test_app.post(
+      "/Users",
+      json={
+        "userName": "testuser",
+        "emails": [
+          {
+            "primary": True,
+            "value": "noboby@nowhere"
+          }
+        ],
+        "active": True
+      },
+      headers=headers
+    )
     assert response.status_code == 201
     user = UserResource(**response.json())
-    response = test_app.delete(f"/Users/{user.id}", headers=headers)
+    response = test_app.delete(
+      f"/Users/{user.id}",
+      headers=headers
+    )
     assert response.status_code == 204

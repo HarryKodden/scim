@@ -65,12 +65,14 @@ def test_duplicate_group(test_app):
       'content-type': 'application/scim+json'
     }
 
-    data = {
-      "displayName": "testgroup123",
-      "externalId": "124"
-    }
-
-    response = test_app.post("/Groups", json=data, headers=headers)
+    response = test_app.post(
+      "/Groups",
+      json={
+        "displayName": "testgroup123",
+        "externalId": "124"
+      },
+      headers=headers
+    )
     assert response.status_code == 201
     group = GroupResource(**response.json())
 
@@ -91,87 +93,123 @@ def test_group_updates(test_app):
       'content-type': 'application/scim+json'
     }
 
-    data = {
-      "userName": "testmember",
-      "emails": [
-        {
-          "primary": True,
-          "value": "noboby@nowhere"
-        }
-      ],
-      "active": True
-    }
-
-    response = test_app.post("/Users", json=data, headers=headers)
+    response = test_app.post(
+      "/Users",
+      json={
+        "userName": "testmember",
+        "emails": [
+          {
+            "primary": True,
+            "value": "noboby@nowhere"
+          }
+        ],
+        "active": True
+      },
+      headers=headers
+    )
     assert response.status_code == 201
     user = UserResource(**response.json())
 
-    data = {
-      "displayName": "test_group_updates",
-      "members": [
-        {
-          "display": user.displayName,
-          "value": user.id
-        }
-      ]
-    }
-
-    response = test_app.post("/Groups", json=data, headers=headers)
+    response = test_app.post(
+      "/Groups",
+      json={
+        "displayName": "test_group_updates",
+        "members": [
+          {
+            "display": user.displayName,
+            "value": user.id
+          }
+        ]
+      },
+      headers=headers
+    )
     assert response.status_code == 201
     group = GroupResource(**response.json())
 
-    response = test_app.get(f"/Groups/{group.id}", headers=headers)
+    response = test_app.get(
+      f"/Groups/{group.id}",
+      headers=headers
+    )
     assert response.status_code == 200
     group = GroupResource(**response.json())
 
     assert len(group.members) == 1
 
-    data = {
-      "operations": [{
-          "op": "remove",
-          "path": "members"
-      }],
-      "schemas": [CORE_SCHEMA_GROUP]
-    }
-
     response = test_app.patch(
       f"/Groups/{group.id}",
-      json=data,
+      json={
+        "operations": [{
+            "op": "remove",
+            "path": "members"
+        }],
+        "schemas": [CORE_SCHEMA_GROUP]
+      },
       headers=headers
     )
     assert response.status_code == 200
 
-    response = test_app.get(f"/Groups/{group.id}", headers=headers)
+    response = test_app.get(
+      f"/Groups/{group.id}",
+      headers=headers
+    )
     assert response.status_code == 200
     group = GroupResource(**response.json())
 
     assert len(group.members) == 0
 
-    data = {
-      "operations": [{
-          "op": "add",
-          "path": "members",
-          "value": [
-            {
-              "value": user.id
-            }
-          ]
-      }],
-      "schemas": [CORE_SCHEMA_GROUP]
-    }
-
     response = test_app.patch(
       f"/Groups/{group.id}",
-      json=data,
+      json={
+        "operations": [{
+            "op": "add",
+            "path": "members",
+            "value": [
+              {
+                "value": user.id
+              }
+            ]
+        }],
+        "schemas": [CORE_SCHEMA_GROUP]
+      },
       headers=headers
     )
     assert response.status_code == 200
 
-    response = test_app.get(f"/Groups/{group.id}", headers=headers)
+    response = test_app.get(
+      f"/Groups/{group.id}",
+      headers=headers
+    )
     assert response.status_code == 200
     group = GroupResource(**response.json())
 
     assert len(group.members) == 1
+
+    response = test_app.patch(
+      f"/Groups/{group.id}",
+      json={
+        "operations": [{
+            "op": "add",
+            "path": "externalId",
+            "value": "external-1"
+        }],
+        "schemas": [CORE_SCHEMA_GROUP]
+      },
+      headers=headers
+    )
+    assert response.status_code == 200
+
+    data = {
+      "displayName": "test_group_with_duplicate_externalid",
+      "members": [],
+      "externalId": "external-1"
+    }
+
+    response = test_app.post(
+      "/Groups",
+      json=data,
+      headers=headers
+    )
+    assert response.status_code == 409
 
 
 def test_update_group(test_app):
@@ -180,15 +218,20 @@ def test_update_group(test_app):
       'content-type': 'application/scim+json'
     }
 
-    data = {
-      "displayName": "test_update_group"
-    }
-
-    response = test_app.post("/Groups", json=data, headers=headers)
+    response = test_app.post(
+      "/Groups",
+      json={
+        "displayName": "test_update_group"
+      },
+      headers=headers
+    )
     assert response.status_code == 201
     group = GroupResource(**response.json())
 
-    response = test_app.get(f"/Groups/{group.id}", headers=headers)
+    response = test_app.get(
+      f"/Groups/{group.id}",
+      headers=headers
+    )
     assert response.status_code == 200
 
     data = Group(**response.json())
@@ -215,18 +258,22 @@ def test_delete_group(test_app):
       'content-type': 'application/scim+json'
     }
 
-    data = {
-      "displayName": "test_delete_group"
-    }
-
-    response = test_app.post("/Groups", json=data, headers=headers)
+    response = test_app.post(
+      "/Groups",
+      json={
+        "displayName": "test_update_group"
+      },
+      headers=headers
+    )
     assert response.status_code == 201
     group = GroupResource(**response.json())
-    response = test_app.delete(f"/Groups/{group.id}", headers=headers)
+    response = test_app.delete(
+      f"/Groups/{group.id}",
+      headers=headers
+    )
     assert response.status_code == 204
 
 
-# PUT GROUP for which a different group holds same externalId
 # PUT group that does not exist
 # PATH group that does not exists
 # PATCH group raise exception

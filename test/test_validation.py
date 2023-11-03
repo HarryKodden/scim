@@ -10,12 +10,14 @@ def test_user_validation(test_app):
         'content-type': 'application/scim+json'
     }
 
-    data = {
-        "foo": "bar",
-        "active": True
-    }
-
-    response = test_app.post("/Users", json=data, headers=headers)
+    response = test_app.post(
+        "/Users",
+        json={
+            "foo": "bar",
+            "active": True
+        },
+        headers=headers
+    )
     assert response.status_code == 422
 
 
@@ -25,9 +27,11 @@ def test_group_validation(test_app):
         'content-type': 'application/scim+json'
     }
 
-    data = {
-        "foo": "bar",
-    }
-
-    response = test_app.post("/Groups", json=data, headers=headers)
+    response = test_app.post(
+        "/Groups",
+        json={
+            "foo": "bar",
+        },
+        headers=headers
+    )
     assert response.status_code == 422
