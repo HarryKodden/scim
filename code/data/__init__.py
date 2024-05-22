@@ -22,6 +22,11 @@ scim_forward_key = os.environ.get(
     os.environ.get("API_KEY", "secret")
 )
 
+# Backend option: NetBird
+netbird_url = os.environ.get("NETBIRD_URL", None)
+netbird_token = os.environ.get("NETBIRD_TOKEN", None)
+
+
 if mongo_db:
     from data.plugins.mongo import MongoPlugin
 
@@ -42,6 +47,11 @@ elif scim_forward_url:
 
     Users = SCIM_Forward_Plugin('Users', scim_forward_url, scim_forward_key)
     Groups = SCIM_Forward_Plugin('Groups', scim_forward_url, scim_forward_key)
+elif netbird_url:
+    from data.plugins.netbird import NetBird
+
+    Users = NetBird('Users', netbird_url, netbird_token)
+    Groups = NetBird('Groups', netbird_url, netbird_token)
 else:
     from data.plugins.file import FilePlugin
 
