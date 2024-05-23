@@ -60,15 +60,13 @@ class NetBird(Plugin):
 
         return None
 
+    def _resources(self) -> Any:
+        return self.api(f"/{self.resource_type.lower()}")
 
     def __iter__(self) -> Any:
         logger.debug(f"[__iter__]: {self.description}")
 
-        resources = self.api(
-                f"{self.resource_type.lower()}"
-            )
-
-        for resource in resources:
+        for resource in self._resources():
             yield resource['id']
 
     def __delitem__(self, id: str) -> None:
@@ -79,7 +77,31 @@ class NetBird(Plugin):
     def __getitem__(self, id: str) -> Any:
         logger.debug(f"[__getitem__]: {self.description}, id:{id}")
 
-        return self['id']
+        for resource in self._resources():
+            logger.debug(f"[__getitem__]: resource: {resource}")
+            if resource['id'] == id:
+                if self.resource_type == 'Users':
+                    return {
+                        'id': id,
+                        'userName': resource['name'] if resource['name'] != '' else id,
+                        'active': (resource['status'] == 'active' and not resource['is_blocked']),
+                        'meta': {
+                            'location': f"/Users/{id}",
+                            'resourceType': '/User'
+                        }
+                    }
+                if self.resource_type == 'Groups':
+                    return {
+                        'id': id,
+                        'displayName': resource['name'],
+                        'meta': {
+                            'location': f"/Groups/{id}",
+                            'resourceType': '/Group'
+                        }
+                    }
+                return resource
+
+        return None
 
     def __setitem__(self, id: str, details: Any) -> None:
         logger.debug(
@@ -93,17 +115,17 @@ class NetBird(Plugin):
                 {
                     'role': 'user',
                     'auto_groups': [],
-                    'is_service_user': False
+                    'is_service_user': False,
+                    'name': details['userName']
                 }
             )
-            for attribute in ['email', 'name']:
-                if attribute in details:
-                    netbird[attribute] = details[attribute]
 
         if self.resource_type == 'Groups':
-            for attribute in ['name',]:
-                if attribute in details:
-                    netbird[attribute] = details[attribute]
+            netbird.update(
+                {
+                    'name': details['displayName']
+                }
+            )
 
         data = json.loads(details)
 
