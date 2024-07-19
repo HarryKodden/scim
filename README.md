@@ -18,7 +18,7 @@
 | code/routers/resource.py          |       20 |        0 |    100% |           |
 | code/routers/schema.py            |       20 |        0 |    100% |           |
 | code/routers/users.py             |       62 |       11 |     82% |104-106, 133-137, 145, 148-149, 166, 175-176 |
-| code/schema.py                    |       88 |        0 |    100% |           |
+| code/schema.py                    |       92 |        0 |    100% |           |
 | test/conftest.py                  |       21 |        0 |    100% |           |
 | test/test\_auth.py                |        8 |        0 |    100% |           |
 | test/test\_config.py              |        3 |        0 |    100% |           |
@@ -29,7 +29,7 @@
 | test/test\_schema.py              |       12 |        0 |    100% |           |
 | test/test\_user.py                |       60 |        0 |    100% |           |
 | test/test\_validation.py          |       10 |        0 |    100% |           |
-|                         **TOTAL** |  **850** |   **85** | **90%** |           |
+|                         **TOTAL** |  **854** |   **85** | **90%** |           |
 
 
 ## Setup coverage badge
