@@ -50,6 +50,11 @@ class Member(BaseModel):
     value: str
 
 
+class Link(BaseModel):
+    name: str
+    value: str
+
+
 class Certificate(BaseModel):
     value: str
 
@@ -83,6 +88,7 @@ class SRAM_Group_Extension(BaseModel):
     description: Optional[str]
     labels: Optional[List[str]]
     urn: Optional[str]
+    links: Optional[List[Union[Link, None]]]
 
 #   class Config:
 #       title = "SRAM Group Extension"
