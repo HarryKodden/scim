@@ -85,10 +85,10 @@ class SRAM_User_Extension(BaseModel):
 
 
 class SRAM_Group_Extension(BaseModel):
-    description: Optional[str]
-    labels: Optional[List[str]]
-    urn: Optional[str]
-    links: Optional[List[Union[Link, None]]]
+    description: Optional[str] = None
+    labels: Optional[List[str]] = None
+    urn: Optional[str] = None
+    links: Optional[List[Union[Link, None]]] = None
 
 #   class Config:
 #       title = "SRAM Group Extension"
