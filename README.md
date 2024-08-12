@@ -48,6 +48,10 @@ go to your browser and open window at:
 http://localhost:8000
 ```
 
+This will open the OpenAPI document interface. In this you can experiment and execute all the SCIM API Endpoints.
+
+![OpenAPI Document](openapi.png)
+
 ## Data handling options
 
 You have different options to handle the data. The simplest is the the flat files handling. You simply assign a (volume-) path to the location where you want to persist the data.
