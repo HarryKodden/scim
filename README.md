@@ -57,9 +57,9 @@ Other options include SQL and NoSQL database, JumpCloud and forwarding the data 
 
 The options can be activated by assiging environment variable values, see below.
 
-The plugin methodology makes it very easy to add additional data backends, you simply have to subclass the **Plugin** class (/code/data/plugins) and provide logic for the base class methods.
+The plugin methodology makes it very easy to add additional data backends, you simply have to subclass the **Plugin Class** (`code/data/plugins/__init__.py`) and provide logic for the base class methods.
 
-![Plugin](/code/data/plugins/__init__.py)
+![Plugin](code/data/plugins/__init__.py)
 
 For inspiration on how to do that, please take a look at the provided implementation examples. If you do want to contribute with a nice additional backend, please do not hesitate to submit a Pull Request.
 
