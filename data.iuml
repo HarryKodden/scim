@@ -1,0 +1,23 @@
+
+@startuml
+cloud World
+
+cloud SCIM {
+  collections plugin as "Plugin Mechanism..."
+}
+
+World <--> SCIM: SCIM Protocol\nRFC 7643
+
+file data
+database sql
+database mongo
+cloud jumpcloud
+cloud scim as "upstream SCIM server"
+
+plugin <--> data : flat files
+plugin <--> sql #line:red;line.bold;text:red : SQL Database
+plugin <--> mongo #green;line.bold;text:green : NoSQL Database
+plugin <--> jumpcloud #blue;line.bold;text:blue : jumpcloud
+plugin <--> scim #yellow;line.bold;text:yellow : scim protocol
+@enduml
+
