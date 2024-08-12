@@ -48,12 +48,12 @@ go to your browser and open window at:
 http://localhost:8000
 ```
 
-## Dat plugin options
+## Data handling options
 
 You have different options to handle the data. The simplest is the the flat files handling. You simply assign a (volume-) path to the location where you want to persist the data.
-Ohter options include SQL and NoSQL database, JumpCloud and forwarding the data to an upstream SCIM Server.
+Other options include SQL and NoSQL database, JumpCloud and forwarding the data to an upstream SCIM Server.
 
-![Data Options](data.png)
+![Data Handling Options](data.png)
 
 The options can be activated by assiging environment variable values, see below.
 
