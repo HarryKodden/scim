@@ -1,6 +1,9 @@
 # routers/users.py
 
-from task_runner import USER_CHANGE_TYPE, call_change_webhook_task
+from task_runner import (
+    CHANGE_TYPE_CREATE, CHANGE_TYPE_DELETE, CHANGE_TYPE_UPDATE,
+    USER_CHANGE_TYPE, call_change_webhook_task
+)
 from fastapi import APIRouter, Depends, Body, status, HTTPException, Query
 
 import traceback
@@ -102,7 +105,9 @@ async def create_user(
     try:
         resource = put_user_resource(None, user)
         response = resource.model_dump(by_alias=True, exclude_none=True)
-        call_change_webhook_task(response, "create", USER_CHANGE_TYPE)
+        call_change_webhook_task(
+            response, CHANGE_TYPE_CREATE, USER_CHANGE_TYPE
+        )
         return response
     except Exception as e:
         logger.error(f"[CREATE_USER] {str(e)}, {traceback.format_exc()}")
@@ -148,7 +153,9 @@ async def update_user(id: str, user: User):
             raise Exception(f"User {id} not found")
 
         response = resource.model_dump(by_alias=True, exclude_none=True)
-        call_change_webhook_task(response, "update", USER_CHANGE_TYPE)
+        call_change_webhook_task(
+            response, CHANGE_TYPE_UPDATE, USER_CHANGE_TYPE
+        )
         return response
     except Exception as e:
         raise HTTPException(status_code=404, detail=f"Error: {str(e)}")
@@ -160,6 +167,10 @@ async def delete_user(id: str):
     resource = get_user_resource(id)
     if resource:
         del_user_resource(id)
+        response = resource.model_dump(by_alias=True, exclude_none=True)
+        call_change_webhook_task(
+            response, CHANGE_TYPE_DELETE, USER_CHANGE_TYPE
+        )
 
 
 @router.patch("/{id}", response_class=SCIM_Response)
@@ -177,7 +188,9 @@ async def patch_user(id: str, patch: Patch):
 
         user = put_user_resource(id, User(**resource))
         response = user.model_dump(by_alias=True, exclude_none=True)
-        call_change_webhook_task(response, "patch", USER_CHANGE_TYPE)
+        call_change_webhook_task(
+            response, CHANGE_TYPE_UPDATE, USER_CHANGE_TYPE
+        )
         return response
     except Exception as e:
         raise HTTPException(status_code=404, detail=f"Error: {str(e)}")

@@ -7,6 +7,7 @@ from unittest.mock import patch
 
 logger = logging.getLogger(__name__)
 
+
 @patch("task_runner.requests")
 def test_call_change_webhook(setup_data):
     os.environ['SCIM_CHANGE_WEBHOOK_URL'] = "https://SCIM_CHANGE_WEBHOOK_URL"
