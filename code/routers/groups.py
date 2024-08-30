@@ -1,5 +1,6 @@
 # routers/groups.py
 
+from task_runner import GROUP_CHANGE_TYPE, call_change_webhook_task
 from fastapi import APIRouter, Depends, Body, status, HTTPException, Query
 
 from schema import ListResponse, Group, Patch
@@ -81,7 +82,9 @@ async def create_group(
 
     try:
         resource = put_group_resource(None, group)
-        return resource.model_dump(by_alias=True, exclude_none=True)
+        response = resource.model_dump(by_alias=True, exclude_none=True)
+        call_change_webhook_task(response, "create", GROUP_CHANGE_TYPE)
+        return response
     except Exception as e:
         raise HTTPException(status_code=404, detail=f"Error: {str(e)}")
 
@@ -114,7 +117,9 @@ async def update_group(id: str, group: Group):
         resource = put_group_resource(id, group)
         if not resource:
             raise Exception(f"Group {id} not found")
-        return resource.model_dump(by_alias=True, exclude_none=True)
+        response = resource.model_dump(by_alias=True, exclude_none=True)
+        call_change_webhook_task(response, "update", GROUP_CHANGE_TYPE)
+        return response
     except Exception as e:
         raise HTTPException(status_code=404, detail=f"Error: {str(e)}")
 

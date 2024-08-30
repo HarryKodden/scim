@@ -1,5 +1,6 @@
 # routers/users.py
 
+from task_runner import USER_CHANGE_TYPE, call_change_webhook_task
 from fastapi import APIRouter, Depends, Body, status, HTTPException, Query
 
 import traceback
@@ -100,7 +101,9 @@ async def create_user(
 
     try:
         resource = put_user_resource(None, user)
-        return resource.model_dump(by_alias=True, exclude_none=True)
+        response = resource.model_dump(by_alias=True, exclude_none=True)
+        call_change_webhook_task(response, "create", USER_CHANGE_TYPE)
+        return response
     except Exception as e:
         logger.error(f"[CREATE_USER] {str(e)}, {traceback.format_exc()}")
         raise HTTPException(status_code=404, detail=f"Error: {str(e)}")
@@ -144,7 +147,9 @@ async def update_user(id: str, user: User):
         if not resource:
             raise Exception(f"User {id} not found")
 
-        return resource.model_dump(by_alias=True, exclude_none=True)
+        response = resource.model_dump(by_alias=True, exclude_none=True)
+        call_change_webhook_task(response, "update", USER_CHANGE_TYPE)
+        return response
     except Exception as e:
         raise HTTPException(status_code=404, detail=f"Error: {str(e)}")
 
@@ -171,6 +176,8 @@ async def patch_user(id: str, patch: Patch):
         )
 
         user = put_user_resource(id, User(**resource))
-        return user.model_dump(by_alias=True, exclude_none=True)
+        response = user.model_dump(by_alias=True, exclude_none=True)
+        call_change_webhook_task(response, "patch", USER_CHANGE_TYPE)
+        return response
     except Exception as e:
         raise HTTPException(status_code=404, detail=f"Error: {str(e)}")

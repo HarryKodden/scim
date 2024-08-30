@@ -15,7 +15,10 @@ RUN pipenv install --system -d
 WORKDIR /code
 
 COPY code .
+COPY entrypoint.sh .
+
+RUN chmod +x ./entrypoint.sh
 
 EXPOSE 8000
 
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0"] 
+ENTRYPOINT ["./entrypoint.sh"]

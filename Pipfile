@@ -20,6 +20,8 @@ sqlalchemy = "*"
 pymongo = "*"
 psycopg2_binary = "*"
 pymysql = "*"
+huey="*"
+peewee = "*"
 
 [requires]
 python_version = "3.10"

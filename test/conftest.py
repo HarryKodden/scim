@@ -27,7 +27,9 @@ def setup_data(request):
 
 @pytest.fixture(scope="module")
 def test_app(setup_data):
-    from main import app
+    os.environ['SCIM_CHANGE_WEBHOOK_URL'] = ""
+    os.environ['SCIM_CHANGE_WEBHOOK_SECRET'] = ""
 
+    from main import app
     client = TestClient(app)
     yield client
