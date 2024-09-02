@@ -33,7 +33,7 @@ class Evaluator(NodeVisitor):
             f"[EVALUATE] Visit Filter..."
             f" expr: {node.expr},"
             f" negated: {node.negated},"
-            f" namespace={node.namespace}"
+            f" namespace {node.namespace}"
         )
         result = self.visit(node.expr)
 
@@ -52,6 +52,10 @@ class Evaluator(NodeVisitor):
         attr = self.visit(node.attr_path)
         value = self.visit(node.comp_value)
         op = node.value.lower()
+
+        logger.debug(f"[ATTR] '{attr}'")
+        logger.debug(f"[VALUE] '{value}'")
+        logger.debug(f"[OP] '{op}'")
 
         if op == 'eq':
             return attr == value
@@ -76,13 +80,27 @@ class Evaluator(NodeVisitor):
         else:
             raise ValueError(f"Unknwown opcode {op}")
 
+    def visit_SubAttr(self, node):
+        logger.debug(f"[EVALUATE] Visit SubAttr: {node.value}")
+        return node.value
+
     def visit_AttrPath(self, node):
-        logger.debug(f"[EVALUATE] Visit AttrPath: {node.attr_name}")
         if not self.resource:
             raise Exception("No resource provided")
 
-        logger.debug(f"CHECK ATTR: {self.resource.get(node.attr_name)}")
-        return self.resource.get(node.attr_name)
+        if node.sub_attr:
+            logger.debug(
+                "[EVALUATE] Visit SubPath: "
+                f"{node.uri}:{node.attr_name}"
+            )
+            return self.resource.get(
+                    f"{node.uri}:{node.attr_name}"
+                ).get(
+                    self.visit(node.sub_attr)
+                )
+        else:
+            logger.debug(f"[EVALUATE] Visit AttrPath: {node.attr_name}")
+            return self.resource.get(node.attr_name)
 
     def visit_CompValue(self, node):
         logger.debug(f"[EVALUATE] Visit CompValue: {node.value}...")
@@ -133,7 +151,7 @@ class Filter:
     def match(self, resource: Any) -> bool:
         """ Process filter to see if resource matches filter conditions
         """
-        logger.debug(f" Evaulate: {resource}...")
+        logger.debug(f" Evaluate: {resource}...")
 
         if self.ast:
             return Evaluator(self.ast).evaluate(resource)
