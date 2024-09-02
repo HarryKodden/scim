@@ -5,7 +5,7 @@
 ## Docker image
 
 Public image available at:
-https://hub.docker.com/r/harrykodden/scim
+<https://hub.docker.com/r/harrykodden/scim>
 
 You do not need to build the docker image yourself. You can just pull the prepared image which is available for both **linux/amd** and **linux/arm** architectures.
 
@@ -48,25 +48,74 @@ go to your browser and open window at:
 http://localhost:8000
 ```
 
+This will open the OpenAPI document interface. In this you can experiment and execute all the SCIM API Endpoints.
+
+![OpenAPI Document](openapi.png)
+
+## Data handling options
+
+You have different options to handle the data. The simplest is the the flat files handling. You simply assign a (volume-) path to the location where you want to persist the data.
+Other options include SQL and NoSQL database, JumpCloud and forwarding the data to an upstream SCIM Server.
+
+![Data Handling Options](data.png)
+
+The options can be activated by assiging environment variable values, see below.
+
+The plugin methodology makes it very easy to add additional data backends, you simply have to subclass the **Plugin Class** (`code/data/plugins/__init__.py`) and provide logic for the base class methods.
+
+```python
+# code/data/plugins/__init__.py
+
+from typing import Any
+import uuid
+
+
+class Plugin(object):
+    """Base class that each plugin must inherit from. within this class
+    you must define the methods that all of your plugins must implement
+    """
+
+    def __init__(self):
+        self.description = 'UNKNOWN'
+
+    def id(self) -> str:
+        return str(uuid.uuid4())
+
+    def __iter__(self) -> Any:
+        raise NotImplementedError
+
+    def __delete__(self, id: str) -> None:
+        raise NotImplementedError
+
+    def __getitem__(self, id: str) -> Any:
+        raise NotImplementedError
+
+    def __setitem__(self, id: str, details: Any) -> None:
+        raise NotImplementedError
+
+```
+
+For inspiration on how to do that, please take a look at the provided implementation examples. If you do want to contribute with a nice additional backend, please do not hesitate to submit a Pull Request.
+
 ## Environment variables
 
 This image uses environment variables for configuration.
 
-| Available variables | Description                                                                             | Example                                                                                                             | Default                       |
-| ------------------- | --------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- | ----------------------------- |
-| `LOGLEVEL`          | The application logging level                                                           | ERROR                                                                                                               | INFO                          |
-| `API_KEY`           | The API key to authenticate with                                                        | mysecret                                                                                                            | secret                        |
-| `PAGE_SIZE`         | The maximum number of resources returned in 1 response.                                 | 10                                                                                                                  | 100                           |
-| `BASE_PATH`         | The base path of all API endpoints                                                      | /api/v2                                                                                                             | /                             |
-| `DATA_PATH`         | File system path name                                                                   | /mnt/scim                                                                                                           | /tmp                          |
-| `MONGO_DB`          | Mongo connection string                                                                 | mongodb://user:password@mongo_host                                                                                  | mongodb://localhost:27017/    |
-| `DATABASE_URL`      | SQL Database connection string                                                          | postgresql://user:password@postrgres_host:5432/mydb<br />**or**<br /> mysql+pymysql://user:password@mysql_host/mydb | sqlite:///scim.sqlite         |
-| `JUMPCLOUD_URL`     | The API endpoint for JumpCloud                                                          | https://console.jumpcloud.com                                                                                       | https://console.jumpcloud.com |
-| `JUMPCLOUD_KEY`     | The API Key for your JumpCloud tenant                                                   | **value** of API key obtained from JumpCloud_<br /><br />**Mandatory when JUMPCLOUD_URL is set**                       | None                          |
-| `FORWARD_SCIM_URL`  | Forward SCIM request to upstream SCIM server                                            | https://example.com/v2/api                                                                                          | None                          |
-| `FORWARD_SCIM_KEY`  | API KEY for **FORWARD_SCIM_URL** scim server. if not provided, **API_KEY** will be used | https://example.com/v2/api                                                                                          | None                          |
-| `USER_MAPPING`  | A JSON string that specify how attribute values should be mapped to different attributes| '{"userName": "sram_user_extension.eduPersonUniqueId"}'                                                                  | None                          |
-| `GROUP_MAPPING`  | A JSON string that specify how attribute values should be mapped to different attributes| '{"id": "displanNameuser_extension.eduPersonUniqueId"}'                                                                  | None                          |
+| Available variables | Description                                                                              | Example                                                                                                             | Default                         |
+| ------------------- | ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- | ------------------------------- |
+| `LOGLEVEL`          | The application logging level                                                            | ERROR                                                                                                               | INFO                            |
+| `API_KEY`           | The API key to authenticate with                                                         | mysecret                                                                                                            | secret                          |
+| `PAGE_SIZE`         | The maximum number of resources returned in 1 response.                                  | 10                                                                                                                  | 100                             |
+| `BASE_PATH`         | The base path of all API endpoints                                                       | /api/v2                                                                                                             | /                               |
+| `DATA_PATH`         | File system path name                                                                    | /mnt/scim                                                                                                           | /tmp                            |
+| `MONGO_DB`          | Mongo connection string                                                                  | mongodb://user:password@mongo_host                                                                                  | mongodb://localhost:27017/      |
+| `DATABASE_URL`      | SQL Database connection string                                                           | postgresql://user:password@postrgres_host:5432/mydb<br />**or**<br /> mysql+pymysql://user:password@mysql_host/mydb | sqlite:///scim.sqlite           |
+| `JUMPCLOUD_URL`     | The API endpoint for JumpCloud                                                           | <https://console.jumpcloud.com>                                                                                     | <https://console.jumpcloud.com> |
+| `JUMPCLOUD_KEY`     | The API Key for your JumpCloud tenant                                                    | **value** of API key obtained from JumpCloud\_<br /><br />**Mandatory when JUMPCLOUD_URL is set**                   | None                            |
+| `FORWARD_SCIM_URL`  | Forward SCIM request to upstream SCIM server                                             | <https://example.com/v2/api>                                                                                        | None                            |
+| `FORWARD_SCIM_KEY`  | API KEY for **FORWARD_SCIM_URL** scim server. if not provided, **API_KEY** will be used  | <https://example.com/v2/api>                                                                                        | None                            |
+| `USER_MAPPING`      | A JSON string that specify how attribute values should be mapped to different attributes | '{"userName": "sram_user_extension.eduPersonUniqueId"}'                                                             | None                            |
+| `GROUP_MAPPING`     | A JSON string that specify how attribute values should be mapped to different attributes | '{"id": "displanNameuser_extension.eduPersonUniqueId"}'                                                             | None                            |
 
 ## Handling data
 
@@ -83,9 +132,9 @@ The structure of both tables are alike and have only 2 columnns
 
 For example after a provisiong the data for **Users** contains:
 
-| id                                   | details                                                                                                                                                                                                                                                                                                |
-| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| 613277a6-aa52-440e-b604-9bbd14343558 | {\"userName\": \"hkodden5\", \"active\": true, \"externalId\": \"44cb3ba1-7a58-49af-961d-9a1253a26181@sram.surf.nl\", \"name\": {\"familyName\": \"Kodden\", \"givenName\": \"Harry\"}, \"displayName\": \"Harry Kodden\", \"emails\": [{\"primary\": true, \"value\": \"harry.kodden@surf.nl\"}] ...} |
+| id                                   | details                                                                                                                                                                                                                                                                                                  |
+| ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 613277a6-aa52-440e-b604-9bbd14343558 | {\"userName\": \"hkodden5\", \"active\": true, \"externalId\": \"<44cb3ba1-7a58-49af-961d-9a1253a26181@sram.surf.nl>\", \"name\": {\"familyName\": \"Kodden\", \"givenName\": \"Harry\"}, \"displayName\": \"Harry Kodden\", \"emails\": [{\"primary\": true, \"value\": \"harry.kodden@surf.nl\"}] ...} |
 
 Then you would like to retrieve specific values out of the JSON data.
 For example, we want to lookup the userName.
