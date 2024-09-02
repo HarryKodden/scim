@@ -2,7 +2,7 @@
 
 from task_runner import (
     CHANGE_TYPE_CREATE, CHANGE_TYPE_UPDATE, CHANGE_TYPE_DELETE,
-    GROUP_CHANGE_TYPE, call_change_webhook_task
+    RESOURCE_TYPE_GROUP, call_change_webhook_task
 )
 from fastapi import APIRouter, Depends, Body, status, HTTPException, Query
 
@@ -87,7 +87,7 @@ async def create_group(
         resource = put_group_resource(None, group)
         response = resource.model_dump(by_alias=True, exclude_none=True)
         call_change_webhook_task(
-            response, CHANGE_TYPE_CREATE, GROUP_CHANGE_TYPE
+            response, CHANGE_TYPE_CREATE, RESOURCE_TYPE_GROUP
         )
         return response
     except Exception as e:
@@ -124,7 +124,7 @@ async def update_group(id: str, group: Group):
             raise Exception(f"Group {id} not found")
         response = resource.model_dump(by_alias=True, exclude_none=True)
         call_change_webhook_task(
-            response, CHANGE_TYPE_UPDATE, GROUP_CHANGE_TYPE
+            response, CHANGE_TYPE_UPDATE, RESOURCE_TYPE_GROUP
         )
         return response
     except Exception as e:
@@ -139,7 +139,7 @@ async def delete_group(id: str):
         del_group_resource(id)
         response = resource.model_dump(by_alias=True, exclude_none=True)
         call_change_webhook_task(
-            response, CHANGE_TYPE_DELETE, GROUP_CHANGE_TYPE
+            response, CHANGE_TYPE_DELETE, RESOURCE_TYPE_GROUP
         )
 
 

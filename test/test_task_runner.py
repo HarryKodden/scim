@@ -1,5 +1,5 @@
 from datetime import datetime
-from task_runner import USER_CHANGE_TYPE, call_change_webhook
+from task_runner import RESPOURCE_TYPE_USER, call_change_webhook
 
 import logging
 import os
@@ -16,4 +16,4 @@ def test_call_change_webhook(setup_data):
     call_change_webhook({
         "datetime": datetime.now(),
         "name": "name"
-      }, "create", USER_CHANGE_TYPE)
+      }, "create", RESPOURCE_TYPE_USER)

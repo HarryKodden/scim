@@ -10,8 +10,8 @@ from huey.contrib.sql_huey import SqlHuey
 logger = logging.getLogger(__name__)
 
 
-USER_CHANGE_TYPE = "user"
-GROUP_CHANGE_TYPE = "group"
+RESPOURCE_TYPE_USER = "USER"
+RESOURCE_TYPE_GROUP = "GROUP"
 
 CHANGE_TYPE_CREATE = "CREATE"
 CHANGE_TYPE_UPDATE = "UPDATE"

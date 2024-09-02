@@ -2,7 +2,7 @@
 
 from task_runner import (
     CHANGE_TYPE_CREATE, CHANGE_TYPE_DELETE, CHANGE_TYPE_UPDATE,
-    USER_CHANGE_TYPE, call_change_webhook_task
+    RESPOURCE_TYPE_USER, call_change_webhook_task
 )
 from fastapi import APIRouter, Depends, Body, status, HTTPException, Query
 
@@ -106,7 +106,7 @@ async def create_user(
         resource = put_user_resource(None, user)
         response = resource.model_dump(by_alias=True, exclude_none=True)
         call_change_webhook_task(
-            response, CHANGE_TYPE_CREATE, USER_CHANGE_TYPE
+            response, CHANGE_TYPE_CREATE, RESPOURCE_TYPE_USER
         )
         return response
     except Exception as e:
@@ -154,7 +154,7 @@ async def update_user(id: str, user: User):
 
         response = resource.model_dump(by_alias=True, exclude_none=True)
         call_change_webhook_task(
-            response, CHANGE_TYPE_UPDATE, USER_CHANGE_TYPE
+            response, CHANGE_TYPE_UPDATE, RESPOURCE_TYPE_USER
         )
         return response
     except Exception as e:
@@ -169,7 +169,7 @@ async def delete_user(id: str):
         del_user_resource(id)
         response = resource.model_dump(by_alias=True, exclude_none=True)
         call_change_webhook_task(
-            response, CHANGE_TYPE_DELETE, USER_CHANGE_TYPE
+            response, CHANGE_TYPE_DELETE, RESPOURCE_TYPE_USER
         )
 
 
@@ -189,7 +189,7 @@ async def patch_user(id: str, patch: Patch):
         user = put_user_resource(id, User(**resource))
         response = user.model_dump(by_alias=True, exclude_none=True)
         call_change_webhook_task(
-            response, CHANGE_TYPE_UPDATE, USER_CHANGE_TYPE
+            response, CHANGE_TYPE_UPDATE, RESPOURCE_TYPE_USER
         )
         return response
     except Exception as e:
