@@ -116,7 +116,16 @@ This image uses environment variables for configuration.
 | `FORWARD_SCIM_KEY`  | API KEY for **FORWARD_SCIM_URL** scim server. if not provided, **API_KEY** will be used  | <https://example.com/v2/api>                                                                                        | None                            |
 | `USER_MAPPING`      | A JSON string that specify how attribute values should be mapped to different attributes | '{"userName": "sram_user_extension.eduPersonUniqueId"}'                                                             | None                            |
 | `GROUP_MAPPING`     | A JSON string that specify how attribute values should be mapped to different attributes | '{"id": "displanNameuser_extension.eduPersonUniqueId"}'                                                             | None                            |
+| `SCIM_CHANGE_WEBHOOK_URL`     | url for the change webhook                                                            | None                            |
 
+| `SCIM_CHANGE_WEBHOOK_SECRET`     | secret for the change webhook                                                           | None                            |
+
+| `USER_MODEL_NAME`            | User model name                                                        | Users                            |
+
+| `GROUP_MODEL_NAME`            | Group model name                                                        | Group                            |
+
+
+USER_MODEL_NAME
 ## Handling data
 
 The data that is received by this SCIM server can be handled in different ways. Below is an example on how to pick up specific attributes from the received data.

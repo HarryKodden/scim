@@ -1,5 +1,9 @@
 # routers/groups.py
 
+from task_runner import (
+    CHANGE_TYPE_CREATE, CHANGE_TYPE_UPDATE, CHANGE_TYPE_DELETE,
+    RESOURCE_TYPE_GROUP, call_change_webhook_task
+)
 from fastapi import APIRouter, Depends, Body, status, HTTPException, Query
 
 from schema import ListResponse, Group, Patch
@@ -81,7 +85,11 @@ async def create_group(
 
     try:
         resource = put_group_resource(None, group)
-        return resource.model_dump(by_alias=True, exclude_none=True)
+        response = resource.model_dump(by_alias=True, exclude_none=True)
+        call_change_webhook_task(
+            response, CHANGE_TYPE_CREATE, RESOURCE_TYPE_GROUP
+        )
+        return response
     except Exception as e:
         raise HTTPException(status_code=404, detail=f"Error: {str(e)}")
 
@@ -114,7 +122,11 @@ async def update_group(id: str, group: Group):
         resource = put_group_resource(id, group)
         if not resource:
             raise Exception(f"Group {id} not found")
-        return resource.model_dump(by_alias=True, exclude_none=True)
+        response = resource.model_dump(by_alias=True, exclude_none=True)
+        call_change_webhook_task(
+            response, CHANGE_TYPE_UPDATE, RESOURCE_TYPE_GROUP
+        )
+        return response
     except Exception as e:
         raise HTTPException(status_code=404, detail=f"Error: {str(e)}")
 
@@ -125,6 +137,10 @@ async def delete_group(id: str):
     resource = get_group_resource(id)
     if resource:
         del_group_resource(id)
+        response = resource.model_dump(by_alias=True, exclude_none=True)
+        call_change_webhook_task(
+            response, CHANGE_TYPE_DELETE, RESOURCE_TYPE_GROUP
+        )
 
 
 @router.patch("/{id}", response_class=SCIM_Response)

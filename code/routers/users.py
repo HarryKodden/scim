@@ -1,5 +1,9 @@
 # routers/users.py
 
+from task_runner import (
+    CHANGE_TYPE_CREATE, CHANGE_TYPE_DELETE, CHANGE_TYPE_UPDATE,
+    RESPOURCE_TYPE_USER, call_change_webhook_task
+)
 from fastapi import APIRouter, Depends, Body, status, HTTPException, Query
 
 import traceback
@@ -100,7 +104,11 @@ async def create_user(
 
     try:
         resource = put_user_resource(None, user)
-        return resource.model_dump(by_alias=True, exclude_none=True)
+        response = resource.model_dump(by_alias=True, exclude_none=True)
+        call_change_webhook_task(
+            response, CHANGE_TYPE_CREATE, RESPOURCE_TYPE_USER
+        )
+        return response
     except Exception as e:
         logger.error(f"[CREATE_USER] {str(e)}, {traceback.format_exc()}")
         raise HTTPException(status_code=404, detail=f"Error: {str(e)}")
@@ -144,7 +152,11 @@ async def update_user(id: str, user: User):
         if not resource:
             raise Exception(f"User {id} not found")
 
-        return resource.model_dump(by_alias=True, exclude_none=True)
+        response = resource.model_dump(by_alias=True, exclude_none=True)
+        call_change_webhook_task(
+            response, CHANGE_TYPE_UPDATE, RESPOURCE_TYPE_USER
+        )
+        return response
     except Exception as e:
         raise HTTPException(status_code=404, detail=f"Error: {str(e)}")
 
@@ -155,6 +167,10 @@ async def delete_user(id: str):
     resource = get_user_resource(id)
     if resource:
         del_user_resource(id)
+        response = resource.model_dump(by_alias=True, exclude_none=True)
+        call_change_webhook_task(
+            response, CHANGE_TYPE_DELETE, RESPOURCE_TYPE_USER
+        )
 
 
 @router.patch("/{id}", response_class=SCIM_Response)
@@ -171,6 +187,10 @@ async def patch_user(id: str, patch: Patch):
         )
 
         user = put_user_resource(id, User(**resource))
-        return user.model_dump(by_alias=True, exclude_none=True)
+        response = user.model_dump(by_alias=True, exclude_none=True)
+        call_change_webhook_task(
+            response, CHANGE_TYPE_UPDATE, RESPOURCE_TYPE_USER
+        )
+        return response
     except Exception as e:
         raise HTTPException(status_code=404, detail=f"Error: {str(e)}")
