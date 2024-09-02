@@ -10,7 +10,7 @@
 | code/data/plugins/\_\_init\_\_.py |       15 |        5 |     67% |11, 17, 20, 23, 26 |
 | code/data/plugins/file.py         |       32 |        0 |    100% |           |
 | code/data/users.py                |       56 |       11 |     80% |43-47, 54, 84-92 |
-| code/filter.py                    |       92 |       26 |     72% |41, 60-77, 82, 90, 92, 94, 103, 107, 130-131 |
+| code/filter.py                    |      100 |       30 |     70% |41, 64-81, 84-85, 89, 92-96, 108, 110, 112, 121, 125, 148-149 |
 | code/main.py                      |       34 |        5 |     85% |38-40, 76, 80 |
 | code/routers/\_\_init\_\_.py      |       59 |        4 |     93% |40, 74, 84-85 |
 | code/routers/config.py            |        8 |        0 |    100% |           |
@@ -29,7 +29,7 @@
 | test/test\_schema.py              |       12 |        0 |    100% |           |
 | test/test\_user.py                |       60 |        0 |    100% |           |
 | test/test\_validation.py          |       10 |        0 |    100% |           |
-|                         **TOTAL** |  **854** |   **85** | **90%** |           |
+|                         **TOTAL** |  **862** |   **89** | **90%** |           |
 
 
 ## Setup coverage badge
