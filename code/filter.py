@@ -144,7 +144,7 @@ class Filter:
 
                 for depth, node in flatten(self.ast):
                     logger.debug(f"{'    ' * depth} {node}")
-    
+
             except Exception as e:
                 raise Exception(f"Filter is not valid: {str(e)}")
 
