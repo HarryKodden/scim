@@ -8,7 +8,8 @@ from auth import api_key_auth
 
 from routers import BASE_PATH, PAGE_SIZE, \
     get_all_resources, resource_exists, patch_resource, \
-    SCIM_Route, SCIM_Response
+    SCIM_Route, SCIM_Response, \
+    broadcast
 
 from data.groups import \
     get_group_resource, \
@@ -81,6 +82,9 @@ async def create_group(
 
     try:
         resource = put_group_resource(None, group)
+
+        broadcast("Group", "Create", resource.id)
+
         return resource.model_dump(by_alias=True, exclude_none=True)
     except Exception as e:
         raise HTTPException(status_code=404, detail=f"Error: {str(e)}")
@@ -114,6 +118,9 @@ async def update_group(id: str, group: Group):
         resource = put_group_resource(id, group)
         if not resource:
             raise Exception(f"Group {id} not found")
+
+        broadcast("Group", "Update", id)
+
         return resource.model_dump(by_alias=True, exclude_none=True)
     except Exception as e:
         raise HTTPException(status_code=404, detail=f"Error: {str(e)}")
@@ -125,6 +132,7 @@ async def delete_group(id: str):
     resource = get_group_resource(id)
     if resource:
         del_group_resource(id)
+        broadcast("Group", "Delete", id)
 
 
 @router.patch("/{id}", response_class=SCIM_Response)
@@ -141,6 +149,10 @@ async def patch_group(id: str, patch: Patch):
         )
 
         group = put_group_resource(id, Group(**resource))
+
+        broadcast("Group", "Update", id)
+
         return group.model_dump(by_alias=True, exclude_none=True)
+
     except Exception as e:
         raise HTTPException(status_code=404, detail=f"Error: {str(e)}")

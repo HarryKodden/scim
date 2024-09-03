@@ -2,6 +2,7 @@
 
 import time
 import json
+import pika
 
 from fastapi import HTTPException, Request, Response
 from fastapi.routing import APIRoute
@@ -21,6 +22,40 @@ logger = logging.getLogger(__name__)
 
 BASE_PATH = os.environ.get('BASE_PATH', '')
 PAGE_SIZE = int(os.environ.get('PAGE_SIZE', 100))
+
+
+def broadcast(resource_type: str, operation: str, id: int) -> None:
+
+    AMQP = os.environ.get('AMQP', None)
+
+    if not AMQP:
+        return
+
+    try:
+        parameters = pika.URLParameters(AMQP)
+        connection = pika.BlockingConnection(parameters)
+    except Exception as e:
+        logger.error(f"Exception connecting to: {AMQP}, error: {str(e)}")
+        return
+
+    channel = connection.channel()
+
+    queue = f"SCIM-{resource_type}-{operation}".upper()
+
+    channel.queue_declare(
+        queue=queue,
+        durable=True
+    )
+
+    logger.debug(f"Broadcasting: {queue}, id: {id}")
+
+    channel.basic_publish(
+        exchange='',
+        routing_key=queue,
+        body=id
+    )
+
+    connection.close()
 
 
 class SCIM_Response(Response):

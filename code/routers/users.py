@@ -10,7 +10,8 @@ from auth import api_key_auth
 
 from routers import BASE_PATH, PAGE_SIZE, \
     get_all_resources, resource_exists, patch_resource, \
-    SCIM_Route, SCIM_Response
+    SCIM_Route, SCIM_Response, \
+    broadcast
 
 from data.users import \
     get_user_resource, \
@@ -100,6 +101,9 @@ async def create_user(
 
     try:
         resource = put_user_resource(None, user)
+
+        broadcast("User", "Create", resource.id)
+
         return resource.model_dump(by_alias=True, exclude_none=True)
     except Exception as e:
         logger.error(f"[CREATE_USER] {str(e)}, {traceback.format_exc()}")
@@ -144,7 +148,10 @@ async def update_user(id: str, user: User):
         if not resource:
             raise Exception(f"User {id} not found")
 
+        broadcast("user", "Update", id)
+
         return resource.model_dump(by_alias=True, exclude_none=True)
+
     except Exception as e:
         raise HTTPException(status_code=404, detail=f"Error: {str(e)}")
 
@@ -155,6 +162,7 @@ async def delete_user(id: str):
     resource = get_user_resource(id)
     if resource:
         del_user_resource(id)
+        broadcast("User", "Delete", id)
 
 
 @router.patch("/{id}", response_class=SCIM_Response)
@@ -171,6 +179,9 @@ async def patch_user(id: str, patch: Patch):
         )
 
         user = put_user_resource(id, User(**resource))
+
+        broadcast("User", "Update", id)
+
         return user.model_dump(by_alias=True, exclude_none=True)
     except Exception as e:
         raise HTTPException(status_code=404, detail=f"Error: {str(e)}")

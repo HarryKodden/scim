@@ -116,6 +116,8 @@ This image uses environment variables for configuration.
 | `FORWARD_SCIM_KEY`  | API KEY for **FORWARD_SCIM_URL** scim server. if not provided, **API_KEY** will be used  | <https://example.com/v2/api>                                                                                        | None                            |
 | `USER_MAPPING`      | A JSON string that specify how attribute values should be mapped to different attributes | '{"userName": "sram_user_extension.eduPersonUniqueId"}'                                                             | None                            |
 | `GROUP_MAPPING`     | A JSON string that specify how attribute values should be mapped to different attributes | '{"id": "displanNameuser_extension.eduPersonUniqueId"}'                                                             | None                            |
+| `AMQP        `     | (optional) the amqp address of the MQ Server to broadcast SCIM updates to | 'amqp://localhost'                               | None                            |
+
 
 ## Handling data
 
