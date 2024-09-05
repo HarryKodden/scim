@@ -23,31 +23,33 @@ scim_forward_key = os.environ.get(
 )
 
 # Datamodels for Users & Groups
-user_model_name = os.environ.get("USER_MODEL_NAME", "Users")
-group_model_name = os.environ.get("GROUP_MODEL_NAME", "Groups")
+user_model = os.environ.get("USER_model_name", "Users")
+group_model = os.environ.get("GROUP_model_name", "Groups")
 
 if mongo_db:
     from data.plugins.mongo import MongoPlugin
 
-    Users = MongoPlugin(user_model_name, mongo_db)
-    Groups = MongoPlugin(group_model_name, mongo_db)
+    Users = MongoPlugin(user_model, mongo_db)
+    Groups = MongoPlugin(group_model, mongo_db)
 elif database_url:
     from data.plugins.sql import SQLPlugin
 
-    Users = SQLPlugin(user_model_name, database_url)
-    Groups = SQLPlugin(group_model_name, database_url)
+    Users = SQLPlugin(user_model, database_url)
+    Groups = SQLPlugin(group_model, database_url)
 elif jumpcloud_url:
     from data.plugins.jumpcloud import JumpCloudPlugin
 
-    Users = JumpCloudPlugin(user_model_name, jumpcloud_url, jumpcloud_key)
-    Groups = JumpCloudPlugin(group_model_name, jumpcloud_url, jumpcloud_key)
+    Users = JumpCloudPlugin(user_model, jumpcloud_url, jumpcloud_key)
+    Groups = JumpCloudPlugin(group_model, jumpcloud_url, jumpcloud_key)
 elif scim_forward_url:
     from data.plugins.scim import SCIM_Forward_Plugin
 
-    Users = SCIM_Forward_Plugin(user_model_name, scim_forward_url, scim_forward_key)
-    Groups = SCIM_Forward_Plugin(group_model_name, scim_forward_url, scim_forward_key)
+    Users = SCIM_Forward_Plugin(user_model, 
+        scim_forward_url, scim_forward_key)
+    Groups = SCIM_Forward_Plugin(group_model,
+        scim_forward_url, scim_forward_key)
 else:
     from data.plugins.file import FilePlugin
 
-    Users = FilePlugin(user_model_name, data_path)
-    Groups = FilePlugin(group_model_name, data_path)
+    Users = FilePlugin(user_model, data_path)
+    Groups = FilePlugin(group_model, data_path)

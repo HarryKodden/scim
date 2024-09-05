@@ -36,10 +36,10 @@ docker run -p 8000:8000 scim
 This will show like:
 
 ```log
-INFO:     Started server process [1]
-INFO:     Waiting for application startup.
-INFO:     Application startup complete.
-INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO: Started server process [1]
+INFO: Waiting for application startup.
+INFO: Application startup complete.
+INFO: Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
 ```
 
 go to your browser and open window at:
@@ -101,22 +101,24 @@ For inspiration on how to do that, please take a look at the provided implementa
 
 This image uses environment variables for configuration.
 
-| Available variables | Description                                                                              | Example                                                                                                             | Default                         |
+| Available variables | Description | Example | Default |
 | ------------------- | ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- | ------------------------------- |
-| `LOGLEVEL`          | The application logging level                                                            | ERROR                                                                                                               | INFO                            |
-| `API_KEY`           | The API key to authenticate with                                                         | mysecret                                                                                                            | secret                          |
-| `PAGE_SIZE`         | The maximum number of resources returned in 1 response.                                  | 10                                                                                                                  | 100                             |
-| `BASE_PATH`         | The base path of all API endpoints                                                       | /api/v2                                                                                                             | /                               |
-| `DATA_PATH`         | File system path name                                                                    | /mnt/scim                                                                                                           | /tmp                            |
-| `MONGO_DB`          | Mongo connection string                                                                  | mongodb://user:password@mongo_host                                                                                  | mongodb://localhost:27017/      |
-| `DATABASE_URL`      | SQL Database connection string                                                           | postgresql://user:password@postrgres_host:5432/mydb<br />**or**<br /> mysql+pymysql://user:password@mysql_host/mydb | sqlite:///scim.sqlite           |
-| `JUMPCLOUD_URL`     | The API endpoint for JumpCloud                                                           | <https://console.jumpcloud.com>                                                                                     | <https://console.jumpcloud.com> |
-| `JUMPCLOUD_KEY`     | The API Key for your JumpCloud tenant                                                    | **value** of API key obtained from JumpCloud\_<br /><br />**Mandatory when JUMPCLOUD_URL is set**                   | None                            |
-| `FORWARD_SCIM_URL`  | Forward SCIM request to upstream SCIM server                                             | <https://example.com/v2/api>                                                                                        | None                            |
-| `FORWARD_SCIM_KEY`  | API KEY for **FORWARD_SCIM_URL** scim server. if not provided, **API_KEY** will be used  | <https://example.com/v2/api>                                                                                        | None                            |
-| `USER_MAPPING`      | A JSON string that specify how attribute values should be mapped to different attributes | '{"userName": "sram_user_extension.eduPersonUniqueId"}'                                                             | None                            |
-| `GROUP_MAPPING`     | A JSON string that specify how attribute values should be mapped to different attributes | '{"id": "displanNameuser_extension.eduPersonUniqueId"}'                                                             | None                            |
-| `AMQP        `     | (optional) the amqp address of the MQ Server to broadcast SCIM updates to | 'amqp://localhost'                               | None                            |
+| `LOGLEVEL` | The application logging level | ERROR | INFO |
+| `API_KEY` | The API key to authenticate with | mysecret | secret |
+| `PAGE_SIZE` | The maximum number of resources returned in 1 response. | 10 | 100 |
+| `BASE_PATH` | The base path of all API endpoints | /api/v2 | / |
+| `DATA_PATH` | File system path name | /mnt/scim | /tmp |
+| `MONGO_DB` | Mongo connection string | mongodb://user:password@mongo_host | |
+| `DATABASE_URL` | SQL Database connection string | postgresql://user:password@postrgres_host:5432/mydb<br />**or**<br /> mysql+pymysql://user:password@mysql_host/mydb | |
+| `JUMPCLOUD_URL` | The API endpoint for JumpCloud | <https://console.jumpcloud.com> | |
+| `JUMPCLOUD_KEY` | The API Key for your JumpCloud tenant | **value** of API key obtained from JumpCloud\_<br /><br />**Mandatory when JUMPCLOUD_URL is set** | |
+| `FORWARD_SCIM_URL` | Forward SCIM request to upstream SCIM server | <https://example.com/v2/api> | |
+| `FORWARD_SCIM_KEY` | API KEY for **FORWARD_SCIM_URL** scim server. if not provided, **API_KEY** will be used | my-secret-password | |
+| `USER_MAPPING` | A JSON string that specify how attribute values should be mapped to different attributes | '{"userName": "sram_user_extension.eduPersonUniqueId"} | |
+| `GROUP_MAPPING` | A JSON string that specify how attribute values should be mapped to different attributes | '{"id": "displanNameuser_extension.eduPersonUniqueId"} | |
+| `USER_MODEL_NAME` | User model name | myUsers | Users |
+| `GROUP_MODEL_NAME` | Group model name | myGroups | Groups |
+| `AMQP` | (optional) the amqp address of the MQ Server to broadcast SCIM updates to | 'amqp://localhost' | |
 
 
 ## Handling data
@@ -128,13 +130,13 @@ The data that is received by this SCIM server can be handled in different ways. 
 Suppose you have configured a MySQL database via the SQL Plugin configuration. Then your data will be persisted in 2 MySQL database tables **Users** and **Groups**.
 The structure of both tables are alike and have only 2 columnns
 
-| id                           | details                                                              |
+| id | details |
 | ---------------------------- | -------------------------------------------------------------------- |
 | unique uuid of this resource | this is a JSON datatype holding the data attributes of this resource |
 
 For example after a provisiong the data for **Users** contains:
 
-| id                                   | details                                                                                                                                                                                                                                                                                                  |
+| id | details  |
 | ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 613277a6-aa52-440e-b604-9bbd14343558 | {\"userName\": \"hkodden5\", \"active\": true, \"externalId\": \"<44cb3ba1-7a58-49af-961d-9a1253a26181@sram.surf.nl>\", \"name\": {\"familyName\": \"Kodden\", \"givenName\": \"Harry\"}, \"displayName\": \"Harry Kodden\", \"emails\": [{\"primary\": true, \"value\": \"harry.kodden@surf.nl\"}] ...} |
 
@@ -147,6 +149,6 @@ select id, details->'$.userName' as userName from Users where id = '613277a6-aa5
 
 will result in:
 
-| id                                   | userName   |
+| id | userName |
 | ------------------------------------ | ---------- |
 | 613277a6-aa52-440e-b604-9bbd14343558 | "hkodden5" |
