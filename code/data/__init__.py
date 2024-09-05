@@ -52,7 +52,8 @@ elif jumpcloud_url:
 elif scim_forward_url:
     from data.plugins.scim import SCIM_Forward_Plugin
 
-    Users = SCIM_Forward_Plugin(user_model,
+    Users = SCIM_Forward_Plugin(
+        user_model,
         scim_forward_url,
         scim_forward_key
     )
