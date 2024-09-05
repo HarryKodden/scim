@@ -39,15 +39,28 @@ elif database_url:
 elif jumpcloud_url:
     from data.plugins.jumpcloud import JumpCloudPlugin
 
-    Users = JumpCloudPlugin(user_model, jumpcloud_url, jumpcloud_key)
-    Groups = JumpCloudPlugin(group_model, jumpcloud_url, jumpcloud_key)
+    Users = JumpCloudPlugin(
+        user_model,
+        jumpcloud_url,
+        jumpcloud_key
+    )
+    Groups = JumpCloudPlugin(
+        group_model,
+        jumpcloud_url,
+        jumpcloud_key
+    )
 elif scim_forward_url:
     from data.plugins.scim import SCIM_Forward_Plugin
 
-    Users = SCIM_Forward_Plugin(user_model, 
-        scim_forward_url, scim_forward_key)
-    Groups = SCIM_Forward_Plugin(group_model,
-        scim_forward_url, scim_forward_key)
+    Users = SCIM_Forward_Plugin(user_model,
+        scim_forward_url,
+        scim_forward_key
+    )
+    Groups = SCIM_Forward_Plugin(
+        group_model,
+        scim_forward_url,
+        scim_forward_key
+    )
 else:
     from data.plugins.file import FilePlugin
 
