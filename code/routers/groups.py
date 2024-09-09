@@ -2,6 +2,8 @@
 
 from fastapi import APIRouter, Depends, Body, status, HTTPException, Query
 
+import traceback
+
 from schema import ListResponse, Group, Patch, GroupResource
 from typing import Any
 from auth import api_key_auth
@@ -38,8 +40,7 @@ def broadcast_group(operation: str, group: GroupResource) -> None:
             {
                 'resourceType': 'User',
                 'id': user.id,
-                'externalId': user.externalId 
-            
+                'externalId': user.externalId
             }
         )
 
@@ -49,7 +50,7 @@ def broadcast_group(operation: str, group: GroupResource) -> None:
             'resourceType': 'Group',
             'id': group.id,
             'externalId': group.externalId,
-            'members': members 
+            'members': members
         }
     )
 
