@@ -24,9 +24,10 @@ BASE_PATH = os.environ.get('BASE_PATH', '')
 PAGE_SIZE = int(os.environ.get('PAGE_SIZE', 100))
 
 
-def broadcast(resource_type: str, operation: str, id: int) -> None:
+def broadcast(resource_type: str, data: Any) -> None:
 
     AMQP = os.environ.get('AMQP', None)
+    QUEUE = os.environ.get('QUEUE_NAME', 'SCIM')
 
     if not AMQP:
         return
@@ -40,19 +41,17 @@ def broadcast(resource_type: str, operation: str, id: int) -> None:
 
     channel = connection.channel()
 
-    queue = f"SCIM-{resource_type}-{operation}".upper()
-
     channel.queue_declare(
-        queue=queue,
+        queue=QUEUE,
         durable=True
     )
 
-    logger.debug(f"Broadcasting: {queue}, id: {id}")
+    logger.debug(f"Broadcasting: {QUEUE}, data: {json.dumps(data)}")
 
     channel.basic_publish(
         exchange='',
-        routing_key=queue,
-        body=id
+        routing_key=QUEUE,
+        body=json.dumps(data)
     )
 
     connection.close()

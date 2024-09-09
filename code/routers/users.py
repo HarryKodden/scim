@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, Body, status, HTTPException, Query
 
 import traceback
 
-from schema import ListResponse, User, Patch
+from schema import ListResponse, User, Patch, UserResource
 from typing import Any
 from auth import api_key_auth
 
@@ -27,6 +27,17 @@ router = APIRouter(
     tags=["SCIM Users"],
     dependencies=[Depends(api_key_auth)]
 )
+
+
+def broadcast_user(operation: str, user: UserResource) -> None:
+    broadcast(
+        operation,
+        {
+            'resourceType': 'User',
+            'id': user.id,
+            'externalId': user.externalId
+        }
+    )
 
 
 @router.get("", response_class=SCIM_Response)
@@ -102,7 +113,7 @@ async def create_user(
     try:
         resource = put_user_resource(None, user)
 
-        broadcast("User", "Create", resource.id)
+        broadcast_user("Create", resource)
 
         return resource.model_dump(by_alias=True, exclude_none=True)
     except Exception as e:
@@ -148,7 +159,7 @@ async def update_user(id: str, user: User):
         if not resource:
             raise Exception(f"User {id} not found")
 
-        broadcast("user", "Update", id)
+        broadcast_user("Update", resource)
 
         return resource.model_dump(by_alias=True, exclude_none=True)
 
@@ -161,8 +172,8 @@ async def delete_user(id: str):
     """ Delete a User Resource """
     resource = get_user_resource(id)
     if resource:
+        broadcast_user("Delete", resource)
         del_user_resource(id)
-        broadcast("User", "Delete", id)
 
 
 @router.patch("/{id}", response_class=SCIM_Response)
@@ -180,7 +191,7 @@ async def patch_user(id: str, patch: Patch):
 
         user = put_user_resource(id, User(**resource))
 
-        broadcast("User", "Update", id)
+        broadcast_user("Update", user)
 
         return user.model_dump(by_alias=True, exclude_none=True)
     except Exception as e:

@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter, Depends, Body, status, HTTPException, Query
 
-from schema import ListResponse, Group, Patch
+from schema import ListResponse, Group, Patch, GroupResource
 from typing import Any
 from auth import api_key_auth
 
@@ -10,6 +10,8 @@ from routers import BASE_PATH, PAGE_SIZE, \
     get_all_resources, resource_exists, patch_resource, \
     SCIM_Route, SCIM_Response, \
     broadcast
+
+from data.users import get_user_resource
 
 from data.groups import \
     get_group_resource, \
@@ -25,6 +27,31 @@ router = APIRouter(
     tags=["SCIM Groups"],
     dependencies=[Depends(api_key_auth)]
 )
+
+
+def broadcast_group(operation: str, group: GroupResource) -> None:
+
+    members = []
+    for m in group.members:
+        user = get_user_resource(m.value)
+        members.append(
+            {
+                'resourceType': 'User',
+                'id': user.id,
+                'externalId': user.externalId 
+            
+            }
+        )
+
+    broadcast(
+        operation,
+        {
+            'resourceType': 'Group',
+            'id': group.id,
+            'externalId': group.externalId,
+            'members': members 
+        }
+    )
 
 
 @router.get("", response_class=SCIM_Response)
@@ -83,10 +110,11 @@ async def create_group(
     try:
         resource = put_group_resource(None, group)
 
-        broadcast("Group", "Create", resource.id)
+        broadcast_group("Create", resource)
 
         return resource.model_dump(by_alias=True, exclude_none=True)
     except Exception as e:
+        logger.error(f"[CREATE_GROUP] {str(e)}, {traceback.format_exc()}")
         raise HTTPException(status_code=404, detail=f"Error: {str(e)}")
 
 
@@ -119,7 +147,7 @@ async def update_group(id: str, group: Group):
         if not resource:
             raise Exception(f"Group {id} not found")
 
-        broadcast("Group", "Update", id)
+        broadcast_group("Update", resource)
 
         return resource.model_dump(by_alias=True, exclude_none=True)
     except Exception as e:
@@ -131,8 +159,8 @@ async def delete_group(id: str):
     """ Delete a Group Resource"""
     resource = get_group_resource(id)
     if resource:
+        broadcast_group("Delete", resource)
         del_group_resource(id)
-        broadcast("Group", "Delete", id)
 
 
 @router.patch("/{id}", response_class=SCIM_Response)
@@ -150,7 +178,7 @@ async def patch_group(id: str, patch: Patch):
 
         group = put_group_resource(id, Group(**resource))
 
-        broadcast("Group", "Update", id)
+        broadcast_group("Update", group)
 
         return group.model_dump(by_alias=True, exclude_none=True)
 

@@ -119,6 +119,7 @@ This image uses environment variables for configuration.
 | `USER_MODEL_NAME` | User model name | myUsers | Users |
 | `GROUP_MODEL_NAME` | Group model name | myGroups | Groups |
 | `AMQP` | (optional) the amqp address of the MQ Server to broadcast SCIM updates to | 'amqp://localhost' | |
+| `QUEUE` | (optional) the amqp queue name to broadcast SCIM updates to | 'SCIM' | |
 
 
 ## Handling data
