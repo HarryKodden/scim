@@ -31,7 +31,6 @@ router = APIRouter(
 
 def broadcast_user(operation: str, user: UserResource) -> None:
     broadcast(
-        operation,
         {
             'operation': operation,
             'resourceType': 'User',
