@@ -45,8 +45,8 @@ def broadcast_group(operation: str, group: GroupResource) -> None:
         )
 
     broadcast(
-        operation,
         {
+            'operation': operation,
             'resourceType': 'Group',
             'id': group.id,
             'externalId': group.externalId,

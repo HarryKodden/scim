@@ -24,7 +24,7 @@ BASE_PATH = os.environ.get('BASE_PATH', '')
 PAGE_SIZE = int(os.environ.get('PAGE_SIZE', 100))
 
 
-def broadcast(resource_type: str, data: Any) -> None:
+def broadcast(data: Any) -> None:
 
     AMQP = os.environ.get('AMQP', None)
     QUEUE = os.environ.get('QUEUE_NAME', 'SCIM')
