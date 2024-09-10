@@ -226,17 +226,6 @@ During successful deletion of the SCIM resource, the notification consist of thi
 
 Note: The reported **id** can not be read anymore, since it will no longer exists. The value of the **id** should only be used to inspect possible use as a foreign key value.
 
-### Delete of User Resource
-
-```json
-{
-  "operation": "Delete",
-  "resourceType": "User",
-  "id": "3ea25126-78a6-4d5e-9246-fa100e4cff10",
-  "externalId": "c601d601-4a54-498a-9c45-f98882050733@sram.surf.nl"
-}
-```
-
 ### Delete of Group Resource
 
 ```json
@@ -252,5 +241,16 @@ Note: The reported **id** can not be read anymore, since it will no longer exist
       "externalId": "c601d601-4a54-498a-9c45-f98882050733@sram.surf.nl"
     }
   ]
+}
+```
+
+### Delete of User Resource
+
+```json
+{
+  "operation": "Delete",
+  "resourceType": "User",
+  "id": "3ea25126-78a6-4d5e-9246-fa100e4cff10",
+  "externalId": "c601d601-4a54-498a-9c45-f98882050733@sram.surf.nl"
 }
 ```
