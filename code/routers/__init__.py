@@ -27,7 +27,7 @@ PAGE_SIZE = int(os.environ.get('PAGE_SIZE', 100))
 def broadcast(data: Any) -> None:
 
     AMQP = os.environ.get('AMQP', None)
-    QUEUE = os.environ.get('QUEUE_NAME', 'SCIM')
+    QUEUE = os.environ.get('QUEUE', 'SCIM')
 
     if not AMQP:
         return
@@ -51,7 +51,10 @@ def broadcast(data: Any) -> None:
     channel.basic_publish(
         exchange='',
         routing_key=QUEUE,
-        body=json.dumps(data)
+        body=json.dumps(data),
+        properties=pika.BasicProperties(
+            delivery_mode=2,  # Make message persistent
+        )
     )
 
     connection.close()
