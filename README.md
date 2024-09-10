@@ -119,7 +119,7 @@ This image uses environment variables for configuration.
 | `USER_MODEL_NAME` | User model name | myUsers | Users |
 | `GROUP_MODEL_NAME` | Group model name | myGroups | Groups |
 | `AMQP` | (optional) the amqp address of the MQ Server to broadcast SCIM updates to | 'amqp://localhost' | |
-| `QUEUE` | (optional) the amqp queue name to broadcast SCIM updates to | 'SCIM' | |
+| `QUEUE` | (optional) the amqp queue name to broadcast SCIM updates to | | 'SCIM' |
 
 
 ## Handling data
@@ -153,3 +153,104 @@ will result in:
 | id | userName |
 | ------------------------------------ | ---------- |
 | 613277a6-aa52-440e-b604-9bbd14343558 | "hkodden5" |
+
+# AMQP
+
+Optionally a AMQP endpoint can be configured to which incoming SCIM updates will be reported. The data to this notification mechanism consist of the following details:
+
+## Incoming Create/Update operation
+
+During successful creation of the SCIM resource, the notification consists of this payload
+
+### Create of User Resource
+
+```json
+{
+  "operation": "Create",
+  "resourceType": "User",
+  "id": "3ea25126-78a6-4d5e-9246-fa100e4cff10",
+  "externalId": "c601d601-4a54-498a-9c45-f98882050733@sram.surf.nl"
+}
+```
+
+### Create of Group Resource
+
+```json
+{
+  "operation": "Create",
+  "resourceType": "Group",
+  "id": "3c7f1338-c131-425a-9a94-2a2f08440820",
+  "externalId": "e46e388c-9362-4aaa-b23f-a855bf559598@sram.surf.nl",
+  "members": [
+    {
+      "resourceType": "User",
+      "id": "3ea25126-78a6-4d5e-9246-fa100e4cff10",
+      "externalId": "c601d601-4a54-498a-9c45-f98882050733@sram.surf.nl"
+    }
+  ]
+}
+```
+
+### Update of User Resource
+
+```json
+{
+  "operation": "Update",
+  "resourceType": "User",
+  "id": "3ea25126-78a6-4d5e-9246-fa100e4cff10",
+  "externalId": "c601d601-4a54-498a-9c45-f98882050733@sram.surf.nl"
+}
+```
+
+### Update of Group Resource
+
+```json
+{
+  "operation": "Update",
+  "resourceType": "Group",
+  "id": "3c7f1338-c131-425a-9a94-2a2f08440820",
+  "externalId": "e46e388c-9362-4aaa-b23f-a855bf559598@sram.surf.nl",
+  "members": [
+    {
+      "resourceType": "User",
+      "id": "3ea25126-78a6-4d5e-9246-fa100e4cff10",
+      "externalId": "c601d601-4a54-498a-9c45-f98882050733@sram.surf.nl"
+    }
+  ]
+}
+```
+
+## Incoming Delete operation
+
+During successful deletion of the SCIM resource, the notification consist of this payload.
+
+Note: The reported **id** can not be read anymore, since it will no longer exists. The value of the **id** should only be used to inspect possible use as a foreign key value.
+
+### Delete of User Resource
+
+```json
+{
+  "operation": "Delete",
+  "resourceType": "User",
+  "id": "3ea25126-78a6-4d5e-9246-fa100e4cff10",
+  "externalId": "c601d601-4a54-498a-9c45-f98882050733@sram.surf.nl"
+}
+```
+
+### Delete of Group Resource
+
+```json
+{
+  "operation": "Update",
+  "resourceType": "Group",
+  "id": "3c7f1338-c131-425a-9a94-2a2f08440820",
+  "externalId": "e46e388c-9362-4aaa-b23f-a855bf559598@sram.surf.nl",
+  "members": [
+    {
+      "resourceType": "User",
+      "id": "3ea25126-78a6-4d5e-9246-fa100e4cff10",
+      "externalId": "c601d601-4a54-498a-9c45-f98882050733@sram.surf.nl"
+    }
+  ]
+}
+```
