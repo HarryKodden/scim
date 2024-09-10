@@ -230,7 +230,7 @@ Note: The reported **id** can not be read anymore, since it will no longer exist
 
 ```json
 {
-  "operation": "Update",
+  "operation": "Delete",
   "resourceType": "Group",
   "id": "3c7f1338-c131-425a-9a94-2a2f08440820",
   "externalId": "e46e388c-9362-4aaa-b23f-a855bf559598@sram.surf.nl",
