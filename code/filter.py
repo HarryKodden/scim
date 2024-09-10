@@ -39,7 +39,6 @@ class Evaluator(NodeVisitor):
 
         if node.namespace:
             self.namespace = self.visit(node.namespace)
-            logger.debug(f"[NAMESPACE CHANGE] {self.namespace}")
 
         result = self.visit(node.expr)
 
@@ -65,27 +64,36 @@ class Evaluator(NodeVisitor):
         logger.debug(f"[VALUE] '{value}'")
         logger.debug(f"[OP] '{op}'")
 
-        def expression(op, attribute, value):
+        def attr_data(data, attr):
+            s = attr.rfind(':')
+            attr = attr[:s] + attr[s:].replace('.', '~')
+
+            for i in attr.split('~'):
+                data = data.get(i)
+
+            return data
+
+        def expression(op, data, value):
             if op == 'eq':
-                return attribute == value
+                return data == value
             elif op == 'ne':
-                return attribute != value
+                return data != value
             elif op == 'co':
-                return value in attribute
+                return value in data
             elif op == 'sw':
-                return attribute.startswith(value)
+                return data.startswith(value)
             elif op == 'ew':
-                return attribute.endswith(value)
+                return data.endswith(value)
             elif op == 'pr':
-                return attribute
+                return data
             elif op == 'gt':
-                return attribute > value
+                return data > value
             elif op == 'ge':
-                return attribute >= value
+                return data >= value
             elif op == 'lt':
-                return attribute < value
+                return data < value
             elif op == 'le':
-                return attribute <= value
+                return data <= value
             else:
                 raise ValueError(f"Unknwown opcode {op}")
 
@@ -99,10 +107,10 @@ class Evaluator(NodeVisitor):
         try:
             if isinstance(data, list):
                 for item in data:
-                    if expression(op, item.get(attr), value):
+                    if expression(op, attr_data(item, attr), value):
                         return True
             else:
-                if expression(op, data.get(attr), value):
+                if expression(op, attr_data(data, attr), value):
                     return True
         except Exception as e:
             logger.error(f"[FILTER] '{str(e)}'")
@@ -114,10 +122,15 @@ class Evaluator(NodeVisitor):
         return node.value
 
     def visit_AttrPath(self, node):
+        attr = node.attr_name
+
+        if node.uri:
+            attr = f"{node.uri}:{attr}"
+
         if node.sub_attr:
-            return f"{node.attr_name}.{self.visit(node.sub_attr)}"
-        else:
-            return node.attr_name
+            attr = f"{attr}.{self.visit(node.sub_attr)}"
+
+        return attr
 
     def visit_CompValue(self, node):
         logger.debug(f"[EVALUATE] Visit CompValue: {node.value}...")
