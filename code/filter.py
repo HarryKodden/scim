@@ -19,6 +19,7 @@ class Evaluator(NodeVisitor):
     def __init__(self, ast, *args, **kwargs):
         self.ast = ast
         self.resource = None
+        self.namespace = None
 
         super().__init__(*args, **kwargs)
 
@@ -35,6 +36,11 @@ class Evaluator(NodeVisitor):
             f" negated: {node.negated},"
             f" namespace {node.namespace}"
         )
+
+        if node.namespace:
+            self.namespace = self.visit(node.namespace)
+            logger.debug(f"[NAMESPACE CHANGE] {self.namespace}")
+
         result = self.visit(node.expr)
 
         if node.negated:
@@ -49,58 +55,69 @@ class Evaluator(NodeVisitor):
             f" value: {node.value}, "
             f"path: {node.attr_path}"
         )
+
         attr = self.visit(node.attr_path)
         value = self.visit(node.comp_value)
         op = node.value.lower()
 
+        logger.debug(f"[NAMESPACE] '{self.namespace}'")
         logger.debug(f"[ATTR] '{attr}'")
         logger.debug(f"[VALUE] '{value}'")
         logger.debug(f"[OP] '{op}'")
 
-        if op == 'eq':
-            return attr == value
-        elif op == 'ne':
-            return attr != value
-        elif op == 'co':
-            return value in attr
-        elif op == 'sw':
-            return attr.startswith(value)
-        elif op == 'ew':
-            return attr.endswith(value)
-        elif op == 'pr':
-            return attr
-        elif op == 'gt':
-            return attr > value
-        elif op == 'ge':
-            return attr >= value
-        elif op == 'lt':
-            return attr < value
-        elif op == 'le':
-            return attr <= value
+        def expression(op, attribute, value):
+            if op == 'eq':
+                return attribute == value
+            elif op == 'ne':
+                return attribute != value
+            elif op == 'co':
+                return value in attribute
+            elif op == 'sw':
+                return attribute.startswith(value)
+            elif op == 'ew':
+                return attribute.endswith(value)
+            elif op == 'pr':
+                return attribute
+            elif op == 'gt':
+                return attribute > value
+            elif op == 'ge':
+                return attribute >= value
+            elif op == 'lt':
+                return attribute < value
+            elif op == 'le':
+                return attribute <= value
+            else:
+                raise ValueError(f"Unknwown opcode {op}")
+
+        if self.namespace:
+            data = self.resource.get(self.namespace)
         else:
-            raise ValueError(f"Unknwown opcode {op}")
+            data = self.resource
+
+        logger.debug(f"[DATA] '{data}'")
+
+        try:
+            if isinstance(data, list):
+                for item in data:
+                    if expression(op, item.get(attr), value):
+                        return True
+            else:
+                if expression(op, data.get(attr), value):
+                    return True
+        except Exception as e:
+            logger.error(f"[FILTER] '{str(e)}'")
+
+        return False
 
     def visit_SubAttr(self, node):
         logger.debug(f"[EVALUATE] Visit SubAttr: {node.value}")
         return node.value
 
     def visit_AttrPath(self, node):
-        if not self.resource:
-            raise Exception("No resource provided")
-
         if node.sub_attr:
-            logger.debug(
-                "[EVALUATE] Visit SubPath: "
-                f"{node.uri}:{node.attr_name}"
-            )
-            return self.resource.get(
-                    f"{node.uri}:{node.attr_name}"
-                ).get(
-                    self.visit(node.sub_attr)
-                )
+            return f"{node.attr_name}.{self.visit(node.sub_attr)}"
         else:
-            logger.debug(f"[EVALUATE] Visit AttrPath: {node.attr_name}")
-            return self.resource.get(node.attr_name)
+            return node.attr_name
 
     def visit_CompValue(self, node):
         logger.debug(f"[EVALUATE] Visit CompValue: {node.value}...")
