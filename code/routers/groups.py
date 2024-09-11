@@ -15,8 +15,6 @@ from routers import BASE_PATH, PAGE_SIZE, \
     SCIM_Route, SCIM_Response, \
     broadcast
 
-from data.users import get_user_resource
-
 from data.groups import \
     get_group_resource, \
     put_group_resource, \
