@@ -157,100 +157,33 @@ will result in:
 # AMQP
 
 Optionally a AMQP endpoint can be configured to which incoming SCIM updates will be reported. The data to this notification mechanism consist of the following details:
+* operation (Create/Update/Delete)
+* resource (Either User or Group Resource)
 
-## Incoming Create/Update operation
-
-During successful creation of the SCIM resource, the notification consists of this payload
-
-### Create of User Resource
+Example:
 
 ```json
 {
   "operation": "Create",
-  "resourceType": "User",
-  "id": "3ea25126-78a6-4d5e-9246-fa100e4cff10",
-  "externalId": "c601d601-4a54-498a-9c45-f98882050733@sram.surf.nl"
-}
-```
-
-### Create of Group Resource
-
-```json
-{
-  "operation": "Create",
-  "resourceType": "Group",
-  "id": "3c7f1338-c131-425a-9a94-2a2f08440820",
-  "externalId": "e46e388c-9362-4aaa-b23f-a855bf559598@sram.surf.nl",
-  "members": [
-    {
-      "resourceType": "User",
-      "id": "3ea25126-78a6-4d5e-9246-fa100e4cff10",
-      "externalId": "c601d601-4a54-498a-9c45-f98882050733@sram.surf.nl"
+  "resource": {
+    "displayName": "service_group_mail_name",
+    "externalId": "9946ca40-2a53-40a8-bc63-fb0758e716e3@sram.surf.nl",
+    "members": [],
+    "urn:mace:surf.nl:sram:scim:extension:Group": {
+      "description": "Provisioned by service Mail Services - Mail group",
+      "urn": "uuc:ai_computing:mail-mail"
+    },
+    "schemas": [
+      "urn:ietf:params:scim:schemas:core:2.0:Group",
+      "urn:mace:surf.nl:sram:scim:extension:Group"
+    ],
+    "id": "e3e7f74e-fa90-46c9-995f-567494761128",
+    "meta": {
+      "created": "2024-09-11T09:33:36.571617",
+      "lastModified": "2024-09-11T09:33:36.571831",
+      "location": "/Groups/e3e7f74e-fa90-46c9-995f-567494761128",
+      "resourceType": "Group"
     }
-  ]
-}
-```
-
-### Update of User Resource
-
-```json
-{
-  "operation": "Update",
-  "resourceType": "User",
-  "id": "3ea25126-78a6-4d5e-9246-fa100e4cff10",
-  "externalId": "c601d601-4a54-498a-9c45-f98882050733@sram.surf.nl"
-}
-```
-
-### Update of Group Resource
-
-```json
-{
-  "operation": "Update",
-  "resourceType": "Group",
-  "id": "3c7f1338-c131-425a-9a94-2a2f08440820",
-  "externalId": "e46e388c-9362-4aaa-b23f-a855bf559598@sram.surf.nl",
-  "members": [
-    {
-      "resourceType": "User",
-      "id": "3ea25126-78a6-4d5e-9246-fa100e4cff10",
-      "externalId": "c601d601-4a54-498a-9c45-f98882050733@sram.surf.nl"
-    }
-  ]
-}
-```
-
-## Incoming Delete operation
-
-During successful deletion of the SCIM resource, the notification consist of this payload.
-
-Note: The reported **id** can not be read anymore, since it will no longer exists. The value of the **id** should only be used to inspect possible use as a foreign key value.
-
-### Delete of Group Resource
-
-```json
-{
-  "operation": "Delete",
-  "resourceType": "Group",
-  "id": "3c7f1338-c131-425a-9a94-2a2f08440820",
-  "externalId": "e46e388c-9362-4aaa-b23f-a855bf559598@sram.surf.nl",
-  "members": [
-    {
-      "resourceType": "User",
-      "id": "3ea25126-78a6-4d5e-9246-fa100e4cff10",
-      "externalId": "c601d601-4a54-498a-9c45-f98882050733@sram.surf.nl"
-    }
-  ]
-}
-```
-
-### Delete of User Resource
-
-```json
-{
-  "operation": "Delete",
-  "resourceType": "User",
-  "id": "3ea25126-78a6-4d5e-9246-fa100e4cff10",
-  "externalId": "c601d601-4a54-498a-9c45-f98882050733@sram.surf.nl"
+  }
 }
 ```

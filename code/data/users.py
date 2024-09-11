@@ -33,7 +33,9 @@ def get_user_resources(filter: Filter) -> [Any]:
         resource = get_user_resource(id)
         if filter.match(resource):
             result.append(
-                resource.model_dump(by_alias=True, exclude_none=True)
+                json.loads(
+                    resource.model_dump_json(by_alias=True, exclude_none=True)
+                )
             )
 
     return result

@@ -34,7 +34,9 @@ def get_group_resources(filter: Filter) -> [Any]:
         resource = get_group_resource(id)
         if filter.match(resource):
             result.append(
-                resource.model_dump(by_alias=True, exclude_none=True)
+                json.loads(
+                    resource.model_dump_json(by_alias=True, exclude_none=True)
+                )
             )
 
     return result
@@ -92,3 +94,14 @@ def put_group_resource(id: str, group: Group) -> GroupResource:
     Groups[id] = resource.model_dump_json(by_alias=True, exclude_none=True)
 
     return get_group_resource(id)
+
+
+def remove_member(group: GroupResource, id) -> bool:
+    for i in range(len(group.members or [])):
+        if group.members[i].value == id:
+            group.members = group.members[:i] + group.members[i+1:]
+            Groups[group.id] = group.model_dump_json(
+                by_alias=True, exclude_none=True
+            )
+            return True
+    return False

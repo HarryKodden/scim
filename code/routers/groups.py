@@ -1,5 +1,7 @@
 # routers/groups.py
 
+import json
+
 from fastapi import APIRouter, Depends, Body, status, HTTPException, Query
 
 import traceback
@@ -33,24 +35,12 @@ router = APIRouter(
 
 def broadcast_group(operation: str, group: GroupResource) -> None:
 
-    members = []
-    for m in group.members:
-        user = get_user_resource(m.value)
-        members.append(
-            {
-                'resourceType': 'User',
-                'id': user.id,
-                'externalId': user.externalId
-            }
-        )
-
     broadcast(
         {
             'operation': operation,
-            'resourceType': 'Group',
-            'id': group.id,
-            'externalId': group.externalId,
-            'members': members
+            'resource': json.loads(
+                group.model_dump_json(by_alias=True, exclude_none=True)
+            )
         }
     )
 

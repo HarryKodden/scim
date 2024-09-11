@@ -1,10 +1,13 @@
 # routers/users.py
 
+import json
+
 from fastapi import APIRouter, Depends, Body, status, HTTPException, Query
+from pydantic_core import from_json
 
 import traceback
 
-from schema import ListResponse, User, Patch, UserResource
+from schema import ListResponse, User, Patch, UserResource, GroupResource
 from typing import Any
 from auth import api_key_auth
 
@@ -12,6 +15,12 @@ from routers import BASE_PATH, PAGE_SIZE, \
     get_all_resources, resource_exists, patch_resource, \
     SCIM_Route, SCIM_Response, \
     broadcast
+
+# Needed to update groups when User resource is deleted
+# which is a member of a group
+from data.groups import get_group_resources, remove_member
+from routers.groups import broadcast_group
+from filter import Filter
 
 from data.users import \
     get_user_resource, \
@@ -33,9 +42,9 @@ def broadcast_user(operation: str, user: UserResource) -> None:
     broadcast(
         {
             'operation': operation,
-            'resourceType': 'User',
-            'id': user.id,
-            'externalId': user.externalId
+            'resource': json.loads(
+                user.model_dump_json(by_alias=True, exclude_none=True)
+            )
         }
     )
 
@@ -172,6 +181,18 @@ async def delete_user(id: str):
     """ Delete a User Resource """
     resource = get_user_resource(id)
     if resource:
+        groups = get_group_resources(Filter(f"members[value eq \"{id}\"]"))
+        for g in groups:
+            logger.debug(f"[GROUP]: {g}")
+
+            group = GroupResource.model_validate(
+                from_json(
+                    json.dumps(g)
+                )
+            )
+            if remove_member(group, id):
+                broadcast_group("Update", group)
+
         broadcast_user("Delete", resource)
         del_user_resource(id)
 
