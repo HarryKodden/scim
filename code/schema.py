@@ -79,6 +79,7 @@ class SRAM_User_Extension(BaseModel):
     eduPersonUniqueId: Optional[str] = None
     voPersonExternalAffiliation: Optional[str] = None
     voPersonExternalId: Optional[str] = None
+    sramInactiveDays: Optional[int] = None
 
 #   class Config:
 #       title = "SRAM User Extension"
