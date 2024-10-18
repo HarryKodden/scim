@@ -187,3 +187,14 @@ Example:
   }
 }
 ```
+
+## CI/CD
+
+Committing changes to this repository initiates the CI pipeline that will result in a docker image creation and uploading to dockerhub.
+
+For CD the **argo** is supported to automatacally refresh the application in your kubernetes cluster.
+Assuming you have **argo** running in your cluster, just apply thius manifest:
+
+```
+kubectl apply -f argo/application.yaml
+```
