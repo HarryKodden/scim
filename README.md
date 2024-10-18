@@ -196,5 +196,5 @@ For CD the **argo** is supported to automatacally refresh the application in you
 Assuming you have **argo** running in your cluster, just apply thius manifest:
 
 ```
-kubectl apply -f argo/application.yaml
+kubectl apply -f argocd/application.yaml
 ```
