@@ -1,5 +1,6 @@
 from typing import Any
 import uuid
+import os
 
 
 class Plugin(object):
@@ -7,6 +8,9 @@ class Plugin(object):
     you must define the methods that all of your plugins must implement
     """
 
+    USERS = os.environ.get("USER_model_name", "Users")
+    GROUPS = os.environ.get("GROUP_model_name", "Groups")
+    
     def __init__(self):
         self.description = 'UNKNOWN'
 

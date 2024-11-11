@@ -30,9 +30,11 @@ scim_forward_key = os.environ.get(
     os.environ.get("API_KEY", "secret")
 )
 
-# Datamodels for Users & Groups
-user_model = os.environ.get("USER_model_name", "Users")
-group_model = os.environ.get("GROUP_model_name", "Groups")
+from data.plugins import Plugin
+
+user_model = Plugin().USERS
+group_model = Plugin().GROUPS
+
 
 if ldap_hostname:
     from data.plugins.ldap import LDAP_Plugin

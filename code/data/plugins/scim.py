@@ -103,7 +103,7 @@ class SCIM_Forward_Plugin(Plugin):
 
         members = []
 
-        if self.resource_type == 'Groups':
+        if self.resource_type == self.GROUPS:
             members = data.pop('members', [])
             data['members'] = []
 

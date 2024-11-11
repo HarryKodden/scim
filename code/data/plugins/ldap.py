@@ -21,38 +21,36 @@ class LDAP_Plugin(Plugin):
         self.resource_type = resource_type
         self.description = f'LDAP-{resource_type}'
 
-        if resource_type == 'Users':
+        if resource_type == self.USERS:
             self.resource_dn = self.user_dn()
-        if resource_type == 'Groups':
+        if resource_type == self.GROUPS:
             self.resource_dn = self.group_dn()
                 
         logger.info("Connectinto to LDAP...")
         
         # Establish connection with LDAP...
         try:
-            s = Server(ldap_hostname, get_info=ALL)
+            server = Server(ldap_hostname, get_info=ALL)
 
-            self.session = Connection(s, user=ldap_username, password=ldap_password)
+            self.session = Connection(server, user=ldap_username, password=ldap_password)
             if not self.session.bind():
                raise("Exception during bind")
 
             logger.debug("LDAP Connected !")
-            logger.info(s.info)
+            logger.info(server.info)
         except Exception as e:
             logger.error("Problem connecting to LDAP {} error: {}".format(ldap_hostname, str(e)))
 
         self.document_def = ObjectDef(['document', 'extensibleObject'], self.session)
         self.document_def += AttrDef('info')
 
-        if self.resource_type == 'Users':
+        if self.resource_type == self.USERS:
             self.document_def += AttrDef('uid')
             self.document_def += AttrDef('displayName')
-            self.document_def += AttrDef('sn')
-            self.document_def += AttrDef('givenName')
             self.document_def += AttrDef('email')
             self.document_def += AttrDef('sshPublicKey')
             
-        if  self.resource_type == 'Groups':
+        if  self.resource_type == self.GROUPS:
             self.document_def += AttrDef('displayName')
             self.document_def += AttrDef('member')
 
@@ -79,7 +77,6 @@ class LDAP_Plugin(Plugin):
         return self
 
     def __exit__(self, exception_type, exception_value, traceback):
-        logger
         self.session.unbind()
 
     def search(self, 
@@ -102,17 +99,16 @@ class LDAP_Plugin(Plugin):
         for i in g:
             result[i['dn']] = i['attributes']
 
-        logger.info(result)
-
         return result
 
     def __iter__(self) -> Any:
         logger.debug(f"[__iter__]: {self.description}")
 
-        reader = Reader(self.session, self.document_def, self.resource_dn).search()
+        reader = Reader(self.session, self.document_def, self.resource_dn)
+        reader.search()
 
-        for entry in self.session.entries:
-            yield entry.documentIdentifier
+        for record in reader:
+            yield record.documentIdentifier
                 
     def __delitem__(self, id: str) -> None:
         logger.debug(f"[__delitem__]: {self.description}, id={id}")
@@ -122,48 +118,44 @@ class LDAP_Plugin(Plugin):
     def read_resource(self, dn) -> Any:
         logger.debug(f"[read_resource]: {dn}")
         
-        r = Reader(self.session, self.document_def, dn).search()
+        reader = Reader(self.session, self.document_def, dn)
+        reader.search()
         
-        if len(r) == 0:
-            raise Exception(f"Entry '{dn}' not found")
+        if len(reader) == 0:
+            raise Exception(f"record '{dn}' not found")
         
-        entry = r[0]
+        record = reader[0]
         
-        resource = json.loads(str(entry.info))
+        resource = json.loads(record.info.value)
         
-        resource['id'] = str(entry.documentIdentifier)
-        resource['displayName'] = str(entry.displayname) or '???'
+        resource['id'] = record.documentIdentifier.value
+        resource['displayName'] = record.displayname.value
              
-        if self.resource_type == 'Users':
-            resource['userName'] = str(entry.uid) or '???'
-                         
-            resource['name'] = {
-                'familyName': str(entry.sn),
-                'givenName': str(entry.givenName)
-            }
-            
-            if 'email' in entry:
+        if self.resource_type == self.USERS:
+            resource['userName'] = record.uid.value
+                                     
+            if 'email' in record:
                 primary = True
-                for email in entry.email:
+                for email in record.email:
                     resource.setdefault('emails', []).append(
                         {
                             "primary": primary,
-                            "value": str(email)
+                            "value": email
                         }
                     )
                     primary = False
                     
-            if 'sshPublicKey' in entry:
-                for sshPublicKey in entry.sshPublicKey:
+            if 'sshPublicKey' in record:
+                for sshPublicKey in record.sshPublicKey:
                     resource.setdefault('x509Certificates', []).append(
                         {
-                            "value": str(sshPublicKey)
+                            "value": sshPublicKey
                         }
                     )
 
-        if self.resource_type == 'Groups':
-            if 'member' in entry:
-                for dn in entry.member:
+        if self.resource_type == self.GROUPS:
+            if 'member' in record:
+                for dn in record.member:
                     member = self.read_resource(dn)
                     resource.setdefault('members', []).append(
                         {
@@ -173,7 +165,7 @@ class LDAP_Plugin(Plugin):
                         }
                     )
         
-        logger.info(resource)
+        logger.debug(resource)
         
         return resource
     
@@ -182,39 +174,39 @@ class LDAP_Plugin(Plugin):
 
         logger.debug(f"[write_resource]: {id} --> {dn}")
 
-        writer = Writer(self.session, self.document_def, self.resource_dn)
-        
-        entry = writer.new(dn)
+        reader = Reader(self.session, self.document_def, dn)
+        reader.search()
+        writer = Writer.from_cursor(reader)
 
-        entry.documentIdentifier = id
+        if len(writer) == 0:
+            record = writer.new(dn)
+        else:
+            record = writer[0]
 
-        if self.resource_type == 'Users':
-            entry.uid = resource.pop('userName')
-            entry.displayName = resource.pop('displayName')
+        record.documentIdentifier = id
+
+        if self.resource_type == self.USERS:
+            record.uid = resource.pop('userName')
+            record.displayName = resource.pop('displayName')
             
-            entry.email.discard()
-            for email in resource.pop('emails', []):
-                entry.email += email.get('value')
+            emails = resource.pop('emails', [])
+            if len(emails) > 0:
+                record.email = [email['value'] for email in emails]
                 
-            entry.sshPublicKey.discard()
-            for pubkey in resource.pop('x509Certificates', []):
-                entry.sshPublicKey += pubkey.get('value')
+            pubkeys = resource.pop('x509Certificates', [])
+            if len(pubkeys) > 0:
+                record.sshPublicKey = [pubkey.get('value') for pubkey in pubkeys]
                 
-            name = resource.pop('name', {})
-            entry.sn = name.get('familyName', '')
-            entry.givenName = name.get('givenName', '')
-                    
-        if self.resource_type == 'Groups':
-            entry.displayName = resource.pop('displayName')
+        if self.resource_type == self.GROUPS:
+            record.displayName = resource.pop('displayName')
             
-            members = resource.pop('members')
-            entry.members.discard()
-            for m in members:
-                dn, _ = self.lookup(user_dn(), m['value'])
-                entry.members += dn
+            members = resource.pop('members', [])
+            if len(members):
+                record.member = [self.lookup(self.user_dn(), m['value']) for m in members]
 
-        entry.info = json.dumps(resource)
+        record.info = json.dumps(resource)
 
+        logger.debug(record)
         writer.commit()
 
     def lookup(self, base:str, id: str) -> str:
@@ -240,7 +232,8 @@ class LDAP_Plugin(Plugin):
         dn = self.lookup(self.resource_dn, id)
         
         if not dn:
-            raise Exception("Resource {id} does not exists")
+            logger.info(f"[__getitem__]: {self.description}, id={id} not found")
+            return None
         
         resource = self.read_resource(dn)
 
