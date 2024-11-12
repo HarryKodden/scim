@@ -97,6 +97,19 @@ class Plugin(object):
 
 For inspiration on how to do that, please take a look at the provided implementation examples. If you do want to contribute with a nice additional backend, please do not hesitate to submit a Pull Request.
 
+## Available Plugins...
+
+At this moment the following Plugin Options are implementated:
+
+* Flat Files (e.g. /tmp/Users/..., /tmp/Groups/...)
+* Relational Database (SQL)
+* MongoDB (No-SQL)
+* JumpCloud
+* SCIM (Proxy incomming SCIM requests to upstream SCIM Server)
+* LDAP
+
+The actual Plugin is selected by providing the corresponding envrionment variables, see below.
+
 ## Environment variables
 
 This image uses environment variables for configuration.
@@ -114,6 +127,10 @@ This image uses environment variables for configuration.
 | `JUMPCLOUD_KEY` | The API Key for your JumpCloud tenant | **value** of API key obtained from JumpCloud\_<br /><br />**Mandatory when JUMPCLOUD_URL is set** | |
 | `FORWARD_SCIM_URL` | Forward SCIM request to upstream SCIM server | <https://example.com/v2/api> | |
 | `FORWARD_SCIM_KEY` | API KEY for **FORWARD_SCIM_URL** scim server. if not provided, **API_KEY** will be used | my-secret-password | |
+| `LDAP_HOSTNAME` | Hostname or IP address of LDAP host | ldap.example.org | |
+| `LDAP_BASENAME` | Base name of tree in which the SCIM tree will be created | dc=example,dc=org | dc=example, + LDAP_BASENAME |
+| `LDAP_USERNAME` | bind user name | cn=admin,dc=example,dc=org | cn=admin,dc=example,dc=org |
+| `LDAP_PASSWORD` | bind password | | |
 | `USER_MAPPING` | A JSON string that specify how attribute values should be mapped to different attributes | '{"userName": "sram_user_extension.eduPersonUniqueId"} | |
 | `GROUP_MAPPING` | A JSON string that specify how attribute values should be mapped to different attributes | '{"id": "displanNameuser_extension.eduPersonUniqueId"} | |
 | `USER_MODEL_NAME` | User model name | myUsers | Users |

@@ -10,6 +10,7 @@ spec:
     repoURL: https://github.com/HarryKodden/scim.git
     targetRevision: HEAD
     path: helm
+
   destination: 
     server: https://kubernetes.default.svc
     namespace: scim

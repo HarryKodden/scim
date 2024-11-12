@@ -2,13 +2,19 @@
 
 import os
 
+from data.plugins import Plugin
+
 # Backend option: LDAP
 DEFAULT_LDAP_BASENAME = "dc=example,dc=org"
 
 ldap_hostname = os.environ.get("LDAP_HOSTNAME", None)
-ldap_username = os.environ.get("LDAP_USERNAME", f"cn=admin,{DEFAULT_LDAP_BASENAME}")
+ldap_basename = os.environ.get(
+    "LDAP_BASENAME", DEFAULT_LDAP_BASENAME
+)
+ldap_username = os.environ.get(
+    "LDAP_USERNAME", f"cn=admin,{DEFAULT_LDAP_BASENAME}"
+)
 ldap_password = os.environ.get("LDAP_PASSWORD", None)
-ldap_basename = os.environ.get("LDAP_BASENAME", DEFAULT_LDAP_BASENAME)
 
 # Backend option: Mongo DB
 mongo_db = os.environ.get("MONGO_DB", None)
@@ -30,8 +36,6 @@ scim_forward_key = os.environ.get(
     os.environ.get("API_KEY", "secret")
 )
 
-from data.plugins import Plugin
-
 user_model = Plugin().USERS
 group_model = Plugin().GROUPS
 
@@ -41,14 +45,19 @@ if ldap_hostname:
 
     def user_dn(cls):
         return f"ou={user_model},{ldap_basename}"
+
     def group_dn(cls):
         return f"ou={group_model},{ldap_basename}"
-    
+
     LDAP_Plugin.user_dn = classmethod(user_dn)
     LDAP_Plugin.group_dn = classmethod(group_dn)
-    
-    Users = LDAP_Plugin(user_model, ldap_hostname, ldap_username, ldap_password)
-    Groups = LDAP_Plugin(group_model, ldap_hostname, ldap_username, ldap_password)
+
+    Users = LDAP_Plugin(
+        user_model, ldap_hostname, ldap_username, ldap_password
+    )
+    Groups = LDAP_Plugin(
+        group_model, ldap_hostname, ldap_username, ldap_password
+    )
 
 elif mongo_db:
     from data.plugins.mongo import MongoPlugin

@@ -10,7 +10,7 @@ class Plugin(object):
 
     USERS = os.environ.get("USER_model_name", "Users")
     GROUPS = os.environ.get("GROUP_model_name", "Groups")
-    
+
     def __init__(self):
         self.description = 'UNKNOWN'
 
