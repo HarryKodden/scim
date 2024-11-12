@@ -5,10 +5,10 @@
 | Name                              |    Stmts |     Miss |   Cover |   Missing |
 |---------------------------------- | -------: | -------: | ------: | --------: |
 | code/auth.py                      |       12 |        0 |    100% |           |
-| code/data/\_\_init\_\_.py         |       29 |       12 |     59% |30-33, 35-38, 40-47, 53-60 |
+| code/data/\_\_init\_\_.py         |       45 |       21 |     53% |44-58, 63-66, 68-71, 73-80, 86-93 |
 | code/data/groups.py               |       61 |       12 |     80% |82-90, 100-107 |
-| code/data/plugins/\_\_init\_\_.py |       15 |        5 |     67% |11, 17, 20, 23, 26 |
-| code/data/plugins/file.py         |       32 |        0 |    100% |           |
+| code/data/plugins/\_\_init\_\_.py |       18 |        4 |     78% |21, 24, 27, 30 |
+| code/data/plugins/file.py         |       31 |        0 |    100% |           |
 | code/data/users.py                |       56 |       11 |     80% |45-49, 56, 86-94 |
 | code/filter.py                    |      124 |       32 |     74% |46, 81-98, 111, 115-116, 121-122, 128, 131, 138, 140, 142, 151, 155, 178-179 |
 | code/main.py                      |       34 |        5 |     85% |38-40, 76, 80 |
@@ -29,7 +29,7 @@
 | test/test\_schema.py              |       12 |        0 |    100% |           |
 | test/test\_user.py                |       60 |        0 |    100% |           |
 | test/test\_validation.py          |       10 |        0 |    100% |           |
-|                         **TOTAL** |  **939** |  **112** | **88%** |           |
+|                         **TOTAL** |  **957** |  **120** | **87%** |           |
 
 
 ## Setup coverage badge
