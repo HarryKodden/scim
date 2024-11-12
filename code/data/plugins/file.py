@@ -21,8 +21,10 @@ class FilePlugin(Plugin):
         self.resource_type = resource_type
         self.description = 'FILE STORAGE'
 
-        Path(f"{self.data_path}/Users").mkdir(parents=True, exist_ok=True)
-        Path(f"{self.data_path}/Groups").mkdir(parents=True, exist_ok=True)
+        Path(f"{self.data_path}/{resource_type}").mkdir(
+            parents=True,
+            exist_ok=True
+        )
 
     def __iter__(self) -> Any:
         logger.debug(f"[__iter__]: {self.description}")
