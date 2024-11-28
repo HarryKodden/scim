@@ -215,3 +215,9 @@ Assuming you have **argo** running in your cluster, just apply thius manifest:
 ```
 kubectl apply -f argocd/application.yaml
 ```
+
+Or without cloning this repository, you can even do:
+
+```
+https://raw.githubusercontent.com/HarryKodden/scim/refs/heads/main/argocd/application.yaml
+```
