@@ -31,18 +31,23 @@ def register_schemas():
     from schema import register_schemas, Group, User
     logging.info("[SCHEMA] Registering dynamic schemas")
     register_schemas()
-    
+
     # Add verification that schemas are loaded
     logging.info(f"Group schema attributes: {vars(Group)}")
     logging.info(f"User schema attributes: {vars(User)}")
-    
+
     # Check if expected attributes are present
-    assert hasattr(Group, "members"), "Group schema is missing members attribute!" 
-    assert hasattr(Group, "displayName"), "Group schema is missing displayName attribute!"
-    assert hasattr(Group, "externalId"), "Group schema is missing externalId attribute!"
-    assert hasattr(User, "userName"), "User schema is missing userName attribute!"
-    assert hasattr(User, "name"), "User schema is missing name attribute!"
-    
+    assert hasattr(Group, "members"), \
+        "Group schema is missing members attribute!"
+    assert hasattr(Group, "displayName"), \
+        "Group schema is missing displayName attribute!"
+    assert hasattr(Group, "externalId"), \
+        "Group schema is missing externalId attribute!"
+    assert hasattr(User, "userName"), \
+        "User schema is missing userName attribute!"
+    assert hasattr(User, "name"), \
+        "User schema is missing name attribute!"
+
     yield
 
 
