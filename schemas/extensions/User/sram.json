@@ -1,0 +1,57 @@
+{
+    "id": "urn:mace:surf.nl:sram:scim:extension:User",
+    "name": "SRAM User Extension",
+    "description": "SRAM User Extension",
+    "attributes": [
+        {
+            "name": "eduPersonScopedAffiliation",
+            "description": "eduPersonScopedAffiliation",
+            "type": "string",
+            "multiValued": false,
+            "required": false,
+            "mutability": "readWrite",
+            "returned": "default",
+            "uniqueness": "none"
+        },
+        {
+            "name": "eduPersonUniqueId",
+            "description": "eduPersonUniqueId",
+            "type": "string",
+            "multiValued": false,
+            "required": false,
+            "mutability": "readWrite",
+            "returned": "default",
+            "uniqueness": "none"
+        },
+        {
+            "name": "voPersonExternalAffiliation",
+            "description": "voPersonExternalAffiliation",
+            "type": "string",
+            "multiValued": false,
+            "required": false,
+            "mutability": "readWrite",
+            "returned": "default",
+            "uniqueness": "none"
+        },
+        {
+            "name": "voPersonExternalId",
+            "description": "voPersonExternalId",
+            "type": "string",
+            "multiValued": false,
+            "required": false,
+            "mutability": "readWrite",
+            "returned": "default",
+            "uniqueness": "none"
+        },
+        {
+            "name": "sramInactiveDays",
+            "description": "sramInactiveDays",
+            "type": "integer",
+            "multiValued": false,
+            "required": false,
+            "mutability": "readWrite",
+            "returned": "default",
+            "uniqueness": "none"
+        }
+    ]
+}

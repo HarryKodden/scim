@@ -155,7 +155,8 @@ def test_group_updates(test_app):
     assert response.status_code == 200
     group = GroupResource(**response.json())
 
-    assert len(group.members) == 0
+
+    assert not group.members or len(group.members) == 0
 
     response = test_app.patch(
       f"/Groups/{group.id}",

@@ -20,10 +20,11 @@ async def get_schemas() -> ListResponse:
 
     resources = []
 
-    for schema in Schemas.keys():
-        resources.append(
-            Schemas[schema].model_json_schema(by_alias=True)
-        )
+    for resource in ['User', 'Group']:
+        for schema in Schemas[resource].keys():
+            resources.append(
+                Schemas[resource][schema].model_json_schema(by_alias=True)
+            )
 
     return ListResponse(
         Resources=resources,
@@ -40,7 +41,8 @@ async def get_schemas() -> ListResponse:
 async def get_schema(id: str) -> Any:
     """ Return Schemas """
 
-    resource = Schemas.get(id)
+    resource = {**Schemas['User'], **Schemas['Group']}.get(id)
+
     logger.debug(resource)
     if not resource:
         raise HTTPException(status_code=404, detail=f"Schema {id} not found")

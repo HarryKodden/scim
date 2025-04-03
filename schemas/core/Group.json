@@ -1,0 +1,54 @@
+{
+  "id": "urn:ietf:params:scim:schemas:core:2.0:Group",
+  "name": "Core Group schema",
+  "description": "Core Group schema",
+  "attributes": [
+    {
+      "name": "displayName",
+      "description": "displayName",
+      "type": "string",
+      "multiValued": false,
+      "required": true,
+      "mutability": "readWrite",
+      "returned": "default",
+      "uniqueness": "none"
+    },
+    {
+      "name": "externalId",
+      "description": "externalId",
+      "type": "string",
+      "multiValued": false,
+      "required": false,
+      "mutability": "readWrite",
+      "returned": "default",
+      "uniqueness": "none"
+    },
+    {
+      "name": "members",
+      "type": "complex",
+      "multiValued": true,
+      "required": false,
+      "returned": "default",
+      "mutability": "readWrite",
+      "uniqueness": "none",
+      "description": "members",
+      "subAttributes": [
+        {
+          "name": "value",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "display",
+          "type": "string",
+          "required": false
+        },
+        {
+          "name": "ref",
+          "type": "string",
+          "required": true
+        }
+      ]
+    }
+  ]
+}

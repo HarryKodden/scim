@@ -5,8 +5,7 @@ import json
 
 from typing import Any
 from datetime import datetime
-from schema import CORE_SCHEMA_GROUP, SRAM_SCHEMA_GROUP, \
-    GroupResource, Group, Meta
+from schema import CORE_SCHEMA_GROUP, Schemas, GroupResource, Group, Meta
 from filter import Filter
 from data import Groups
 from data.users import get_user_resource
@@ -67,15 +66,21 @@ def put_group_resource(id: str, group: Group) -> GroupResource:
             )
         )
 
-    resource.displayName = group.displayName
-    resource.externalId = group.externalId
-    resource.members = group.members
-    resource.sram_group_extension = group.sram_group_extension
-    resource.meta.lastModified = datetime.now()
     resource.schemas = [
-        CORE_SCHEMA_GROUP,
-        SRAM_SCHEMA_GROUP
+        CORE_SCHEMA_GROUP
     ]
+
+    # Generic field copying from group to resource
+    for field in vars(group):
+        if (hasattr(resource, field)):
+
+            for id in Schemas['Group']:
+                if id not in resource.schemas and field.startswith(id):
+                    resource.schemas.append(id)
+
+            setattr(resource, field, getattr(group, field))
+
+    resource.meta.lastModified = datetime.now()
 
     mapping = json.loads(os.environ.get('GROUP_MAPPING', "{}"))
     for k, v in mapping.items():

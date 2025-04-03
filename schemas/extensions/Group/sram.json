@@ -1,0 +1,69 @@
+{
+    "id": "urn:mace:surf.nl:sram:scim:extension:Group",
+    "name": "SRAM Group Extension",
+    "description": "SRAM Group Extension",
+    "attributes": [
+        {
+            "name": "description",
+            "description": "description",
+            "type": "string",
+            "multiValued": false,
+            "required": false,
+            "mutability": "readWrite",
+            "returned": "default",
+            "uniqueness": "none"
+        },
+        {
+            "name": "labels",
+            "description": "labels",
+            "type": "string",
+            "multiValued": true,
+            "required": false,
+            "mutability": "readWrite",
+            "returned": "default",
+            "uniqueness": "none"
+        },
+        {
+            "name": "urn",
+            "description": "urn",
+            "type": "string",
+            "multiValued": false,
+            "required": false,
+            "mutability": "readWrite",
+            "returned": "default",
+            "uniqueness": "none"
+        },
+        {
+            "name": "links",
+            "description": "links",
+            "type": "complex",
+            "multiValued": true,
+            "required": false,
+            "mutability": "readWrite",
+            "returned": "default",
+            "uniqueness": "none",
+            "subAttributes": [
+                {
+                    "name": "name",
+                    "description": "name",
+                    "type": "string",
+                    "multiValued": false,
+                    "required": false,
+                    "mutability": "readWrite",
+                    "returned": "default",
+                    "uniqueness": "none"
+                },
+                {
+                    "name": "value",
+                    "description": "value",
+                    "type": "string",
+                    "multiValued": false,
+                    "required": false,
+                    "mutability": "readWrite",
+                    "returned": "default",
+                    "uniqueness": "none"
+                }
+            ]   
+        }
+    ]
+}

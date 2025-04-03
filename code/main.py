@@ -1,20 +1,19 @@
 # main.py
 
+import os
+import logging
 import uvicorn
 
 from fastapi import Request, FastAPI, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse, RedirectResponse
-
-from routers import BASE_PATH, config, resource, schema, users, groups
 from schema import HealthCheck
-
-import os
-import logging
+from routers import BASE_PATH, config, resource, schema, users, groups
 
 LOGLEVEL = os.environ.get('LOGLEVEL', 'ERROR').upper()
 logging.basicConfig(level=LOGLEVEL)
 logger = logging.getLogger(__name__)
+
 
 app = FastAPI(
     title="SCIM",

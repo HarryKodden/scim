@@ -1,22 +1,50 @@
 # schema.py
 
+import os
+import json
+
+from pathlib import Path
 from datetime import datetime
-
 from typing import Union, List, Optional, Dict, Literal, Any
+from pydantic import BaseModel, Field, create_model
 
-from pydantic import BaseModel, Field
+import logging
+logger = logging.getLogger(__name__)
 
+# SCIM 2.0 Core Schema URIs
 CORE_SCHEMA = "urn:ietf:params:scim:schemas:core:2.0"
 CORE_SCHEMA_USER = CORE_SCHEMA+":User"
 CORE_SCHEMA_GROUP = CORE_SCHEMA+":Group"
 
-SRAM_SCHEMA = "urn:mace:surf.nl:sram:scim:extension"
-SRAM_SCHEMA_USER = SRAM_SCHEMA+":User"
-SRAM_SCHEMA_GROUP = SRAM_SCHEMA+":Group"
-
+# SCIM 2.0 API URIs
 SCIM_API_MESSAGES = "urn:ietf:params:scim:api:messages:2.0"
 
+# SCIM 2.0 Content Types
 SCIM_CONTENT_TYPE = 'application/scim+json'
+
+
+resourceTypes = []
+
+Schemas = {
+    "User": {},
+    "Group": {},
+}
+
+
+class User(BaseModel):
+    pass
+
+
+class Group(BaseModel):
+    pass
+
+
+class UserResource(BaseModel):
+    pass
+
+
+class GroupResource(BaseModel):
+    pass
 
 
 class HealthCheck(BaseModel):
@@ -34,103 +62,13 @@ class Patch(BaseModel):
     operations: List[Operation]
 
 
-class Name(BaseModel):
-    familyName: str
-    givenName: str
-
-
-class Email(BaseModel):
-    primary: bool
-    value: str
-
-
-class Member(BaseModel):
-    ref: Optional[str] = Field(alias="$ref", default=None)
-    display: Optional[str] = None
-    value: str
-
-
-class Link(BaseModel):
-    name: str
-    value: str
-
-
-class Certificate(BaseModel):
-    value: str
-
-
 class Meta(BaseModel):
-    created: datetime = Field(default_factory=datetime.now)
-    lastModified: datetime = Field(default_factory=datetime.now)
-    location: Optional[str] = None
+    location: str
     resourceType: str
-
-
-class ListResponse(BaseModel):
-    Resources: Optional[List[Dict]] = None
-    itemsPerPage: int
-    schemas: List[str]
-    startIndex: int
-    totalResults: int
-
-
-class SRAM_User_Extension(BaseModel):
-    eduPersonScopedAffiliation: Optional[str] = None
-    eduPersonUniqueId: Optional[str] = None
-    voPersonExternalAffiliation: Optional[str] = None
-    voPersonExternalId: Optional[str] = None
-    sramInactiveDays: Optional[int] = None
-
-#   class Config:
-#       title = "SRAM User Extension"
-
-
-class SRAM_Group_Extension(BaseModel):
-    description: Optional[str] = None
-    labels: Optional[List[str]] = None
-    urn: Optional[str] = None
-    links: Optional[List[Union[Link, None]]] = None
-
-#   class Config:
-#       title = "SRAM Group Extension"
-
-
-class User(BaseModel):
-    userName: str
-    active: bool = True
-    externalId: Optional[str] = None
-    name: Optional[Name] = None
-    displayName: Optional[str] = None
-    emails: Optional[List[Union[Email, None]]] = None
-    sram_user_extension: Optional[SRAM_User_Extension] = \
-        Field(alias=SRAM_SCHEMA_USER, default=None)
-    x509Certificates: Optional[List[Union[Certificate, None]]] = None
-    schemas: Optional[List[Union[str, None]]] = None
-
-
-class UserResource(User):
-    id: str
-    meta: Meta
-
-#   class Config:
-#       title = "User"
-
-
-class Group(BaseModel):
-    displayName: str
-    externalId: Optional[str] = None
-    members: Optional[List[Union[Member, None]]] = []
-    sram_group_extension: Optional[SRAM_Group_Extension] = \
-        Field(alias=SRAM_SCHEMA_GROUP, default=None)
-    schemas: List[Union[str, None]] = None
-
-
-class GroupResource(Group):
-    id: str
-    meta: Meta
-
-#   class Config:
-#       title = "Group"
+    lastModified: Optional[datetime] = None
+    created: Optional[datetime] = None
+    version: Optional[str] = None
+    etag: Optional[str] = None
 
 
 class SchemaExtension(BaseModel):
@@ -138,57 +76,185 @@ class SchemaExtension(BaseModel):
     schema_name: str = Field(alias="schema")
 
 
-class ResourceType(BaseModel):
+class Resource(BaseModel):
     id: str
+    meta: Meta
+    schemas: Optional[List[str]] = None
+
+
+class ResourceType(Resource):
     name: str
     description: str
     endpoint: str
-    meta: Meta
     schema_name: str = Field(alias="schema")
     schemaExtensions: Optional[List[Union[SchemaExtension, None]]] = None
-    schemas: List[Union[str, None]] = [
+    schemas: List[str] = [
         CORE_SCHEMA+":ResourceType"
     ]
 
 
-Schemas = {
-    CORE_SCHEMA_USER: UserResource,
-    CORE_SCHEMA_GROUP: GroupResource,
-    SRAM_SCHEMA_USER: SRAM_User_Extension,
-    SRAM_SCHEMA_GROUP: SRAM_Group_Extension,
-}
+class ListResponse(BaseModel):
+    totalResults: int
+    itemsPerPage: int
+    schemas: List[str]
+    Resources: List[Any] = Field(alias="Resources")
 
-resourceTypes = [
-    ResourceType(
-        name="User",
-        id="User",
-        description="Defined resource types for the User schema",
-        endpoint="/Users",
-        meta=Meta(
-            location="/ResourceTypes/User",
-            resourceType="ResourceType"
-        ),
-        schemaExtensions=[
-            SchemaExtension(
-                schema=SRAM_SCHEMA_USER
+
+def register_schemas() -> None:
+
+    global User, Group, UserResource, GroupResource
+
+    SCHEMA_DIR = os.environ.get(
+        'SCHEMA_PATH',
+        str(Path(__file__).parent.parent / "schemas")
+    )
+
+    def register_model(name, attributes) -> Any:
+        fields = {}
+
+        for attr in attributes:
+            attr_name = attr.get('name')
+            attr_type = attr.get('type', 'string')
+            attr_required = attr.get('required', False)
+            attr_multi_valued = attr.get('multiValued', False)
+
+            # Map JSON schema types to Python types
+            type_mapping = {
+                'string': str,
+                'integer': int,
+                'boolean': bool,
+                'decimal': float,
+                'datetime': datetime,
+                'reference': str,
+                'complex': dict
+            }
+
+            python_type = type_mapping.get(attr_type, Any)
+
+            # Handle complex types
+            if attr_type == 'complex':
+                python_type = register_model(
+                    f"{name}_{attr_name}",
+                    attr.get('subAttributes', [])
+                )
+
+            # Handle multi-valued attributes
+            if attr_multi_valued:
+                if python_type is dict:
+                    python_type = List[Dict[str, Any]]
+                else:
+                    python_type = List[python_type]
+
+            # Make field optional if not required
+            if not attr_required:
+                python_type = Optional[python_type]
+
+            fields[attr_name] = (python_type, None)
+
+        # Create dynamic Pydantic model
+        logger.debug(f"Create Model: {name} with fields: {fields}")
+
+        return create_model(
+            name,
+            **fields
+        )
+
+    # Replace the duplicated blocks with a generic function:
+
+    def register_resource_type(resource_name, schema_uri, attributes):
+        """
+        Register a resource type with its schema
+        and create associated models.
+        """
+        # Create the base model
+        base_model = register_model(resource_name, attributes)
+
+        # Create the resource model by extending base model with Resource
+        resource_model = create_model(
+            f"{resource_name}Resource",
+            __base__=(base_model, Resource)
+        )
+
+        # Store in Schemas dictionary
+        Schemas[resource_name][schema_uri] = resource_model
+
+        # Add to ResourceType collection
+        resourceTypes.append(
+            ResourceType(
+                id=resource_name,
+                name=resource_name,
+                description=f"Resource type for the {resource_name} schema",
+                endpoint=f"/{resource_name}s",  # Pluralize endpoint
+                meta=Meta(
+                    location=f"/ResourceTypes/{resource_name}",
+                    resourceType="ResourceType"
+                ),
+                schemaExtensions=[],
+                schema=schema_uri
             )
-        ],
-        schema=CORE_SCHEMA_USER,
-    ),
-    ResourceType(
-        name="Group",
-        id="Group",
-        description="Defined resource types for the Group schema",
-        endpoint="/Groups",
-        meta=Meta(
-            location="/ResourceTypes/Group",
-            resourceType="ResourceType"
-        ),
-        schemaExtensions=[
-            SchemaExtension(
-                schema=SRAM_SCHEMA_GROUP
+        )
+
+        # Return the created models to assign to global variables
+        return base_model, resource_model
+
+    for resource in ['User', 'Group']:
+        # First create the extension models...
+        extensions = os.path.join(SCHEMA_DIR, f"extensions/{resource}")
+
+        if os.path.exists(extensions):
+            for filename in os.listdir(extensions):
+                if filename.endswith('.json'):
+                    filepath = os.path.join(extensions, filename)
+                    try:
+                        with open(filepath, 'r') as f:
+                            schema_data = json.load(f)
+
+                        # Extract schema information
+                        name = Path(filename).stem
+                        id = schema_data.get('id', name)
+                        attributes = schema_data.get('attributes', [])
+
+                        Schemas[resource][id] = register_model(
+                            f"{resource}_{name}", attributes
+                        )
+
+                    except Exception as e:
+                        logger.error(
+                            f"Error loading schema from {filepath}: {str(e)}"
+                        )
+
+        # Now load core schema for this resource...
+        try:
+            core_schema_path = os.path.join(
+                SCHEMA_DIR, f"core/{resource}.json"
             )
-        ],
-        schema=CORE_SCHEMA_GROUP,
-    ),
-]
+            logger.debug(f"Loading core schema from: {core_schema_path}")
+
+            with open(core_schema_path, 'r') as f:
+                schema_data = json.load(f)
+
+            attributes = schema_data.get('attributes', [])
+
+            if resource == 'User':
+                User, UserResource = register_resource_type(
+                    'User', CORE_SCHEMA_USER, attributes
+                )
+            elif resource == 'Group':
+                Group, GroupResource = register_resource_type(
+                    'Group', CORE_SCHEMA_GROUP, attributes
+                )
+            else:
+                raise ValueError(f"Unknown resource type: {resource}")
+
+        except Exception as e:
+            print(f"Error loading core schema {resource}: {str(e)}")
+
+    for s in Schemas:
+        logger.debug(f"Schema: {s} -> {Schemas[s]}")
+
+    for r in resourceTypes:
+        logger.debug(f"Resource: {r.id} -> {r}")
+
+
+# Load schemas...
+register_schemas()

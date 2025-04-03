@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, Body, status, HTTPException, Query
 import traceback
 
 from schema import ListResponse, Group, Patch, GroupResource
+from pydantic import ValidationError
 from typing import Any
 from auth import api_key_auth
 
@@ -102,9 +103,17 @@ async def create_group(
         broadcast_group("Create", resource)
 
         return resource.model_dump(by_alias=True, exclude_none=True)
+    except ValidationError:
+        raise HTTPException(
+            status_code=422,
+            detail="Invalid User resource"
+        )
     except Exception as e:
         logger.error(f"[CREATE_GROUP] {str(e)}, {traceback.format_exc()}")
-        raise HTTPException(status_code=404, detail=f"Error: {str(e)}")
+        raise HTTPException(
+            status_code=404,
+            detail=f"Error: {str(e)}"
+        )
 
 
 @router.get("/{id}", response_class=SCIM_Response)

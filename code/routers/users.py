@@ -3,7 +3,7 @@
 import json
 
 from fastapi import APIRouter, Depends, Body, status, HTTPException, Query
-from pydantic_core import from_json
+from pydantic_core import from_json, ValidationError
 
 import traceback
 
@@ -100,6 +100,8 @@ async def create_user(
 ) -> Any:
     """ Create a User """
 
+    logger.info(f"[CREATE_USER] {user}")
+
     if resource_exists(
         "User",
         f"userName eq \"{user.userName}\""
@@ -125,9 +127,17 @@ async def create_user(
         broadcast_user("Create", resource)
 
         return resource.model_dump(by_alias=True, exclude_none=True)
+    except ValidationError:
+        raise HTTPException(
+            status_code=422,
+            detail="Invalid User resource"
+        )
     except Exception as e:
         logger.error(f"[CREATE_USER] {str(e)}, {traceback.format_exc()}")
-        raise HTTPException(status_code=404, detail=f"Error: {str(e)}")
+        raise HTTPException(
+            status_code=404,
+            detail=f"Error: {str(e)}"
+        )
 
 
 @router.get("/{id}", response_class=SCIM_Response)
