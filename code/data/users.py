@@ -40,14 +40,6 @@ def get_user_resources(filter: Filter) -> [Any]:
     return result
 
 
-def lookup_user(userName: str) -> UserResource:
-    for user in get_user_resources():
-        if user.userName == userName:
-            return user
-
-    return None
-
-
 def put_user_resource(id: str, user: User) -> UserResource:
     if id:
         resource = get_user_resource(id)

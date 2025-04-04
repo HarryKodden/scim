@@ -73,11 +73,6 @@ def put_group_resource(id: str, group: Group) -> GroupResource:
     # Generic field copying from group to resource
     for field in vars(group):
         if (hasattr(resource, field)):
-
-            for id in Schemas['Group']:
-                if id not in resource.schemas and field.startswith(id):
-                    resource.schemas.append(id)
-
             setattr(resource, field, getattr(group, field))
 
     # Scan top level fields to see if they belong to extension schemas
