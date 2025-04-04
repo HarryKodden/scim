@@ -9,6 +9,7 @@ from typing import Union, List, Optional, Dict, Literal, Any
 from pydantic import BaseModel, Field, create_model
 
 import logging
+logging.basicConfig(level="DEBUG")
 logger = logging.getLogger(__name__)
 
 # SCIM 2.0 Core Schema URIs
@@ -232,7 +233,7 @@ for resource in ['User', 'Group']:
         core_schema_path = os.path.join(
             SCHEMA_DIR, f"core/{resource}.json"
         )
-        logger.info(f"Loading core schema from: {core_schema_path}")
+        logger.debug(f"Loading core schema from: {core_schema_path}")
 
         with open(core_schema_path, 'r') as f:
             schema_data = json.load(f)

@@ -43,7 +43,7 @@ class Evaluator(NodeVisitor):
         result = self.visit(node.expr)
 
         if node.negated:
-            result = ~result
+            result = not result
 
         logger.debug(f"Result: {result}")
         return result
@@ -56,8 +56,11 @@ class Evaluator(NodeVisitor):
         )
 
         attr = self.visit(node.attr_path)
-        value = self.visit(node.comp_value)
         op = node.value.lower()
+        if node.comp_value:
+            value = self.visit(node.comp_value)
+        else:
+            value = None
 
         logger.debug(f"[NAMESPACE] '{self.namespace}'")
         logger.debug(f"[ATTR] '{attr}'")
@@ -65,11 +68,18 @@ class Evaluator(NodeVisitor):
         logger.debug(f"[OP] '{op}'")
 
         def attr_data(data, attr):
-            s = attr.rfind(':')
-            attr = attr[:s] + attr[s:].replace('.', '~')
-
-            for i in attr.split('~'):
+            logger.debug(f"[ATTR_DATA] '{attr}, {data}'")
+            for i in attr.split('.'):
+                if i not in data:
+                    return None
                 data = data.get(i)
+            logger.debug(f"[ATTR_DATA] RESULT {data}")
+
+            # s = attr.rfind(':')
+            # attr = attr[:s] + attr[s:].replace('.', '~')
+
+            # for i in attr.split('~'):
+            #    data = data.get(i)
 
             return data
 
@@ -85,15 +95,27 @@ class Evaluator(NodeVisitor):
             elif op == 'ew':
                 return data.endswith(value)
             elif op == 'pr':
-                return data
+                return data is not None
             elif op == 'gt':
-                return data > value
+                if value.isdigit():
+                    return int(data) > int(value)
+                else:
+                    return data > value
             elif op == 'ge':
-                return data >= value
+                if value.isdigit():
+                    return int(data) >= int(value)
+                else:
+                    return data >= value
             elif op == 'lt':
-                return data < value
+                if value.isdigit():
+                    return int(data) < int(value)
+                else:
+                    return data < value
             elif op == 'le':
-                return data <= value
+                if value.isdigit():
+                    return int(data) <= int(value)
+                else:
+                    return data <= value
             else:
                 raise ValueError(f"Unknwown opcode {op}")
 
@@ -119,7 +141,10 @@ class Evaluator(NodeVisitor):
 
     def visit_SubAttr(self, node):
         logger.debug(f"[EVALUATE] Visit SubAttr: {node.value}")
-        return node.value
+        if node.value.upper() in ['TRUE', 'FALSE']:
+            return node.value.upper() == 'TRUE'
+        else:
+            return node.value
 
     def visit_AttrPath(self, node):
         attr = node.attr_name
@@ -150,14 +175,12 @@ class Evaluator(NodeVisitor):
         if op not in ["OR", "AND"]:
             raise Exception(f"Illegal logical operation: {op}")
 
-        q1 = self.visit(node.expr1)
-        if q1 and op == "OR":
-            return True
-        if not q1 and op == "AND":
-            return False
+        if op == "OR":
+            return (self.visit(node.expr1) or self.visit(node.expr2))
+        if op == "AND":
+            return (self.visit(node.expr1) and self.visit(node.expr2))
 
-        q2 = self.visit(node.expr2)
-        return q2
+        return False
 
 
 class Filter:
