@@ -80,6 +80,12 @@ def put_group_resource(id: str, group: Group) -> GroupResource:
 
             setattr(resource, field, getattr(group, field))
 
+    # Scan top level fields to see if they belong to extension schemas
+    # and add them to the schemas list
+    for field in resource.model_dump(by_alias=True, exclude_none=True):
+        if field in Schemas['Group'] and field not in resource.schemas:
+            resource.schemas.append(field)
+
     resource.meta.lastModified = datetime.now()
 
     mapping = json.loads(os.environ.get('GROUP_MAPPING', "{}"))

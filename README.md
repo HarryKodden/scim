@@ -120,6 +120,7 @@ This image uses environment variables for configuration.
 | `API_KEY` | The API key to authenticate with | mysecret | secret |
 | `PAGE_SIZE` | The maximum number of resources returned in 1 response. | 10 | 100 |
 | `BASE_PATH` | The base path of all API endpoints | /api/v2 | / |
+| `SCHEMA_PATH` | File system path name that contains the SCHEMA files, structure should be similare as the schema folder in this repository | /mnt/schemas | code/.. |
 | `DATA_PATH` | File system path name | /mnt/scim | /tmp |
 | `MONGO_DB` | Mongo connection string | mongodb://user:password@mongo_host | |
 | `DATABASE_URL` | SQL Database connection string | postgresql://user:password@postrgres_host:5432/mydb<br />**or**<br /> mysql+pymysql://user:password@mysql_host/mydb | |

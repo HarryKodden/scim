@@ -100,8 +100,6 @@ async def create_user(
 ) -> Any:
     """ Create a User """
 
-    logger.info(f"[CREATE_USER] {user}")
-
     if resource_exists(
         "User",
         f"userName eq \"{user.userName}\""

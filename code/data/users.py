@@ -73,12 +73,13 @@ def put_user_resource(id: str, user: User) -> UserResource:
     # Generic field copying from user to resource
     for field in vars(user):
         if (hasattr(resource, field)):
-
-            for id in Schemas['User']:
-                if id not in resource.schemas and field.startswith(id):
-                    resource.schemas.append(id)
-
             setattr(resource, field, getattr(user, field))
+
+    # Scan top level fields to see if they belong to extension schemas
+    # and add them to the schemas list
+    for field in resource.model_dump(by_alias=True, exclude_none=True):
+        if field in Schemas['User'] and field not in resource.schemas:
+            resource.schemas.append(field)
 
     resource.meta.lastModified = datetime.now()
 

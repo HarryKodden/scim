@@ -46,7 +46,8 @@
         {
           "name": "ref",
           "type": "string",
-          "required": true
+          "required": false,
+          "alias": "$ref"
         }
       ]
     }
