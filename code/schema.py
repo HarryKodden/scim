@@ -149,6 +149,7 @@ def register_model(name, attributes, fields={}, __base__=(BaseModel)) -> Any:
         __base__=__base__,
         **fields,
     )
+    fields = {}
 
 
 def register_resource_type(resource_name, schema_uri, attributes):

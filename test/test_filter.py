@@ -30,7 +30,7 @@ class TestFilter:
                 "created": "2010-01-23T04:56:22Z",
                 "lastModified": "2011-05-13T04:42:34Z"
             },
-            "age": 30
+            "age": 3
         }
 
         class ResourceMock:
@@ -89,19 +89,19 @@ class TestFilter:
 
     def test_numeric_operators(self):
         # Greater than
-        filter_obj = Filter('age gt 20')
+        filter_obj = Filter('age gt 2')
         assert filter_obj.match(self.user) is True
 
         # Greater than or equal
-        filter_obj = Filter('age ge 30')
+        filter_obj = Filter('age ge 3')
         assert filter_obj.match(self.user) is True
 
         # Less than
-        filter_obj = Filter('age lt 40')
+        filter_obj = Filter('age lt 4')
         assert filter_obj.match(self.user) is True
 
         # Less than or equal
-        filter_obj = Filter('age le 30')
+        filter_obj = Filter('age le 3')
         assert filter_obj.match(self.user) is True
 
     def test_logical_operators(self):
