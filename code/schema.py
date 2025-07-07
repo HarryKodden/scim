@@ -20,6 +20,9 @@ CORE_SCHEMA_GROUP = CORE_SCHEMA+":Group"
 # SCIM 2.0 API URIs
 SCIM_API_MESSAGES = "urn:ietf:params:scim:api:messages:2.0"
 
+# SCIM 2.0 Patch Operation URIs
+SCIM_PATCH_OP = SCIM_API_MESSAGES + ":PatchOp"
+
 # SCIM 2.0 Content Types
 SCIM_CONTENT_TYPE = 'application/scim+json'
 
@@ -43,7 +46,11 @@ class HealthCheck(BaseModel):
 
 
 class Operation(BaseModel):
-    op: Literal["add", "remove", "replace"]
+    op: Literal[
+        "add", "Add", "ADD",
+        "remove", "Remove", "REMOVE",
+        "replace", "Replace", "REPLACE",
+    ]
     path: str
     value: Optional[Any] = None
 

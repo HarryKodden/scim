@@ -6,7 +6,8 @@ from fastapi import APIRouter, Depends, Body, status, HTTPException, Query
 
 import traceback
 
-from schema import ListResponse, Group, Patch, GroupResource
+from schema import ListResponse, Group, Patch, GroupResource, \
+    SCIM_PATCH_OP
 from pydantic import ValidationError
 from typing import Any
 from auth import api_key_auth
@@ -168,6 +169,13 @@ async def patch_group(id: str, patch: Patch):
         group = get_group_resource(id)
         if not group:
             raise Exception(f"Group {id} not found")
+
+        if SCIM_PATCH_OP not in patch.schemas:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Missing schema {SCIM_API_PATCH_OP}"
+                
+            )
 
         resource = patch_resource(
             group.model_dump(by_alias=True, exclude_none=True),

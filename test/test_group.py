@@ -1,6 +1,6 @@
 # import test_group.py
 
-from schema import UserResource, GroupResource, Group, CORE_SCHEMA_GROUP
+from schema import UserResource, GroupResource, Group, SCIM_PATCH_OP
 
 import logging
 logger = logging.getLogger(__name__)
@@ -142,7 +142,7 @@ def test_group_updates(test_app):
             "op": "remove",
             "path": "members"
         }],
-        "schemas": [CORE_SCHEMA_GROUP]
+        "schemas": [SCIM_PATCH_OP]
       },
       headers=headers
     )
@@ -169,7 +169,7 @@ def test_group_updates(test_app):
               }
             ]
         }],
-        "schemas": [CORE_SCHEMA_GROUP]
+        "schemas": [SCIM_PATCH_OP]
       },
       headers=headers
     )
@@ -192,7 +192,7 @@ def test_group_updates(test_app):
             "path": "externalId",
             "value": "external-1"
         }],
-        "schemas": [CORE_SCHEMA_GROUP]
+        "schemas": [SCIM_PATCH_OP]
       },
       headers=headers
     )

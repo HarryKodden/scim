@@ -1,6 +1,6 @@
 # import test_user.py
 
-from schema import User, UserResource, ListResponse, CORE_SCHEMA_USER
+from schema import User, UserResource, ListResponse, SCIM_PATCH_OP
 
 import logging
 logger = logging.getLogger(__name__)
@@ -157,7 +157,7 @@ def test_update_user(test_app):
             "path": "externalId",
             "value": "external-1"
         }],
-        "schemas": [CORE_SCHEMA_USER]
+        "schemas": [SCIM_PATCH_OP]
       },
       headers=headers
     )

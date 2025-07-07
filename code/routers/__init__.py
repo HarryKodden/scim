@@ -137,7 +137,7 @@ def get_all_resources(
 def patch_resource(resource, operations):
 
     for operation in operations:
-        if operation.op.upr() == 'REMOVE':
+        if operation.op.upper() == 'REMOVE':
             resource.pop(operation.path)
         elif operation.op.upper() == 'REPLACE':
             if operation.path in resource:

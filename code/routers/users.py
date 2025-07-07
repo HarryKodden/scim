@@ -7,7 +7,8 @@ from pydantic_core import from_json, ValidationError
 
 import traceback
 
-from schema import ListResponse, User, Patch, UserResource, GroupResource
+from schema import ListResponse, User, Patch, UserResource, GroupResource, \
+    SCIM_PATCH_OP
 from typing import Any
 from auth import api_key_auth
 
@@ -212,6 +213,13 @@ async def patch_user(id: str, patch: Patch):
         user = get_user_resource(id)
         if not user:
             raise Exception(f"User {id} not found")
+
+        if SCIM_PATCH_OP not in patch.schemas:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Missing schema {SCIM_API_PATCH_OP}"
+                
+            )
 
         resource = patch_resource(
             user.model_dump(by_alias=True, exclude_none=True),
