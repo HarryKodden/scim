@@ -217,7 +217,7 @@ async def patch_user(id: str, patch: Patch):
         if SCIM_PATCH_OP not in patch.schemas:
             raise HTTPException(
                 status_code=400,
-                detail=f"Missing schema {SCIM_API_PATCH_OP}"
+                detail=f"Missing schema {SCIM_PATCH_OP}"
             )
 
         resource = patch_resource(
