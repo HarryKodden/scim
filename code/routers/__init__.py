@@ -136,16 +136,64 @@ def get_all_resources(
 
 def patch_resource(resource, operations):
 
-    def patch(path, value):
-        logger.debug(f"[PATCH] {path} := {value}")
-
-        resource[path] = value
-
     for operation in operations:
         if operation.op == 'remove':
             resource.pop(operation.path)
+        elif operation.op == 'replace':
+            if operation.path in resource:
+                resource[operation.path] = operation.value
+            else:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Cannot replace non-existing field: {operation.path}"
+                )
+        elif operation.op == 'add':
+            if operation.path in resource:
+                if isinstance(resource[operation.path], list):
+                    if isinstance(operation.value, list):
+                        items_to_add = operation.value
+                    else:
+                        items_to_add = [operation.value]
+                        
+                    for new_item in items_to_add:
+                        if not isinstance(new_item, dict):
+                            if new_item not in resource[operation.path]:
+                                resource[operation.path].append(new_item)
+                            continue
+                                          
+                        # If new_item is a dict, check if it already exists
+                        # based on the key attributes of the new_item
+                        item_exists = False
+                        
+                        keys = new_item.keys()
+                        
+                        for existing_item in resource[operation.path]:
+                            for key in keys:
+                                if (key in new_item and 
+                                    key in existing_item and 
+                                    existing_item[key] == new_item[key]):
+                                    item_exists = True
+                                    break
+                            
+                            if item_exists:
+                                break
+                                
+                        # Add the item if it doesn't exist
+                        if not item_exists:
+                            resource[operation.path].append(new_item)
+                else:
+                    raise HTTPException(
+                        status_code=400,
+                        detail=f"Cannot add to non-list field: {operation.path}"
+                    )
+            else:
+                # If the path doesn't exist, create it with the value
+                resource[operation.path] = operation.value
         else:
-            patch(operation.path, operation.value)
+            raise HTTPException(
+                status_code=400,
+                detail=f"Unknown operation: {operation.op}"
+            )
 
     logger.debug(f"[PATCH RESULT] {resource}")
     return resource

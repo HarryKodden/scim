@@ -215,7 +215,7 @@ async def patch_user(id: str, patch: Patch):
 
         resource = patch_resource(
             user.model_dump(by_alias=True, exclude_none=True),
-            patch.operations
+            patch.Operations
         )
 
         user = put_user_resource(id, User(**resource))

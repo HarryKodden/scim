@@ -171,7 +171,7 @@ async def patch_group(id: str, patch: Patch):
 
         resource = patch_resource(
             group.model_dump(by_alias=True, exclude_none=True),
-            patch.operations
+            patch.Operations
         )
 
         group = put_group_resource(id, Group(**resource))

@@ -50,7 +50,7 @@ class Operation(BaseModel):
 
 class Patch(BaseModel):
     schemas: List[str]
-    operations: List[Operation]
+    Operations: List[Operation]
 
 
 class Meta(BaseModel):
