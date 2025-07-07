@@ -137,9 +137,9 @@ def get_all_resources(
 def patch_resource(resource, operations):
 
     for operation in operations:
-        if operation.op == 'remove':
+        if operation.op.upr() == 'REMOVE':
             resource.pop(operation.path)
-        elif operation.op == 'replace':
+        elif operation.op.upper() == 'REPLACE':
             if operation.path in resource:
                 resource[operation.path] = operation.value
             else:
@@ -147,7 +147,7 @@ def patch_resource(resource, operations):
                     status_code=400,
                     detail=f"Cannot replace non-existing: {operation.path}"
                 )
-        elif operation.op == 'add':
+        elif operation.op.upper() == 'ADD':
             if operation.path in resource:
                 if isinstance(resource[operation.path], list):
                     if isinstance(operation.value, list):
