@@ -218,7 +218,6 @@ async def patch_user(id: str, patch: Patch):
             raise HTTPException(
                 status_code=400,
                 detail=f"Missing schema {SCIM_API_PATCH_OP}"
-                
             )
 
         resource = patch_resource(
