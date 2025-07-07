@@ -152,7 +152,7 @@ def test_update_user(test_app):
     response = test_app.patch(
       f"/Users/{id}",
       json={
-        "operations": [{
+        "Operations": [{
             "op": "add",
             "path": "externalId",
             "value": "external-1"

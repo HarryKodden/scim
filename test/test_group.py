@@ -138,7 +138,7 @@ def test_group_updates(test_app):
     response = test_app.patch(
       f"/Groups/{group.id}",
       json={
-        "operations": [{
+        "Operations": [{
             "op": "remove",
             "path": "members"
         }],
@@ -160,7 +160,7 @@ def test_group_updates(test_app):
     response = test_app.patch(
       f"/Groups/{group.id}",
       json={
-        "operations": [{
+        "Operations": [{
             "op": "add",
             "path": "members",
             "value": [
@@ -187,7 +187,7 @@ def test_group_updates(test_app):
     response = test_app.patch(
       f"/Groups/{group.id}",
       json={
-        "operations": [{
+        "Operations": [{
             "op": "add",
             "path": "externalId",
             "value": "external-1"
