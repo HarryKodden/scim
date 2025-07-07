@@ -65,7 +65,7 @@
             <a id="nextFileLink" class="nav" href="z_86aabf9308b6d9b1_config_py.html">&#xbb; next</a>
             &nbsp; &nbsp; &nbsp;
             <a class="nav" href="https://coverage.readthedocs.io/en/7.9.2">coverage.py v7.9.2</a>,
-            created at 2025-07-07 06:46 +0000
+            created at 2025-07-07 13:54 +0000
         </p>
         <aside class="hidden">
             <button type="button" class="button_next_chunk" data-shortcut="j"></button>
@@ -219,9 +219,9 @@
     <p class="run"><span class="n"><a id="t137" href="#t137">137</a></span><span class="t"><span class="key">def</span> <span class="nam">patch_resource</span><span class="op">(</span><span class="nam">resource</span><span class="op">,</span> <span class="nam">operations</span><span class="op">)</span><span class="op">:</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t138" href="#t138">138</a></span><span class="t">&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t139" href="#t139">139</a></span><span class="t">    <span class="key">for</span> <span class="nam">operation</span> <span class="key">in</span> <span class="nam">operations</span><span class="op">:</span>&nbsp;</span><span class="r"></span></p>
-    <p class="run"><span class="n"><a id="t140" href="#t140">140</a></span><span class="t">        <span class="key">if</span> <span class="nam">operation</span><span class="op">.</span><span class="nam">op</span> <span class="op">==</span> <span class="str">'remove'</span><span class="op">:</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run"><span class="n"><a id="t140" href="#t140">140</a></span><span class="t">        <span class="key">if</span> <span class="nam">operation</span><span class="op">.</span><span class="nam">op</span><span class="op">.</span><span class="nam">upper</span><span class="op">(</span><span class="op">)</span> <span class="op">==</span> <span class="str">'REMOVE'</span><span class="op">:</span>&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t141" href="#t141">141</a></span><span class="t">            <span class="nam">resource</span><span class="op">.</span><span class="nam">pop</span><span class="op">(</span><span class="nam">operation</span><span class="op">.</span><span class="nam">path</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
-    <p class="run"><span class="n"><a id="t142" href="#t142">142</a></span><span class="t">        <span class="key">elif</span> <span class="nam">operation</span><span class="op">.</span><span class="nam">op</span> <span class="op">==</span> <span class="str">'replace'</span><span class="op">:</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run"><span class="n"><a id="t142" href="#t142">142</a></span><span class="t">        <span class="key">elif</span> <span class="nam">operation</span><span class="op">.</span><span class="nam">op</span><span class="op">.</span><span class="nam">upper</span><span class="op">(</span><span class="op">)</span> <span class="op">==</span> <span class="str">'REPLACE'</span><span class="op">:</span>&nbsp;</span><span class="r"></span></p>
     <p class="mis show_mis"><span class="n"><a id="t143" href="#t143">143</a></span><span class="t">            <span class="key">if</span> <span class="nam">operation</span><span class="op">.</span><span class="nam">path</span> <span class="key">in</span> <span class="nam">resource</span><span class="op">:</span>&nbsp;</span><span class="r"></span></p>
     <p class="mis show_mis"><span class="n"><a id="t144" href="#t144">144</a></span><span class="t">                <span class="nam">resource</span><span class="op">[</span><span class="nam">operation</span><span class="op">.</span><span class="nam">path</span><span class="op">]</span> <span class="op">=</span> <span class="nam">operation</span><span class="op">.</span><span class="nam">value</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t145" href="#t145">145</a></span><span class="t">            <span class="key">else</span><span class="op">:</span>&nbsp;</span><span class="r"></span></p>
@@ -229,7 +229,7 @@
     <p class="pln"><span class="n"><a id="t147" href="#t147">147</a></span><span class="t">                    <span class="nam">status_code</span><span class="op">=</span><span class="num">400</span><span class="op">,</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t148" href="#t148">148</a></span><span class="t">                    <span class="nam">detail</span><span class="op">=</span><span class="fst">f"</span><span class="fst">Cannot replace non-existing: </span><span class="op">{</span><span class="nam">operation</span><span class="op">.</span><span class="nam">path</span><span class="op">}</span><span class="fst">"</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t149" href="#t149">149</a></span><span class="t">                <span class="op">)</span>&nbsp;</span><span class="r"></span></p>
-    <p class="run"><span class="n"><a id="t150" href="#t150">150</a></span><span class="t">        <span class="key">elif</span> <span class="nam">operation</span><span class="op">.</span><span class="nam">op</span> <span class="op">==</span> <span class="str">'add'</span><span class="op">:</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run"><span class="n"><a id="t150" href="#t150">150</a></span><span class="t">        <span class="key">elif</span> <span class="nam">operation</span><span class="op">.</span><span class="nam">op</span><span class="op">.</span><span class="nam">upper</span><span class="op">(</span><span class="op">)</span> <span class="op">==</span> <span class="str">'ADD'</span><span class="op">:</span>&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t151" href="#t151">151</a></span><span class="t">            <span class="key">if</span> <span class="nam">operation</span><span class="op">.</span><span class="nam">path</span> <span class="key">in</span> <span class="nam">resource</span><span class="op">:</span>&nbsp;</span><span class="r"></span></p>
     <p class="mis show_mis"><span class="n"><a id="t152" href="#t152">152</a></span><span class="t">                <span class="key">if</span> <span class="nam">isinstance</span><span class="op">(</span><span class="nam">resource</span><span class="op">[</span><span class="nam">operation</span><span class="op">.</span><span class="nam">path</span><span class="op">]</span><span class="op">,</span> <span class="nam">list</span><span class="op">)</span><span class="op">:</span>&nbsp;</span><span class="r"></span></p>
     <p class="mis show_mis"><span class="n"><a id="t153" href="#t153">153</a></span><span class="t">                    <span class="key">if</span> <span class="nam">isinstance</span><span class="op">(</span><span class="nam">operation</span><span class="op">.</span><span class="nam">value</span><span class="op">,</span> <span class="nam">list</span><span class="op">)</span><span class="op">:</span>&nbsp;</span><span class="r"></span></p>
@@ -294,7 +294,7 @@
             <a class="nav" href="z_86aabf9308b6d9b1_config_py.html">&#xbb; next</a>
             &nbsp; &nbsp; &nbsp;
             <a class="nav" href="https://coverage.readthedocs.io/en/7.9.2">coverage.py v7.9.2</a>,
-            created at 2025-07-07 06:46 +0000
+            created at 2025-07-07 13:54 +0000
         </p>
     </div>
 </footer>
