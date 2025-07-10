@@ -224,7 +224,10 @@ class LDAP_Plugin(Plugin):
         if self.resource_type == self.GROUPS:
             record.displayName = resource.pop('displayName')
 
-            record.objectClass -= ['groupOfNames']
+            if len(writer) > 0:
+                if hasattr(record.objectClass, 'value'):
+                    if 'groupOfNames' in record.objectClass.value:
+                        record.objectClass -= ['groupOfNames']
 
             members = resource.pop('members', [])
             if len(members):
