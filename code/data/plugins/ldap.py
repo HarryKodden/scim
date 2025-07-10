@@ -225,9 +225,10 @@ class LDAP_Plugin(Plugin):
             record.displayName = resource.pop('displayName')
 
             if len(writer) > 0:
-                if hasattr(record.objectClass, 'value'):
-                    if 'groupOfNames' in record.objectClass.value:
-                        record.objectClass -= ['groupOfNames']
+                if (hasattr(record.objectClass, 'value') and
+                    record.objectClass.value is not None and
+                    'groupOfNames' in record.objectClass.value):
+                    record.objectClass -= ['groupOfNames']
 
             members = resource.pop('members', [])
             if len(members):
