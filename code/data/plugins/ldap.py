@@ -224,14 +224,14 @@ class LDAP_Plugin(Plugin):
         if self.resource_type == self.GROUPS:
             record.displayName = resource.pop('displayName')
 
-            record.objectClass.remove('groupOfNames')
+            record.objectClass -= ['groupOfNames']
 
             members = resource.pop('members', [])
             if len(members):
                 record.member = [
                     self.lookup(self.user_dn(), m['value']) for m in members
                 ]
-                record.objectClass.add('groupOfNames')
+                record.objectClass += ['groupOfNames']
 
         record.info = json.dumps(resource)
 
