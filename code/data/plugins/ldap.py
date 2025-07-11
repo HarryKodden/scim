@@ -53,38 +53,39 @@ class LDAP_Plugin(Plugin):
             )
         if self.resource_type == self.USERS:
             self.document_def = ObjectDef(
-                ['document', 'uidObject', 'extensibleObject'],
+                ['device', 'extensibleObject'],
                 self.session
             )
-
-        if self.resource_type == self.GROUPS:
-            self.document_def = ObjectDef(
-                ['document', 'extensibleObject'],
-                self.session
-            )
-
-        self.document_def += AttrDef('info')
-
-        if self.resource_type == self.USERS:
+            self.document_def += AttrDef('cn')
             self.document_def += AttrDef('uid')
             self.document_def += AttrDef('displayName')
             self.document_def += AttrDef('email')
             self.document_def += AttrDef('sshPublicKey')
+            self.document_def += AttrDef('info')
 
         if self.resource_type == self.GROUPS:
+            self.document_def = ObjectDef(
+                ['device', 'extensibleObject'],
+                self.session
+            )
+            self.document_def += AttrDef('cn')
             self.document_def += AttrDef('displayName')
             self.document_def += AttrDef('member')
+            self.document_def += AttrDef('info')
 
-        self.session.add(
-            self.resource_dn,
-            attributes={
-                'objectClass': [
-                    'organizationalUnit',
-                    'top'
-                ],
-                'ou': self.resource_type
-            }
-        )
+        try:
+            self.session.add(
+                self.resource_dn,
+                attributes={
+                    'objectClass': [
+                        'organizationalUnit',
+                        'top'
+                    ],
+                    'ou': self.resource_type
+                }
+            )
+        except Exception as e:
+            logger.debug(f"OU {self.resource_type} may already exist: {e}")
 
     @classmethod
     def user_dn(cls):
@@ -130,12 +131,12 @@ class LDAP_Plugin(Plugin):
         reader.search()
 
         for record in reader:
-            yield record.documentIdentifier
+            yield record.cn.value
 
     def __delitem__(self, id: str) -> None:
         logger.debug(f"[__delitem__]: {self.description}, id={id}")
 
-        self.session.delete(f"documentIdentifier={id},{self.resource_dn}")
+        self.session.delete(f"cn={id},{self.resource_dn}")
 
     def read_resource(self, dn) -> Any:
         logger.debug(f"[read_resource]: {dn}")
@@ -150,7 +151,7 @@ class LDAP_Plugin(Plugin):
 
         resource = json.loads(record.info.value)
 
-        resource['id'] = record.documentIdentifier.value
+        resource['id'] = record.cn.value
         resource['displayName'] = record.displayname.value
 
         if self.resource_type == self.USERS:
@@ -192,7 +193,7 @@ class LDAP_Plugin(Plugin):
         return resource
 
     def write_resource(self, id: str, resource: Any) -> None:
-        dn = f"documentIdentifier={id},{self.resource_dn}"
+        dn = f"cn={id},{self.resource_dn}"
 
         logger.debug(f"[write_resource]: {id} --> {dn}")
 
@@ -205,7 +206,7 @@ class LDAP_Plugin(Plugin):
         else:
             record = writer[0]
 
-        record.documentIdentifier = id
+        record.cn = id
 
         if self.resource_type == self.USERS:
             record.uid = resource.pop('userName')
@@ -224,18 +225,12 @@ class LDAP_Plugin(Plugin):
         if self.resource_type == self.GROUPS:
             record.displayName = resource.pop('displayName')
 
-            if len(writer) > 0:
-                if (hasattr(record.objectClass, 'value') and
-                    record.objectClass.value is not None and
-                    'groupOfNames' in record.objectClass.value):
-                    record.objectClass -= ['groupOfNames']
-
             members = resource.pop('members', [])
+
             if len(members):
                 record.member = [
                     self.lookup(self.user_dn(), m['value']) for m in members
                 ]
-                record.objectClass += ['groupOfNames']
 
         record.info = json.dumps(resource)
 
@@ -247,7 +242,7 @@ class LDAP_Plugin(Plugin):
 
         result = self.search(
             base,
-            filter=f"(documentIdentifier={id})",
+            filter=f"(cn={id})",
             attributes=[]
         )
 
@@ -265,11 +260,15 @@ class LDAP_Plugin(Plugin):
         dn = self.lookup(self.resource_dn, id)
 
         if not dn:
+            logger.error(f"Resource with id={id} not found")
             return None
 
-        resource = self.read_resource(dn)
-
-        return resource
+        try:
+            resource = self.read_resource(dn)
+            return resource
+        except Exception as e:
+            logger.error(f"Error reading resource {dn}: {e}")
+            return None 
 
     def __setitem__(self, id: str, details: Any) -> None:
         logger.debug(
