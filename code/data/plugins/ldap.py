@@ -268,7 +268,7 @@ class LDAP_Plugin(Plugin):
             return resource
         except Exception as e:
             logger.error(f"Error reading resource {dn}: {e}")
-            return None 
+            return None
 
     def __setitem__(self, id: str, details: Any) -> None:
         logger.debug(
