@@ -55,7 +55,7 @@ def put_group_resource(id: str, group: Group) -> GroupResource:
         if not resource:
             return None
     else:
-        id = Groups.id()
+        id = Groups.id(group.model_dump(by_alias=True, exclude_none=True))
 
         resource = GroupResource(
             id=id,
@@ -96,6 +96,8 @@ def put_group_resource(id: str, group: Group) -> GroupResource:
         setattr(resource, k, value)
 
     id = resource.id
+
+    logger.info(f"put_group_resource: {id} {resource}, {resource.model_dump_json(by_alias=True, exclude_none=True)}")
 
     Groups[id] = resource.model_dump_json(by_alias=True, exclude_none=True)
 

@@ -107,6 +107,7 @@ At this moment the following Plugin Options are implementated:
 * JumpCloud
 * SCIM (Proxy incomming SCIM requests to upstream SCIM Server)
 * LDAP
+* iRODS (Integrated Rule-Oriented Data System)
 
 The actual Plugin is selected by providing the corresponding envrionment variables, see below.
 
@@ -132,6 +133,11 @@ This image uses environment variables for configuration.
 | `LDAP_BASENAME` | Base name of tree in which the SCIM tree will be created | dc=example,dc=org | dc=example, + LDAP_BASENAME |
 | `LDAP_USERNAME` | bind user name | cn=admin,dc=example,dc=org | cn=admin,dc=example,dc=org |
 | `LDAP_PASSWORD` | bind password | | |
+| `IRODS_HOST` | iRODS server hostname or IP address | irods.example.org | |
+| `IRODS_PORT` | iRODS server port | 1247 | 1247 |
+| `IRODS_ZONE` | iRODS zone name | tempZone | |
+| `IRODS_ADMIN_USERNAME` | iRODS service username for authentication | rods | |
+| `IRODS_ADMIN_PASSWORD` | iRODS service password for authentication | | |
 | `USER_MAPPING` | A JSON string that specify how attribute values should be mapped to different attributes | '{"userName": "sram_user_extension.eduPersonUniqueId"} | |
 | `GROUP_MAPPING` | A JSON string that specify how attribute values should be mapped to different attributes | '{"id": "displanNameuser_extension.eduPersonUniqueId"} | |
 | `USER_MODEL_NAME` | User model name | myUsers | Users |

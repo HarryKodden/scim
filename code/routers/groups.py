@@ -107,7 +107,7 @@ async def create_group(
     except ValidationError:
         raise HTTPException(
             status_code=422,
-            detail="Invalid User resource"
+            detail="Invalid Group resource"
         )
     except Exception as e:
         logger.error(f"[CREATE_GROUP] {str(e)}, {traceback.format_exc()}")
