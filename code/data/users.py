@@ -41,12 +41,15 @@ def get_user_resources(filter: Filter) -> [Any]:
 
 
 def put_user_resource(id: str, user: User) -> UserResource:
+    logger.info(f"put_user_resource: {id} {user}")
     if id:
         resource = get_user_resource(id)
         if not resource:
             return None
+        logger.info(f"Updating user resource: {id} {user}")
     else:
-        id = Users.id()
+        id = Users.id(user.model_dump(by_alias=True, exclude_none=True))
+        logger.info(f"Creating new user resource: {id} {user}")
 
         resource = UserResource(
             id=id,
@@ -57,7 +60,7 @@ def put_user_resource(id: str, user: User) -> UserResource:
                 location=f"/Users/{id}"
             )
         )
-
+        logger.info(f"New user resource created: {resource}")
     resource.schemas = [
         CORE_SCHEMA_USER
     ]

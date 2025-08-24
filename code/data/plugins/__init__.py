@@ -14,7 +14,7 @@ class Plugin(object):
     def __init__(self):
         self.description = 'UNKNOWN'
 
-    def id(self) -> str:
+    def id(self, _: dict) -> str:
         return str(uuid.uuid4())
 
     def __iter__(self) -> Any:

@@ -36,6 +36,13 @@ scim_forward_key = os.environ.get(
     os.environ.get("API_KEY", "secret")
 )
 
+# Backend option: iRODS
+irods_host = os.environ.get("IRODS_HOST", None)
+irods_port = int(os.environ.get("IRODS_PORT", "1247"))
+irods_zone = os.environ.get("IRODS_ZONE", None)
+irods_admin_username = os.environ.get("IRODS_ADMIN_USERNAME", None)
+irods_admin_password = os.environ.get("IRODS_ADMIN_PASSWORD", None)
+
 user_model = Plugin().USERS
 group_model = Plugin().GROUPS
 
@@ -94,6 +101,25 @@ elif scim_forward_url:
         group_model,
         scim_forward_url,
         scim_forward_key
+    )
+elif irods_host:
+    from data.plugins.irods import iRODSPlugin
+
+    Users = iRODSPlugin(
+        user_model,
+        irods_host,
+        irods_port,
+        irods_admin_username,
+        irods_admin_password,
+        irods_zone
+    )
+    Groups = iRODSPlugin(
+        group_model,
+        irods_host,
+        irods_port,
+        irods_admin_username,
+        irods_admin_password,
+        irods_zone
     )
 else:
     from data.plugins.file import FilePlugin
