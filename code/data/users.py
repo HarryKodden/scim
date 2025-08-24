@@ -50,7 +50,7 @@ def put_user_resource(id: str, user: User) -> UserResource:
     else:
         id = Users.id(user.model_dump(by_alias=True, exclude_none=True))
         logger.info(f"Creating new user resource: {id} {user}")
-        
+
         resource = UserResource(
             id=id,
             userName=user.userName,

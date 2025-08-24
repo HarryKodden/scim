@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, irods-plugin ]
   pull_request:
-    branches: [ main ]
+    branches: [ main, irods-plugin ]
 
 jobs:
   build:
