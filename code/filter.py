@@ -147,23 +147,22 @@ class Evaluator(NodeVisitor):
                 try:
                     if value.isdigit():
                         return {
-                            'gt': lambda a,b: int(a) > int(b),
-                            'ge': lambda a,b: int(a) >= int(b),
-                            'lt': lambda a,b: int(a) < int(b),
-                            'le': lambda a,b: int(a) <= int(b),
+                            'gt': lambda a, b: int(a) > int(b),
+                            'ge': lambda a, b: int(a) >= int(b),
+                            'lt': lambda a, b: int(a) < int(b),
+                            'le': lambda a, b: int(a) <= int(b),
                         }[op](data, value)
                     else:
                         return {
-                            'gt': lambda a,b: a > b,
-                            'ge': lambda a,b: a >= b,
-                            'lt': lambda a,b: a < b,
-                            'le': lambda a,b: a <= b,
+                            'gt': lambda a, b: a > b,
+                            'ge': lambda a, b: a >= b,
+                            'lt': lambda a, b: a < b,
+                            'le': lambda a, b: a <= b,
                         }[op](data, value)
                 except Exception:
                     return False
             else:
                 raise ValueError(f"Unknown opcode {op}")
-                         
         if self.namespace:
             data = self.resource.get(self.namespace)
             # If the namespace included a sub-attribute (e.g.
