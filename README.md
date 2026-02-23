@@ -228,3 +228,39 @@ Or without cloning this repository, you can even do:
 ```
 https://raw.githubusercontent.com/HarryKodden/scim/refs/heads/main/argocd/application.yaml
 ```
+
+## Filter examples
+
+Below are a few practical SCIM filter examples demonstrating complex expressions supported by this project.
+
+- Basic equality with list-subfilter: find users with username `bjensen` and a work email
+
+```text
+userName eq "bjensen" and emails[type eq "work"]
+```
+
+- Nested sub-attribute lookup: match groups where an extension urn contains a value
+
+```text
+urn:mace:surf.nl:sram:scim:extension:Group.urn co "surf_demo:test30"
+```
+
+- Bracketed list sub-filter: check items in an array for a sub-attribute match
+
+```text
+urn:mace:surf.nl:sram:scim:extension:Group.links[name eq "logo"]
+```
+
+- Combined logical operators: OR within a parenthesised list-filter combined with another attribute
+
+```text
+(emails[type eq "work"] or emails[type eq "home"]) and active eq true
+```
+
+- Presence operator on lists: ensure a resource contains the `members` attribute
+
+```text
+members pr
+```
+
+These examples match the semantics tested in the project's unit tests (`test/test_filter.py`).
