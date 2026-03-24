@@ -27,6 +27,30 @@ app = FastAPI(
     },
 )
 
+
+@app.middleware("http")
+async def log_request_auth_headers(request: Request, call_next):
+    # Log only presence/shape details; never log secret header values.
+    auth_header = request.headers.get("authorization")
+    api_key = request.headers.get("x-api-key")
+
+    auth_scheme = "none"
+    if auth_header:
+        auth_scheme = auth_header.split(" ", 1)[0].lower()
+
+    logger.debug(
+        "[REQ] %s %s?%s auth_present=%s auth_scheme=%s x_api_key_present=%s",
+        request.method,
+        request.url.path,
+        request.url.query,
+        bool(auth_header),
+        auth_scheme,
+        bool(api_key),
+    )
+
+    return await call_next(request)
+
+
 app.include_router(config.router)
 app.include_router(resource.router)
 app.include_router(schema.router)
