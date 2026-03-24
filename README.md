@@ -4,14 +4,14 @@
 
 | Name                              |    Stmts |     Miss |   Cover |   Missing |
 |---------------------------------- | -------: | -------: | ------: | --------: |
-| code/auth.py                      |       12 |        0 |    100% |           |
+| code/auth.py                      |       17 |        0 |    100% |           |
 | code/data/\_\_init\_\_.py         |       54 |       24 |     56% |51-65, 70-73, 75-78, 80-87, 93-100, 106-116 |
 | code/data/groups.py               |       64 |       13 |     80% |82, 88-96, 108-115 |
 | code/data/plugins/\_\_init\_\_.py |       18 |        4 |     78% |21, 24, 27, 30 |
 | code/data/plugins/file.py         |       31 |        0 |    100% |           |
 | code/data/users.py                |       53 |        8 |     85% |48, 77, 83-91 |
 | code/filter.py                    |      197 |       32 |     84% |138-139, 162-165, 201, 217-243, 260-261, 268, 290, 299, 306 |
-| code/main.py                      |       34 |        9 |     74% |37-39, 47-50, 75, 79 |
+| code/main.py                      |       43 |        9 |     79% |61-63, 71-74, 99, 103 |
 | code/routers/\_\_init\_\_.py      |      101 |       40 |     60% |35-60, 77, 111, 121-122, 143-146, 152-187, 195 |
 | code/routers/config.py            |        8 |        0 |    100% |           |
 | code/routers/groups.py            |       70 |        6 |     91% |135-139, 171, 174, 190-191 |
@@ -30,7 +30,7 @@
 | test/test\_schema.py              |       13 |        0 |    100% |           |
 | test/test\_user.py                |       60 |        0 |    100% |           |
 | test/test\_validation.py          |       10 |        0 |    100% |           |
-| **TOTAL**                         | **1343** |  **170** | **87%** |           |
+| **TOTAL**                         | **1357** |  **170** | **87%** |           |
 
 
 ## Setup coverage badge
