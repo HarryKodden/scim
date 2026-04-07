@@ -9,7 +9,6 @@ from typing import Union, List, Optional, Dict, Literal, Any
 from pydantic import BaseModel, Field, create_model
 
 import logging
-logging.basicConfig(level="DEBUG")
 logger = logging.getLogger(__name__)
 
 # SCIM 2.0 Core Schema URIs
