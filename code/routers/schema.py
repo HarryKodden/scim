@@ -3,7 +3,7 @@
 from fastapi import APIRouter, HTTPException
 from routers import BASE_PATH, SCIM_Response
 from typing import Any
-from schema import SCIM_API_MESSAGES, ListResponse, Schemas
+from schema import SCIM_API_MESSAGES, ListResponse, SchemaResources
 
 import logging
 logger = logging.getLogger(__name__)
@@ -18,13 +18,7 @@ router = APIRouter(
 async def get_schemas() -> ListResponse:
     """ Return Schemas """
 
-    resources = []
-
-    for resource in ['User', 'Group']:
-        for schema in Schemas[resource].keys():
-            resources.append(
-                Schemas[resource][schema].model_json_schema(by_alias=True)
-            )
+    resources = list(SchemaResources.values())
 
     return ListResponse(
         Resources=resources,
@@ -41,10 +35,10 @@ async def get_schemas() -> ListResponse:
 async def get_schema(id: str) -> Any:
     """ Return Schemas """
 
-    resource = {**Schemas['User'], **Schemas['Group']}.get(id)
+    resource = SchemaResources.get(id)
 
     logger.debug(resource)
     if not resource:
         raise HTTPException(status_code=404, detail=f"Schema {id} not found")
 
-    return resource.model_json_schema(by_alias=True)
+    return resource

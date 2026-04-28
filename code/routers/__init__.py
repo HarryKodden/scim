@@ -2,7 +2,10 @@
 
 import time
 import json
-import pika
+try:
+    import pika
+except ImportError:
+    pika = None
 
 from fastapi import HTTPException, Request, Response
 from fastapi.routing import APIRoute
@@ -30,6 +33,10 @@ def broadcast(data: Any) -> None:
     QUEUE = os.environ.get('QUEUE', 'SCIM')
 
     if not AMQP:
+        return
+
+    if pika is None:
+        logger.warning("AMQP configured but pika is not installed; skipping broadcast")
         return
 
     try:

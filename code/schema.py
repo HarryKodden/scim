@@ -36,6 +36,7 @@ Schemas = {
     "User": {},
     "Group": {},
 }
+SchemaResources = {}
 
 global User, UserResource, Group, GroupResource
 
@@ -187,6 +188,20 @@ def register_resource_type(resource_name, schema_uri, attributes):
     # Store in Schemas dictionary
     Schemas[resource_name][schema_uri] = resource_model
 
+    SchemaResources[schema_uri] = {
+        "id": schema_uri,
+        "name": resource_name,
+        "description": f"Schema definition for {resource_name}",
+        "attributes": attributes,
+        "meta": {
+            "location": f"/Schemas/{schema_uri}",
+            "resourceType": "Schema"
+        },
+        "schemas": [
+            CORE_SCHEMA + ":Schema"
+        ]
+    }
+
     # Add to ResourceType collection
     resourceTypes.append(
         ResourceType(
@@ -229,6 +244,22 @@ for resource in ['User', 'Group']:
                     Schemas[resource][id] = register_model(
                         f"{resource}_{name}", attributes
                     )
+                    SchemaResources[id] = {
+                        "id": id,
+                        "name": schema_data.get("name", name),
+                        "description": schema_data.get(
+                            "description",
+                            f"Schema definition for {name}"
+                        ),
+                        "attributes": attributes,
+                        "meta": {
+                            "location": f"/Schemas/{id}",
+                            "resourceType": "Schema"
+                        },
+                        "schemas": [
+                            CORE_SCHEMA + ":Schema"
+                        ]
+                    }
 
                 except Exception as e:
                     logger.error(
