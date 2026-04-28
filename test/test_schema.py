@@ -8,6 +8,30 @@ import logging
 logger = logging.getLogger(__name__)
 
 SCHEMA_RESOURCE_URN = "urn:ietf:params:scim:schemas:core:2.0:Schema"
+ALLOWED_SCIM_ATTRIBUTE_TYPES = {
+    "string",
+    "boolean",
+    "integer",
+    "decimal",
+    "dateTime",
+    "reference",
+    "complex",
+    "binary",
+}
+
+
+def assert_valid_scim_attribute(attr):
+    assert isinstance(attr, dict)
+    attr_type = attr.get("type")
+    assert attr_type in ALLOWED_SCIM_ATTRIBUTE_TYPES
+
+    if attr_type == "string":
+        assert "caseExact" in attr
+        assert isinstance(attr["caseExact"], bool)
+
+    if attr_type == "complex" and isinstance(attr.get("subAttributes"), list):
+        for sub_attr in attr["subAttributes"]:
+            assert_valid_scim_attribute(sub_attr)
 
 
 def assert_is_scim_schema_resource(item):
@@ -20,6 +44,8 @@ def assert_is_scim_schema_resource(item):
     assert item["meta"].get("resourceType") == "Schema"
     assert item["meta"].get("location")
     assert item.get("schemas") == [SCHEMA_RESOURCE_URN]
+    for attr in item["attributes"]:
+        assert_valid_scim_attribute(attr)
 
 
 def test_get_schemas(test_app):
