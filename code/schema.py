@@ -64,6 +64,13 @@ def normalize_attribute_definition(attribute: Dict[str, Any]) -> Dict[str, Any]:
     normalized_type = normalize_scim_type(str(normalized.get("type", "string")))
     normalized["type"] = normalized_type
 
+    # RFC7643 schema attribute objects must carry descriptive metadata.
+    normalized.setdefault("description", str(normalized.get("name", "")))
+    normalized.setdefault("multiValued", False)
+    normalized.setdefault("mutability", "readWrite")
+    normalized.setdefault("returned", "default")
+    normalized.setdefault("required", False)
+
     if normalized_type == "string" and "caseExact" not in normalized:
         normalized["caseExact"] = False
 
