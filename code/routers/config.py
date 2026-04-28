@@ -2,12 +2,13 @@
 
 from typing import Any
 from fastapi import APIRouter
+from routers import BASE_PATH
 
 import logging
 logger = logging.getLogger(__name__)
 
 router = APIRouter(
-    prefix="/ServiceProviderConfig",
+    prefix=BASE_PATH+"/ServiceProviderConfig",
     tags=["SCIM Config"],
 )
 
