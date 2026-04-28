@@ -212,7 +212,7 @@ async def patch_user(id: str, patch: Patch):
     try:
         user = get_user_resource(id)
         if not user:
-            raise Exception(f"User {id} not found")
+            raise HTTPException(status_code=404, detail=f"User {id} not found")
 
         if SCIM_PATCH_OP not in patch.schemas:
             raise HTTPException(
@@ -230,5 +230,7 @@ async def patch_user(id: str, patch: Patch):
         broadcast_user("Update", user)
 
         return user.model_dump(by_alias=True, exclude_none=True)
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(status_code=404, detail=f"Error: {str(e)}")
+        raise HTTPException(status_code=400, detail=f"Error: {str(e)}")

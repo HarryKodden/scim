@@ -168,7 +168,7 @@ async def patch_group(id: str, patch: Patch):
     try:
         group = get_group_resource(id)
         if not group:
-            raise Exception(f"Group {id} not found")
+            raise HTTPException(status_code=404, detail=f"Group {id} not found")
 
         if SCIM_PATCH_OP not in patch.schemas:
             raise HTTPException(
@@ -187,5 +187,7 @@ async def patch_group(id: str, patch: Patch):
 
         return group.model_dump(by_alias=True, exclude_none=True)
 
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(status_code=404, detail=f"Error: {str(e)}")
+        raise HTTPException(status_code=400, detail=f"Error: {str(e)}")

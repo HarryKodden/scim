@@ -162,6 +162,25 @@ def test_update_user(test_app):
       headers=headers
     )
     assert response.status_code == 200
+    assert response.headers["content-type"].startswith("application/scim+json")
+
+    response = test_app.patch(
+      f"/Users/{id}",
+      json={
+        "Operations": [{
+            "op": "replace",
+            "path": "name.familyName",
+            "value": "PatchedFamilyName"
+        }],
+        "schemas": [SCIM_PATCH_OP]
+      },
+      headers=headers
+    )
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("application/scim+json")
+    user = UserResource(**response.json())
+    assert user.name
+    assert user.name.familyName == "PatchedFamilyName"
 
     response = test_app.post(
       "/Users",

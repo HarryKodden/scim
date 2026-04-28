@@ -142,21 +142,73 @@ def get_all_resources(
 
 
 def patch_resource(resource, operations):
+    def _split_path(path: str):
+        if not path:
+            return []
+        return [part for part in path.split('.') if part]
+
+    def _get_parent_and_key(obj, path: str):
+        parts = _split_path(path)
+        if not parts:
+            raise HTTPException(status_code=400, detail="Patch path is required")
+
+        current = obj
+        for part in parts[:-1]:
+            if not isinstance(current, dict):
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Cannot traverse non-object path: {path}"
+                )
+            if part not in current or current[part] is None:
+                current[part] = {}
+            elif not isinstance(current[part], dict):
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Cannot traverse non-object path: {path}"
+                )
+            current = current[part]
+
+        return current, parts[-1]
+
+    def _get_value(obj, path: str):
+        current = obj
+        for part in _split_path(path):
+            if not isinstance(current, dict) or part not in current:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Cannot access non-existing: {path}"
+                )
+            current = current[part]
+        return current
+
+    def _set_value(obj, path: str, value):
+        parent, key = _get_parent_and_key(obj, path)
+        parent[key] = value
+
+    def _remove_value(obj, path: str):
+        parent, key = _get_parent_and_key(obj, path)
+        if key not in parent:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Cannot remove non-existing: {path}"
+            )
+        parent.pop(key)
 
     for operation in operations:
         if operation.op.upper() == 'REMOVE':
-            resource.pop(operation.path)
+            _remove_value(resource, operation.path)
         elif operation.op.upper() == 'REPLACE':
-            if operation.path in resource:
-                resource[operation.path] = operation.value
-            else:
-                raise HTTPException(
-                    status_code=400,
-                    detail=f"Cannot replace non-existing: {operation.path}"
-                )
+            _set_value(resource, operation.path, operation.value)
         elif operation.op.upper() == 'ADD':
-            if operation.path in resource:
-                if isinstance(resource[operation.path], list):
+            value_at_path = None
+            path_exists = True
+            try:
+                value_at_path = _get_value(resource, operation.path)
+            except HTTPException:
+                path_exists = False
+
+            if path_exists:
+                if isinstance(value_at_path, list):
                     if isinstance(operation.value, list):
                         items_to_add = operation.value
                     else:
@@ -164,8 +216,8 @@ def patch_resource(resource, operations):
 
                     for new_item in items_to_add:
                         if not isinstance(new_item, dict):
-                            if new_item not in resource[operation.path]:
-                                resource[operation.path].append(new_item)
+                            if new_item not in value_at_path:
+                                value_at_path.append(new_item)
                             continue
 
                         # If new_item is a dict, check if it already exists
@@ -174,7 +226,7 @@ def patch_resource(resource, operations):
 
                         keys = new_item.keys()
 
-                        for existing_item in resource[operation.path]:
+                        for existing_item in value_at_path:
                             for key in keys:
                                 if (
                                     key in new_item and
@@ -189,7 +241,7 @@ def patch_resource(resource, operations):
 
                         # Add the item if it doesn't exist
                         if not item_exists:
-                            resource[operation.path].append(new_item)
+                            value_at_path.append(new_item)
                 else:
                     raise HTTPException(
                         status_code=400,
@@ -197,7 +249,7 @@ def patch_resource(resource, operations):
                     )
             else:
                 # If the path doesn't exist, create it with the value
-                resource[operation.path] = operation.value
+                _set_value(resource, operation.path, operation.value)
         else:
             raise HTTPException(
                 status_code=400,

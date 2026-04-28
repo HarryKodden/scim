@@ -131,6 +131,7 @@ def test_group_updates(test_app):
       headers=headers
     )
     assert response.status_code == 200
+    assert response.headers["content-type"].startswith("application/scim+json")
     group = GroupResource(**response.json())
 
     assert len(group.members) == 1
@@ -147,12 +148,14 @@ def test_group_updates(test_app):
       headers=headers
     )
     assert response.status_code == 200
+    assert response.headers["content-type"].startswith("application/scim+json")
 
     response = test_app.get(
       f"/Groups/{group.id}",
       headers=headers
     )
     assert response.status_code == 200
+    assert response.headers["content-type"].startswith("application/scim+json")
     group = GroupResource(**response.json())
 
     assert not group.members or len(group.members) == 0
