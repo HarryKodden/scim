@@ -513,7 +513,7 @@
                     "caseExact": true,
                     "mutability": "readWrite",
                     "returned": "default",
-                    "uniqueness": "Server"
+                    "uniqueness": "server"
                 },
                 {
                     "name": "type",
