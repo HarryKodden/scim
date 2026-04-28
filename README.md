@@ -27,10 +27,10 @@
 | test/test\_group.py               |       80 |        0 |    100% |           |
 | test/test\_health.py              |        6 |        0 |    100% |           |
 | test/test\_resource.py            |       12 |        0 |    100% |           |
-| test/test\_schema.py              |       33 |        0 |    100% |           |
+| test/test\_schema.py              |       46 |        0 |    100% |           |
 | test/test\_user.py                |       60 |        0 |    100% |           |
 | test/test\_validation.py          |       10 |        0 |    100% |           |
-| **TOTAL**                         | **1397** |  **175** | **87%** |           |
+| **TOTAL**                         | **1410** |  **175** | **88%** |           |
 
 
 ## Setup coverage badge
