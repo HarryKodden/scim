@@ -41,6 +41,41 @@ SchemaResources = {}
 global User, UserResource, Group, GroupResource
 
 
+def normalize_scim_type(attr_type: str) -> str:
+    """Return canonical SCIM attribute type value."""
+    mapping = {
+        "string": "string",
+        "boolean": "boolean",
+        "booelean": "boolean",
+        "integer": "integer",
+        "decimal": "decimal",
+        "datetime": "dateTime",
+        "dateTime": "dateTime",
+        "reference": "reference",
+        "complex": "complex",
+        "binary": "binary",
+    }
+    return mapping.get(attr_type, attr_type)
+
+
+def normalize_attribute_definition(attribute: Dict[str, Any]) -> Dict[str, Any]:
+    """Normalize schema attribute definition to SCIM-compatible values."""
+    normalized = dict(attribute)
+    normalized_type = normalize_scim_type(str(normalized.get("type", "string")))
+    normalized["type"] = normalized_type
+
+    if normalized_type == "string" and "caseExact" not in normalized:
+        normalized["caseExact"] = False
+
+    sub_attributes = normalized.get("subAttributes")
+    if normalized_type == "complex" and isinstance(sub_attributes, list):
+        normalized["subAttributes"] = [
+            normalize_attribute_definition(sub) for sub in sub_attributes
+        ]
+
+    return normalized
+
+
 class HealthCheck(BaseModel):
     status: str = "OK"
 
@@ -100,6 +135,7 @@ class ListResponse(BaseModel):
 
 def register_model(name, attributes, fields={}, __base__=(BaseModel)) -> Any:
     for attr in attributes:
+        attr = normalize_attribute_definition(attr)
         attr_name = attr.get('name')
         attr_type = attr.get('type', 'string')
         attr_required = attr.get('required', False)
@@ -112,8 +148,10 @@ def register_model(name, attributes, fields={}, __base__=(BaseModel)) -> Any:
             'integer': int,
             'boolean': bool,
             'decimal': float,
+            'dateTime': datetime,
             'datetime': datetime,
             'reference': str,
+            'binary': str,
             'complex': dict
         }
 
@@ -239,7 +277,10 @@ for resource in ['User', 'Group']:
                     # Extract schema information
                     name = Path(filename).stem
                     id = schema_data.get('id', name)
-                    attributes = schema_data.get('attributes', [])
+                    attributes = [
+                        normalize_attribute_definition(attr)
+                        for attr in schema_data.get('attributes', [])
+                    ]
 
                     Schemas[resource][id] = register_model(
                         f"{resource}_{name}", attributes
@@ -276,7 +317,10 @@ for resource in ['User', 'Group']:
         with open(core_schema_path, 'r') as f:
             schema_data = json.load(f)
 
-        attributes = schema_data.get('attributes', [])
+        attributes = [
+            normalize_attribute_definition(attr)
+            for attr in schema_data.get('attributes', [])
+        ]
 
         if resource == 'User':
             User, UserResource = register_resource_type(
