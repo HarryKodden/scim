@@ -266,7 +266,23 @@ def patch_resource(resource, operations):
         parent, key = _get_parent_and_key(obj, path)
         parent[key] = value
 
-    def _remove_value(obj, path: str):
+    def _matches_subset(candidate, selector) -> bool:
+        if isinstance(candidate, dict) and isinstance(selector, dict):
+            for k, v in selector.items():
+                if candidate.get(k) != v:
+                    return False
+            return True
+        return candidate == selector
+
+    def _remove_from_list(target_list, remove_value):
+        remove_items = remove_value if isinstance(remove_value, list) else [remove_value]
+        for selector in remove_items:
+            target_list[:] = [
+                item for item in target_list
+                if not _matches_subset(item, selector)
+            ]
+
+    def _remove_value(obj, path: str, operation_value: Any = None):
         # RFC7644 valuePath support (e.g. members[value eq "user-id"])
         filtered_match = re.fullmatch(
             r'([A-Za-z0-9_.$-]+)\[\s*([A-Za-z0-9_.$-]+)\s+eq\s+"([^"]+)"\s*\]',
@@ -291,6 +307,17 @@ def patch_resource(resource, operations):
             _set_value(obj, list_path, filtered_list)
             return
 
+        # Common SCIM client pattern: op=remove with path=<multi-valued attr>
+        # and value carrying one/more entries to remove.
+        if operation_value is not None:
+            try:
+                current_value = _get_value(obj, path)
+            except HTTPException:
+                current_value = None
+            if isinstance(current_value, list):
+                _remove_from_list(current_value, operation_value)
+                return
+
         parent, key = _get_parent_and_key(obj, path)
         if key not in parent:
             raise HTTPException(
@@ -301,7 +328,7 @@ def patch_resource(resource, operations):
 
     for operation in operations:
         if operation.op.upper() == 'REMOVE':
-            _remove_value(resource, operation.path)
+            _remove_value(resource, operation.path, operation.value)
         elif operation.op.upper() == 'REPLACE':
             _set_value(resource, operation.path, operation.value)
         elif operation.op.upper() == 'ADD':

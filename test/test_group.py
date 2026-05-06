@@ -250,6 +250,29 @@ def test_group_updates(test_app):
       f"/Groups/{group.id}",
       json={
         "Operations": [{
+            "op": "remove",
+            "path": "members",
+            "value": [{"value": user.id}]
+        }],
+        "schemas": [SCIM_PATCH_OP]
+      },
+      headers=headers
+    )
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("application/scim+json")
+
+    response = test_app.get(
+      f"/Groups/{group.id}",
+      headers=headers
+    )
+    assert response.status_code == 200
+    group = GroupResource(**response.json())
+    assert not group.members or len(group.members) == 0
+
+    response = test_app.patch(
+      f"/Groups/{group.id}",
+      json={
+        "Operations": [{
             "op": "add",
             "path": "externalId",
             "value": "external-1"
