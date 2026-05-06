@@ -2,6 +2,7 @@
 
 import time
 import json
+import re
 try:
     import pika
 except ImportError:
@@ -25,6 +26,41 @@ logger = logging.getLogger(__name__)
 
 BASE_PATH = os.environ.get('BASE_PATH', '')
 PAGE_SIZE = int(os.environ.get('PAGE_SIZE', 100))
+REDACTED_KEYS = {
+    "password",
+    "token",
+    "secret",
+    "authorization",
+    "access_token",
+    "refresh_token",
+    "client_secret",
+    "api_key",
+    "x-api-key",
+}
+
+
+def _redact_sensitive(value: Any) -> Any:
+    if isinstance(value, dict):
+        redacted = {}
+        for k, v in value.items():
+            if str(k).lower() in REDACTED_KEYS:
+                redacted[k] = "***REDACTED***"
+            else:
+                redacted[k] = _redact_sensitive(v)
+        return redacted
+    if isinstance(value, list):
+        return [_redact_sensitive(v) for v in value]
+    return value
+
+
+def redact_request_body(raw_body: str) -> str:
+    if not raw_body:
+        return raw_body
+    try:
+        parsed = json.loads(raw_body)
+        return json.dumps(_redact_sensitive(parsed))
+    except Exception:
+        return raw_body
 
 
 def broadcast(data: Any) -> None:
@@ -87,12 +123,57 @@ class SCIM_Route(APIRoute):
 
         async def custom_route_handler(request: Request) -> Response:
             before = time.time()
+            request_body_text = ""
+            body_methods = {"POST", "PUT", "PATCH", "DELETE"}
+
+            if request.method in body_methods and logger.isEnabledFor(logging.DEBUG):
+                try:
+                    # FastAPI caches request.body(), so downstream handlers can still read it.
+                    request_body_text = (await request.body()).decode(
+                        "utf-8",
+                        errors="replace"
+                    )
+                    request_body_text = redact_request_body(request_body_text)
+                except Exception:
+                    request_body_text = "<unreadable>"
 
             verify_content_type('request', request.headers)
 
-            response: Response = await original_route_handler(request)
+            try:
+                response: Response = await original_route_handler(request)
+            except HTTPException as exc:
+                logger.error(
+                    "[REQ FAIL] %s %s status=%s detail=%s content_type=%s body=%s",
+                    request.method,
+                    request.url.path,
+                    exc.status_code,
+                    exc.detail,
+                    request.headers.get("content-type", ""),
+                    request_body_text[:4000]
+                )
+                raise
+            except Exception as exc:
+                logger.exception(
+                    "[REQ FAIL] %s %s status=500 detail=%s content_type=%s body=%s",
+                    request.method,
+                    request.url.path,
+                    str(exc),
+                    request.headers.get("content-type", ""),
+                    request_body_text[:4000]
+                )
+                raise
             duration = time.time() - before
             response.headers["X-Response-Time"] = str(duration)
+
+            if response.status_code >= 400:
+                logger.error(
+                    "[REQ FAIL] %s %s status=%s content_type=%s body=%s",
+                    request.method,
+                    request.url.path,
+                    response.status_code,
+                    request.headers.get("content-type", ""),
+                    request_body_text[:4000]
+                )
 
             verify_content_type('response', response.headers)
 
@@ -186,6 +267,30 @@ def patch_resource(resource, operations):
         parent[key] = value
 
     def _remove_value(obj, path: str):
+        # RFC7644 valuePath support (e.g. members[value eq "user-id"])
+        filtered_match = re.fullmatch(
+            r'([A-Za-z0-9_.$-]+)\[\s*([A-Za-z0-9_.$-]+)\s+eq\s+"([^"]+)"\s*\]',
+            path or ""
+        )
+        if filtered_match:
+            list_path, attr_name, expected = filtered_match.groups()
+            target_list = _get_value(obj, list_path)
+            if not isinstance(target_list, list):
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Cannot remove from non-list: {list_path}"
+                )
+
+            filtered_list = [
+                item for item in target_list
+                if not (
+                    isinstance(item, dict) and
+                    str(item.get(attr_name)) == expected
+                )
+            ]
+            _set_value(obj, list_path, filtered_list)
+            return
+
         parent, key = _get_parent_and_key(obj, path)
         if key not in parent:
             raise HTTPException(

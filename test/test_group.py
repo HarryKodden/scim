@@ -96,7 +96,7 @@ def test_group_updates(test_app):
     response = test_app.post(
       "/Users",
       json={
-        "userName": "testmember",
+        "userName": "testmember-1",
         "emails": [
           {
             "primary": True,
@@ -109,6 +109,23 @@ def test_group_updates(test_app):
     )
     assert response.status_code == 201
     user = UserResource(**response.json())
+
+    response = test_app.post(
+      "/Users",
+      json={
+        "userName": "testmember-2",
+        "emails": [
+          {
+            "primary": True,
+            "value": "noboby@nowhere"
+          }
+        ],
+        "active": True
+      },
+      headers=headers
+    )
+    assert response.status_code == 201
+    user_to_remove = UserResource(**response.json())
 
     response = test_app.post(
       "/Groups",
@@ -177,6 +194,25 @@ def test_group_updates(test_app):
       headers=headers
     )
     assert response.status_code == 200
+    assert response.headers["content-type"].startswith("application/scim+json")
+
+    response = test_app.patch(
+      f"/Groups/{group.id}",
+      json={
+        "Operations": [{
+            "op": "add",
+            "path": "members",
+            "value": [
+              {
+                "value": user_to_remove.id
+              }
+            ]
+        }],
+        "schemas": [SCIM_PATCH_OP]
+      },
+      headers=headers
+    )
+    assert response.status_code == 200
 
     response = test_app.get(
       f"/Groups/{group.id}",
@@ -185,7 +221,30 @@ def test_group_updates(test_app):
     assert response.status_code == 200
     group = GroupResource(**response.json())
 
+    assert len(group.members) == 2
+
+    response = test_app.patch(
+      f"/Groups/{group.id}",
+      json={
+        "Operations": [{
+            "op": "remove",
+            "path": f"members[value eq \"{user_to_remove.id}\"]"
+        }],
+        "schemas": [SCIM_PATCH_OP]
+      },
+      headers=headers
+    )
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("application/scim+json")
+
+    response = test_app.get(
+      f"/Groups/{group.id}",
+      headers=headers
+    )
+    assert response.status_code == 200
+    group = GroupResource(**response.json())
     assert len(group.members) == 1
+    assert group.members[0].value == user.id
 
     response = test_app.patch(
       f"/Groups/{group.id}",
