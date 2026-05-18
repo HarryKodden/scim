@@ -1,7 +1,5 @@
 # test/test_events_config.py
 
-import os
-
 from events import DEFAULT_NOTICE_EVENT_URIS, publish_event
 from events.builder import build_set_envelope, build_sub_id, new_jti
 from events.config import load_event_config
@@ -18,6 +16,8 @@ def test_load_event_config_defaults(monkeypatch):
     assert cfg.event_mode == "notice"
     assert cfg.async_request == "none"
     assert not cfg.push_enabled
+    assert not cfg.signing_enabled
+    assert not cfg.push_require_tls
 
 
 def test_load_event_config_set_push(monkeypatch):

@@ -4,11 +4,16 @@
 
 import json
 import logging
-from typing import Any, Dict, Literal, Optional, Union
+from typing import Any, Dict, Literal, Optional
 
-from events.builder import ProvisioningOp, build_provisioning_event
+from events.builder import (
+    LifecycleOp,
+    ProvisioningOp,
+    build_lifecycle_event,
+    build_provisioning_event,
+)
 from events.config import EventConfig, load_event_config
-from events.delivery.push import deliver_set_push
+from events.delivery.dispatch import deliver_set
 
 logger = logging.getLogger(__name__)
 
@@ -39,14 +44,6 @@ def publish_provisioning_event(
     Never raises — logs failures and returns False so SCIM writes are not rolled back.
     """
     cfg = config or load_event_config()
-    if not cfg.push_enabled:
-        logger.debug(
-            "Provisioning event not delivered (SET_PUSH_URL unset): %s %s",
-            operation,
-            resource_type,
-        )
-        return False
-
     try:
         resource_data = _resource_dict(resource)
         set_token = build_provisioning_event(
@@ -58,7 +55,7 @@ def publish_provisioning_event(
             patch_operations=patch_operations,
             base_path=base_path,
         )
-        delivered = deliver_set_push(set_token, cfg)
+        delivered = deliver_set(set_token, cfg)
         if not delivered:
             logger.warning(
                 "Failed to deliver provisioning SET: op=%s type=%s uri=%s",
@@ -91,6 +88,33 @@ def emit_user_event(
         patch_operations=patch_operations,
         base_path=base_path,
     )
+
+
+def emit_user_lifecycle_event(
+    operation: LifecycleOp,
+    user: Any,
+    *,
+    config: Optional[EventConfig] = None,
+    base_path: Optional[str] = None,
+) -> bool:
+    """Emit prov:activate or prov:deactivate when User.active changes."""
+    cfg = config or load_event_config()
+    try:
+        resource_data = _resource_dict(user)
+        set_token = build_lifecycle_event(
+            operation,
+            resource_data,
+            config=cfg,
+            base_path=base_path,
+        )
+        return deliver_set(set_token, cfg)
+    except Exception as exc:
+        logger.error(
+            "Error building/delivering lifecycle SET: op=%s error=%s",
+            operation,
+            str(exc),
+        )
+        return False
 
 
 def emit_group_event(

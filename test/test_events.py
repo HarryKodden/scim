@@ -1,13 +1,12 @@
 # test/test_events.py
 
-import json
 from unittest.mock import MagicMock, patch
 
 import pytest
 
 from events.builder import build_provisioning_event
 from events.mapping import PROV_CREATE_NOTICE, PROV_DELETE, PROV_PATCH_NOTICE
-from events.publisher import emit_group_event, emit_user_event, publish_provisioning_event
+from events.publisher import publish_provisioning_event
 from schema import SCIM_PATCH_OP
 
 
@@ -66,7 +65,7 @@ def test_provisioning_delete_empty_payload():
     assert set_token["events"][PROV_DELETE] == {}
 
 
-@patch("events.publisher.deliver_set_push", return_value=True)
+@patch("events.publisher.deliver_set", return_value=True)
 def test_publish_provisioning_event_calls_push(mock_deliver, push_env):
     resource = {"id": "x", "meta": {"location": "/Users/x"}}
     assert publish_provisioning_event("create", "User", resource) is True
@@ -75,7 +74,7 @@ def test_publish_provisioning_event_calls_push(mock_deliver, push_env):
     assert PROV_CREATE_NOTICE in set_token["events"]
 
 
-@patch("events.publisher.deliver_set_push", return_value=True)
+@patch("events.publisher.deliver_set", return_value=True)
 def test_create_user_emits_set(mock_deliver, test_app, push_env):
     headers = {
         "x-api-key": "secret",
@@ -96,7 +95,7 @@ def test_create_user_emits_set(mock_deliver, test_app, push_env):
     assert PROV_CREATE_NOTICE in set_token["events"]
 
 
-@patch("events.publisher.deliver_set_push", return_value=True)
+@patch("events.publisher.deliver_set", return_value=True)
 def test_patch_group_members_emits_set(mock_deliver, test_app, push_env):
     headers = {
         "x-api-key": "secret",

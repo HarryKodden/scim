@@ -148,6 +148,14 @@ This image uses environment variables for configuration.
 | `SET_PUSH_TOKEN` | Bearer token for SET push delivery | | |
 | `EVENT_MODE` | Provisioning event payload mode: `notice` or `full` | `notice` | `notice` |
 | `ASYNC_REQUEST` | Async SCIM requests (RFC 9967 §2.5.1): `none`, `request`, or `long` — see [Async SCIM requests](#async-scim-requests) | `request` | `none` |
+| `SET_SIGNING_SECRET` | HMAC secret for JWS-signed SET push (`application/secevent+jwt`) | | |
+| `SET_SIGNING_ALGORITHM` | JWS algorithm when signing is enabled | `HS256` | `HS256` |
+| `SET_PUSH_REQUIRE_TLS` | Reject `http://` push URLs when `true` | `true` | `false` |
+| `SET_FEEDS` | Feed definitions (JSON array or comma-separated ids) | `[{"id":"default","displayName":"Default"}]` | `default` |
+| `SET_FEEDS_ENABLED` | Emit `feed:add` / `feed:remove` on membership changes | `true` | `true` |
+| `SET_GROUP_AS_FEED` | Map each Group to feed `/Events/Feeds/{groupId}` | `true` | `true` |
+| `SET_POLL_ENABLED` | Enable RFC 8936 poll at `/Events/Feeds/{id}/Stream` | `true` | `false` |
+| `SET_POLL_MAX_EVENTS` | Max SETs retained per feed stream (in-memory) | `10000` | `10000` |
 
 
 ## Handling data
@@ -319,6 +327,81 @@ export SET_ISSUER=https://scim.example.com
 Without `Prefer: respond-async`, behavior is unchanged (synchronous 201/200/204 responses).
 
 **Note:** Async results are stored in memory per process. For multiple workers or restarts, use the completion SET or add a shared store (not included yet).
+
+### ETag and resource versions
+
+Resources include `meta.version` (and matching `ETag` response headers) on every write. Clients may send `If-Match` on PUT/PATCH; a mismatch returns **412 Precondition Failed**. `ServiceProviderConfig.etag.supported` is `true`.
+
+Provisioning SETs in notice mode include a `version` field when present. Use `EVENT_MODE=full` to receive full resource bodies in `prov:*:full` events (listed in `securityEvents.eventUris`).
+
+### User activate / deactivate events
+
+When `User.active` changes on PUT or PATCH, additional SETs are emitted:
+
+- `urn:ietf:params:scim:event:prov:activate`
+- `urn:ietf:params:scim:event:prov:deactivate`
+
+These are advertised in `securityEvents.eventUris` alongside standard provisioning events.
+
+### SET signing (optional)
+
+Set `SET_SIGNING_SECRET` to deliver compact JWS SETs (`Content-Type: application/secevent+jwt`). Without it, SETs are posted as JSON for simpler receiver development.
+
+In production, set `SET_PUSH_REQUIRE_TLS=true` so only `https://` push URLs are accepted.
+
+### Event feeds (RFC 9967 §2.3 + RFC 8936 poll)
+
+Feeds are listed at `GET /Events/Feeds`. Each feed has metadata at `GET /Events/Feeds/{id}` including member resource URIs.
+
+When `SET_GROUP_AS_FEED=true` (default), each Group is an event feed. Adding or removing group members emits:
+
+- `urn:ietf:params:scim:event:feed:add`
+- `urn:ietf:params:scim:event:feed:remove`
+
+The SET `aud` claim targets the feed URL (e.g. `https://scim.example.com/Events/Feeds/{groupId}`). `ServiceProviderConfig.securityEvents.feeds` lists available feed URIs.
+
+**Poll delivery** (`SET_POLL_ENABLED=true`):
+
+```http
+GET /Events/Feeds/default/Stream?after={jti}&limit=100
+Authorization: Bearer <API_KEY>
+```
+
+Returns stored SETs for receivers without a push webhook. All published SETs (provisioning and feed) are appended to the matching feed stream(s).
+
+### Bulk operations (RFC 7644 §3.7)
+
+`POST /Bulk` runs multiple operations in one request. `ServiceProviderConfig.bulk.supported` is `true` (up to 1000 operations).
+
+```http
+POST /Bulk HTTP/1.1
+Content-Type: application/scim+json
+
+{
+  "schemas": ["urn:ietf:params:scim:api:messages:2.0:BulkRequest"],
+  "failOnErrors": 1,
+  "Operations": [
+    {
+      "method": "POST",
+      "path": "/Users",
+      "bulkId": "newuser",
+      "data": { "userName": "alice", "active": true }
+    },
+    {
+      "method": "PATCH",
+      "path": "/Users/bulkId:newuser",
+      "data": {
+        "schemas": ["urn:ietf:params:scim:api:messages:2.0:PatchOp"],
+        "Operations": [{ "op": "replace", "path": "active", "value": false }]
+      }
+    }
+  ]
+}
+```
+
+The response uses `BulkResponse` with per-operation `status`, `location`, and optional `response`.
+
+With `ASYNC_REQUEST=request` and `Prefer: respond-async`, bulk returns **202** and one `misc:asyncresp` SET per operation with `txn` values `{Set-Txn}:0`, `{Set-Txn}:1`, … The full bulk result is available at `GET /Async/{Set-Txn}` when processing completes.
 
 ## CI/CD
 

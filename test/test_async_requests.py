@@ -28,11 +28,8 @@ def test_prefer_header_parsing():
     assert parse_wait_seconds("wait=2.5") == 2.5
 
 
-@patch("events.publisher.deliver_set_push", return_value=True)
-@patch("events.async_jobs.deliver_set_push", return_value=True)
-def test_async_post_returns_202_and_completion_set(
-    mock_async_deliver, mock_prov_deliver, test_app, async_env
-):
+@patch("events.async_jobs.deliver_set", return_value=True)
+def test_async_post_returns_202_and_completion_set(mock_deliver, test_app, async_env):
     headers = {
         "x-api-key": "secret",
         "content-type": "application/scim+json",
@@ -54,9 +51,9 @@ def test_async_post_returns_202_and_completion_set(
     assert response.headers.get("Preference-Applied") == "respond-async"
     assert response.headers.get("Location") == f"/Async/{txn}"
 
-    assert mock_async_deliver.call_count >= 1
+    assert mock_deliver.call_count >= 1
     async_set = None
-    for call in mock_async_deliver.call_args_list:
+    for call in mock_deliver.call_args_list:
         token = call[0][0]
         if MISC_ASYNC_RESP in token.get("events", {}):
             async_set = token
@@ -74,7 +71,7 @@ def test_async_post_returns_202_and_completion_set(
     assert result["status"] == "201"
 
 
-@patch("events.publisher.deliver_set_push", return_value=True)
+@patch("events.publisher.deliver_set", return_value=True)
 def test_async_disabled_without_prefer(mock_deliver, test_app, async_env):
     headers = {
         "x-api-key": "secret",

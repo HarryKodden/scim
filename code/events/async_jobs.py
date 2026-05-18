@@ -6,15 +6,15 @@ import asyncio
 import json
 import logging
 import os
-from dataclasses import dataclass, field
-from typing import Any, Dict, Optional
+from dataclasses import dataclass
+from typing import Any, Dict, List, Optional
 
 from fastapi import HTTPException, Request, Response
 from starlette.responses import Response as StarletteResponse
 
 from events.builder import build_set_envelope, build_sub_id, new_txn
 from events.config import load_event_config
-from events.delivery.push import deliver_set_push
+from events.delivery.dispatch import deliver_set
 from events.mapping import MISC_ASYNC_RESP
 from schema import SCIM_API_MESSAGES
 
@@ -88,19 +88,27 @@ def clear_async_results() -> None:
     _async_results.clear()
 
 
+def bulk_operation_txn(base_txn: str, index: int) -> str:
+    """RFC 9967 §2.5.1.2 — txn suffix per bulk operation index."""
+    return f"{base_txn}:{index}"
+
+
 def build_async_response_set(
     record: AsyncJobRecord,
     txn: str,
 ) -> Dict[str, Any]:
     payload = _operation_result(record)
     sub_id = build_sub_id(_resource_uri_from_request_path(record.path))
-    envelope = build_set_envelope(
-        MISC_ASYNC_RESP,
-        payload,
-        sub_id,
-        txn=txn,
-    )
-    return envelope
+    return build_set_envelope(MISC_ASYNC_RESP, payload, sub_id, txn=txn)
+
+
+def build_bulk_async_response_set(
+    operation_result: Dict[str, Any],
+    txn: str,
+) -> Dict[str, Any]:
+    """misc:asyncresp for a single bulk response operation (RFC 9967 §2.5.1.2)."""
+    sub_id = build_sub_id("/Bulk")
+    return build_set_envelope(MISC_ASYNC_RESP, operation_result, sub_id, txn=txn)
 
 
 def _resource_uri_from_request_path(path: str) -> str:
@@ -170,7 +178,7 @@ async def _execute_async_job(
     try:
         set_token = build_async_response_set(record, txn)
         cfg = load_event_config()
-        deliver_set_push(set_token, cfg)
+        deliver_set(set_token, cfg)
     except Exception as exc:
         logger.error("Failed to publish asyncresp SET: txn=%s error=%s", txn, str(exc))
 
@@ -189,6 +197,79 @@ async def schedule_async_request(
         await _execute_async_job(request, handler, txn)
         return
     asyncio.create_task(_execute_async_job(request, handler, txn))
+
+
+async def _execute_bulk_async(
+    base_txn: str,
+    operations: List[Dict[str, Any]],
+    fail_on_errors: Optional[int],
+    max_operations: int,
+) -> None:
+    from bulk.executor import execute_single_operation, is_bulk_operation_error
+    from schema import SCIM_BULK_RESPONSE
+
+    bulk_ids: Dict[str, str] = {}
+    results: List[Dict[str, Any]] = []
+    error_count = 0
+
+    for index, operation in enumerate(operations[:max_operations]):
+        result = execute_single_operation(operation, bulk_ids)
+        results.append(result)
+        op_txn = bulk_operation_txn(base_txn, index)
+
+        async with _async_lock:
+            _async_results[op_txn] = result
+
+        try:
+            set_token = build_bulk_async_response_set(result, op_txn)
+            cfg = load_event_config()
+            deliver_set(set_token, cfg)
+        except Exception as exc:
+            logger.error(
+                "Failed to publish bulk asyncresp SET: txn=%s error=%s",
+                op_txn,
+                str(exc),
+            )
+
+        if is_bulk_operation_error(result):
+            error_count += 1
+            if fail_on_errors is not None and error_count >= fail_on_errors:
+                break
+
+    bulk_response = {
+        "schemas": [SCIM_BULK_RESPONSE],
+        "Operations": results,
+    }
+    async with _async_lock:
+        _async_results[base_txn] = bulk_response
+
+
+async def accept_bulk_async_response(
+    operations: List[Dict[str, Any]],
+    fail_on_errors: Optional[int],
+    max_operations: int,
+) -> Response:
+    """202 Accepted for async bulk with per-operation txn suffix SETs."""
+    base_txn = new_txn()
+    location = async_result_location(base_txn)
+    if _inline_async_enabled():
+        await _execute_bulk_async(
+            base_txn, operations, fail_on_errors, max_operations
+        )
+    else:
+        asyncio.create_task(
+            _execute_bulk_async(
+                base_txn, operations, fail_on_errors, max_operations
+            )
+        )
+    return StarletteResponse(
+        status_code=202,
+        headers={
+            SET_TXN_HEADER: base_txn,
+            PREFERENCE_APPLIED_HEADER: PREFERENCE_APPLIED_VALUE,
+            "Location": location,
+        },
+    )
 
 
 async def accept_async_response(

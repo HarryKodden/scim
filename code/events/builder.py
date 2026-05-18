@@ -9,14 +9,22 @@ from typing import Any, Dict, List, Literal, Optional
 
 from events.config import EventConfig, load_event_config
 from events.mapping import (
+    FEED_ADD,
+    FEED_REMOVE,
+    PROV_ACTIVATE,
     PROV_CREATE_FULL,
     PROV_CREATE_NOTICE,
+    PROV_DEACTIVATE,
     PROV_DELETE,
     PROV_PATCH_FULL,
     PROV_PATCH_NOTICE,
     PROV_PUT_FULL,
     PROV_PUT_NOTICE,
 )
+from events.feed_registry import feed_absolute_uri
+from versioning import resource_version
+
+LifecycleOp = Literal["activate", "deactivate"]
 
 ProvisioningOp = Literal["create", "put", "patch", "delete"]
 
@@ -139,7 +147,33 @@ def build_event_payload(
             attrs = attributes_from_patch_operations(patch_operations)
         else:
             attrs = attributes_from_resource(resource)
-    return {"attributes": attrs}
+    payload = {"attributes": attrs}
+    version = resource_version(resource)
+    if version:
+        payload["version"] = version
+    return payload
+
+
+def build_lifecycle_event(
+    operation: LifecycleOp,
+    resource: Dict[str, Any],
+    config: Optional[EventConfig] = None,
+    base_path: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Build prov:activate or prov:deactivate SET for a User."""
+    cfg = config or load_event_config()
+    event_uri = PROV_ACTIVATE if operation == "activate" else PROV_DEACTIVATE
+    rel_uri = resource_relative_uri(resource, "User", base_path)
+    sub_id = build_sub_id(
+        rel_uri,
+        external_id=resource.get("externalId"),
+        resource_id=resource.get("id"),
+    )
+    payload: Dict[str, Any] = {}
+    version = resource_version(resource)
+    if version:
+        payload["version"] = version
+    return build_set_envelope(event_uri, payload, sub_id, config=cfg)
 
 
 def build_set_envelope(
@@ -171,6 +205,33 @@ def build_set_envelope(
     if txn:
         envelope["txn"] = txn
     return envelope
+
+
+def build_feed_event(
+    operation: Literal["add", "remove"],
+    resource: Dict[str, Any],
+    resource_type: str,
+    feed_id: str,
+    config: Optional[EventConfig] = None,
+    base_path: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Build feed:add or feed:remove SET (RFC 9967 §2.3)."""
+    cfg = config or load_event_config()
+    event_uri = FEED_ADD if operation == "add" else FEED_REMOVE
+    rel_uri = resource_relative_uri(resource, resource_type, base_path)
+    sub_id = build_sub_id(
+        rel_uri,
+        external_id=resource.get("externalId"),
+        resource_id=resource.get("id"),
+    )
+    audience = [feed_absolute_uri(feed_id, issuer=cfg.issuer, base_path=base_path)]
+    return build_set_envelope(
+        event_uri,
+        {},
+        sub_id,
+        config=cfg,
+        audience=audience,
+    )
 
 
 def build_provisioning_event(

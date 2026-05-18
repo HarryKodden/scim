@@ -2,12 +2,12 @@
 
 import json
 
-from fastapi import APIRouter, Depends, Body, status, HTTPException, Query
+from fastapi import APIRouter, Depends, Body, status, HTTPException, Query, Request, Response
 from pydantic_core import from_json, ValidationError
 
 import traceback
 
-from schema import ListResponse, User, Patch, UserResource, GroupResource, \
+from schema import ListResponse, User, Patch, GroupResource, \
     SCIM_PATCH_OP
 from typing import Any
 from auth import api_key_auth
@@ -16,7 +16,10 @@ from routers import BASE_PATH, PAGE_SIZE, \
     get_all_resources, resource_exists, patch_resource, \
     SCIM_Route, SCIM_Response
 
-from events.publisher import emit_group_event, emit_user_event
+from events.feed_events import emit_feed_remove
+from events.feed_registry import resolve_feed_for_group
+from events.publisher import emit_group_event, emit_user_event, emit_user_lifecycle_event
+from versioning import check_if_match, detect_active_change, dump_resource
 
 # Needed to update groups when User resource is deleted
 # which is a member of a group
@@ -55,6 +58,7 @@ async def get_all_users(
     response_class=SCIM_Response
 )
 async def create_user(
+    response: Response,
     user: User = Body(
         examples={
             "externalId": "string",
@@ -114,7 +118,7 @@ async def create_user(
 
         emit_user_event("create", resource, base_path=BASE_PATH)
 
-        return resource.model_dump(by_alias=True, exclude_none=True)
+        return dump_resource(resource, response)
     except ValidationError:
         raise HTTPException(
             status_code=422,
@@ -129,18 +133,23 @@ async def create_user(
 
 
 @router.get("/{id}", response_class=SCIM_Response)
-async def get_user(id: str) -> Any:
+async def get_user(id: str, response: Response) -> Any:
     """ Read a User """
     resource = get_user_resource(id)
     if not resource:
         raise HTTPException(status_code=404, detail=f"User {id} not found")
 
-    return resource.model_dump(by_alias=True, exclude_none=True)
+    return dump_resource(resource, response)
 
 
 @router.put("/{id}", response_class=SCIM_Response)
-async def update_user(id: str, user: User):
+async def update_user(id: str, user: User, request: Request, response: Response):
     """ Update a User Resource """
+
+    existing = get_user_resource(id)
+    if not existing:
+        raise HTTPException(status_code=404, detail=f"User {id} not found")
+    check_if_match(request, existing.meta.version)
 
     if resource_exists(
         "User",
@@ -167,8 +176,11 @@ async def update_user(id: str, user: User):
             raise Exception(f"User {id} not found")
 
         emit_user_event("put", resource, base_path=BASE_PATH)
+        lifecycle = detect_active_change(existing, resource)
+        if lifecycle:
+            emit_user_lifecycle_event(lifecycle, resource, base_path=BASE_PATH)
 
-        return resource.model_dump(by_alias=True, exclude_none=True)
+        return dump_resource(resource, response)
 
     except Exception as e:
         raise HTTPException(status_code=404, detail=f"Error: {str(e)}")
@@ -190,18 +202,25 @@ async def delete_user(id: str):
             )
             if remove_member(group, id):
                 emit_group_event("patch", group, base_path=BASE_PATH)
+                emit_feed_remove(
+                    resource,
+                    "User",
+                    resolve_feed_for_group(group.id),
+                    base_path=BASE_PATH,
+                )
 
         emit_user_event("delete", resource, base_path=BASE_PATH)
         del_user_resource(id)
 
 
 @router.patch("/{id}", response_class=SCIM_Response)
-async def patch_user(id: str, patch: Patch):
+async def patch_user(id: str, patch: Patch, request: Request, response: Response):
     """ Patch a User Resource """
     try:
         user = get_user_resource(id)
         if not user:
             raise HTTPException(status_code=404, detail=f"User {id} not found")
+        check_if_match(request, user.meta.version)
 
         if SCIM_PATCH_OP not in patch.schemas:
             raise HTTPException(
@@ -209,6 +228,7 @@ async def patch_user(id: str, patch: Patch):
                 detail=f"Missing schema {SCIM_PATCH_OP}"
             )
 
+        before = get_user_resource(id)
         resource = patch_resource(
             user.model_dump(by_alias=True, exclude_none=True),
             patch.Operations
@@ -222,8 +242,11 @@ async def patch_user(id: str, patch: Patch):
             patch_operations=patch.Operations,
             base_path=BASE_PATH,
         )
+        lifecycle = detect_active_change(before, user)
+        if lifecycle:
+            emit_user_lifecycle_event(lifecycle, user, base_path=BASE_PATH)
 
-        return user.model_dump(by_alias=True, exclude_none=True)
+        return dump_resource(user, response)
     except HTTPException:
         raise
     except Exception as e:

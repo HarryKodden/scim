@@ -8,6 +8,7 @@ from datetime import datetime
 from schema import CORE_SCHEMA_USER, Schemas, UserResource, User, Meta
 from filter import Filter
 from data import Users
+from versioning import bump_resource_meta
 
 import logging
 logger = logging.getLogger(__name__)
@@ -77,6 +78,7 @@ def put_user_resource(id: str, user: User) -> UserResource:
             resource.schemas.append(field)
 
     resource.meta.lastModified = datetime.now()
+    bump_resource_meta(resource)
 
     mapping = json.loads(os.environ.get('USER_MAPPING', "{}"))
     for k, v in mapping.items():

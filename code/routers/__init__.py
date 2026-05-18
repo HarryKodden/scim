@@ -26,6 +26,15 @@ logger = logging.getLogger(__name__)
 
 BASE_PATH = os.environ.get('BASE_PATH', '')
 PAGE_SIZE = int(os.environ.get('PAGE_SIZE', 100))
+
+
+def is_bulk_endpoint(request: Request) -> bool:
+    """Bulk has dedicated async handling (RFC 9967 §2.5.1.2)."""
+    path = request.url.path.rstrip("/")
+    suffix = (BASE_PATH.rstrip("/") + "/Bulk") if BASE_PATH else "/Bulk"
+    return path == suffix or path.endswith("/Bulk")
+
+
 REDACTED_KEYS = {
     "password",
     "token",
@@ -115,7 +124,12 @@ class SCIM_Route(APIRoute):
                 )
             )
 
-            if use_async and cfg.async_request == "request" and respond_async:
+            if (
+                use_async
+                and cfg.async_request == "request"
+                and respond_async
+                and not is_bulk_endpoint(request)
+            ):
                 return await accept_async_response(request, original_route_handler)
 
             try:
@@ -123,6 +137,7 @@ class SCIM_Route(APIRoute):
                     mutating
                     and cfg.async_request == "long"
                     and wait_seconds is not None
+                    and not is_bulk_endpoint(request)
                 ):
                     try:
                         response: Response = await asyncio.wait_for(

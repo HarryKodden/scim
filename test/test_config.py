@@ -9,6 +9,7 @@ def test_apidoc(test_app):
     assert response.status_code == 200
     body = response.json()
     assert body.get("patch", {}).get("supported") is True
+    assert body.get("etag", {}).get("supported") is True
     security = body.get("securityEvents")
     assert security is not None
     assert security.get("asyncRequest") == "none"

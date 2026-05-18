@@ -29,11 +29,24 @@ environment:
 #- name: SET_PUSH_URL
 #  value: https://receiver.example.com/scim/events
 #- name: SET_PUSH_TOKEN
+#- name: SET_SIGNING_SECRET
+#- name: SET_SIGNING_ALGORITHM
+#  value: "HS256"
+#- name: SET_PUSH_REQUIRE_TLS
+#  value: "true"
 #  value: changeme
 #- name: EVENT_MODE
 #  value: notice
 #- name: ASYNC_REQUEST
 #  value: none
+#- name: SET_FEEDS_ENABLED
+#  value: "true"
+#- name: SET_GROUP_AS_FEED
+#  value: "true"
+#- name: SET_POLL_ENABLED
+#  value: "false"
+#- name: SET_POLL_MAX_EVENTS
+#  value: "10000"
 
 
 # Alternative plugin: SCIM Forward

@@ -2,7 +2,6 @@
 
 """RFC 8935 push-based SET delivery (HTTP POST to receiver)."""
 
-import json
 import logging
 import time
 from typing import Any, Dict
@@ -10,10 +9,9 @@ from typing import Any, Dict
 import httpx
 
 from events.config import EventConfig
+from events.signing import SET_CONTENT_TYPE, prepare_set_delivery_body
 
 logger = logging.getLogger(__name__)
-
-SET_CONTENT_TYPE = "application/secevent+jwt"
 MAX_PUSH_ATTEMPTS = 3
 RETRY_BACKOFF_SECONDS = (0.5, 1.0, 2.0)
 
@@ -35,7 +33,8 @@ def deliver_set_push(
     if config.push_token:
         headers["Authorization"] = f"Bearer {config.push_token}"
 
-    body = json.dumps(set_token)
+    body, content_type = prepare_set_delivery_body(set_token, config)
+    headers["Content-Type"] = content_type
     last_error = None
 
     for attempt, backoff in enumerate(RETRY_BACKOFF_SECONDS):

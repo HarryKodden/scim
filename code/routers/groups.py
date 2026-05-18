@@ -1,10 +1,10 @@
 # routers/groups.py
 
-from fastapi import APIRouter, Depends, Body, status, HTTPException, Query
+from fastapi import APIRouter, Depends, Body, status, HTTPException, Query, Request, Response
 
 import traceback
 
-from schema import ListResponse, Group, Patch, GroupResource, \
+from schema import ListResponse, Group, Patch, \
     SCIM_PATCH_OP
 from pydantic import ValidationError
 from typing import Any
@@ -14,7 +14,12 @@ from routers import BASE_PATH, PAGE_SIZE, \
     get_all_resources, resource_exists, patch_resource, \
     SCIM_Route, SCIM_Response
 
+from events.feed_events import (
+    emit_group_membership_feed_changes,
+    emit_initial_group_members,
+)
 from events.publisher import emit_group_event
+from versioning import check_if_match, dump_resource
 
 from data.groups import \
     get_group_resource, \
@@ -48,6 +53,7 @@ async def get_all_groups(
     response_class=SCIM_Response
 )
 async def create_group(
+    response: Response,
     group: Group = Body(
         examples={
             "displayName": "Student",
@@ -89,8 +95,9 @@ async def create_group(
         resource = put_group_resource(None, group)
 
         emit_group_event("create", resource, base_path=BASE_PATH)
+        emit_initial_group_members(resource.id, resource, base_path=BASE_PATH)
 
-        return resource.model_dump(by_alias=True, exclude_none=True)
+        return dump_resource(resource, response)
     except ValidationError:
         raise HTTPException(
             status_code=422,
@@ -105,18 +112,23 @@ async def create_group(
 
 
 @router.get("/{id}", response_class=SCIM_Response)
-async def get_group(id: str) -> Any:
+async def get_group(id: str, response: Response) -> Any:
     """ Read a Group """
     resource = get_group_resource(id)
     if not resource:
         raise HTTPException(status_code=404, detail=f"Group {id} not found")
 
-    return resource.model_dump(by_alias=True, exclude_none=True)
+    return dump_resource(resource, response)
 
 
 @router.put("/{id}", response_class=SCIM_Response)
-async def update_group(id: str, group: Group):
+async def update_group(id: str, group: Group, request: Request, response: Response):
     """ Update a Group Resource"""
+
+    existing = get_group_resource(id)
+    if not existing:
+        raise HTTPException(status_code=404, detail=f"Group {id} not found")
+    check_if_match(request, existing.meta.version)
 
     if group.externalId:
         if resource_exists(
@@ -134,8 +146,11 @@ async def update_group(id: str, group: Group):
             raise Exception(f"Group {id} not found")
 
         emit_group_event("put", resource, base_path=BASE_PATH)
+        emit_group_membership_feed_changes(
+            id, existing, resource, base_path=BASE_PATH
+        )
 
-        return resource.model_dump(by_alias=True, exclude_none=True)
+        return dump_resource(resource, response)
     except Exception as e:
         raise HTTPException(status_code=404, detail=f"Error: {str(e)}")
 
@@ -150,12 +165,13 @@ async def delete_group(id: str):
 
 
 @router.patch("/{id}", response_class=SCIM_Response)
-async def patch_group(id: str, patch: Patch):
+async def patch_group(id: str, patch: Patch, request: Request, response: Response):
     """ Patch a Group Resource """
     try:
         group = get_group_resource(id)
         if not group:
             raise HTTPException(status_code=404, detail=f"Group {id} not found")
+        check_if_match(request, group.meta.version)
 
         if SCIM_PATCH_OP not in patch.schemas:
             raise HTTPException(
@@ -163,6 +179,7 @@ async def patch_group(id: str, patch: Patch):
                 detail=f"Missing schema {SCIM_PATCH_OP}"
             )
 
+        before = get_group_resource(id)
         resource = patch_resource(
             group.model_dump(by_alias=True, exclude_none=True),
             patch.Operations
@@ -176,8 +193,11 @@ async def patch_group(id: str, patch: Patch):
             patch_operations=patch.Operations,
             base_path=BASE_PATH,
         )
+        emit_group_membership_feed_changes(
+            id, before, group, base_path=BASE_PATH
+        )
 
-        return group.model_dump(by_alias=True, exclude_none=True)
+        return dump_resource(group, response)
 
     except HTTPException:
         raise

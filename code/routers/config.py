@@ -50,7 +50,7 @@ async def get_config() -> Any:
         "urn:ietf:params:scim:schemas:core:2.0:ServiceProviderConfig"
       ],
       "etag": {
-        "supported": False
+        "supported": True
       },
       "sort": {
         "supported": False
@@ -58,7 +58,7 @@ async def get_config() -> Any:
       "bulk": {
         "maxPayloadSize": 1048576,
         "maxOperations": 1000,
-        "supported": False
+        "supported": True
       },
       "changePassword": {
         "supported": False
