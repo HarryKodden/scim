@@ -3,6 +3,7 @@
 from typing import Any
 from fastapi import APIRouter
 from routers import BASE_PATH
+from events import security_events_config
 
 import logging
 logger = logging.getLogger(__name__)
@@ -61,5 +62,6 @@ async def get_config() -> Any:
       },
       "changePassword": {
         "supported": False
-      }
+      },
+      "securityEvents": security_events_config(),
     }

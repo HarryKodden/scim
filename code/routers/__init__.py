@@ -3,10 +3,6 @@
 import time
 import json
 import re
-try:
-    import pika
-except ImportError:
-    pika = None
 
 from fastapi import HTTPException, Request, Response
 from fastapi.routing import APIRoute
@@ -61,46 +57,6 @@ def redact_request_body(raw_body: str) -> str:
         return json.dumps(_redact_sensitive(parsed))
     except Exception:
         return raw_body
-
-
-def broadcast(data: Any) -> None:
-
-    AMQP = os.environ.get('AMQP', None)
-    QUEUE = os.environ.get('QUEUE', 'SCIM')
-
-    if not AMQP:
-        return
-
-    if pika is None:
-        logger.warning("AMQP configured but pika is not installed; skipping broadcast")
-        return
-
-    try:
-        parameters = pika.URLParameters(AMQP)
-        connection = pika.BlockingConnection(parameters)
-    except Exception as e:
-        logger.error(f"Exception connecting to: {AMQP}, error: {str(e)}")
-        return
-
-    channel = connection.channel()
-
-    channel.queue_declare(
-        queue=QUEUE,
-        durable=True
-    )
-
-    logger.debug(f"Broadcasting: {QUEUE}, data: {json.dumps(data)}")
-
-    channel.basic_publish(
-        exchange='',
-        routing_key=QUEUE,
-        body=json.dumps(data),
-        properties=pika.BasicProperties(
-            delivery_mode=2,  # Make message persistent
-        )
-    )
-
-    connection.close()
 
 
 class SCIM_Response(Response):

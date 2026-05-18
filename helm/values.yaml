@@ -21,6 +21,21 @@ environment:
 - name: DATA_PATH
   value: /tmp
 
+# RFC 9967 Security Event Tokens (SET) — see TODO.md
+#- name: SET_ISSUER
+#  value: https://scim.example.com
+#- name: SET_AUDIENCE
+#  value: https://receiver.example.com
+#- name: SET_PUSH_URL
+#  value: https://receiver.example.com/scim/events
+#- name: SET_PUSH_TOKEN
+#  value: changeme
+#- name: EVENT_MODE
+#  value: notice
+#- name: ASYNC_REQUEST
+#  value: none
+
+
 # Alternative plugin: SCIM Forward
 #- name: SCIM_FORWARD_URL
 #  value: https://scim.example.com/api/v2

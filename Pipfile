@@ -5,22 +5,22 @@ verify_ssl = true
 
 [dev-packages]
 flake8 = "*"
-httpx = "*"
 pytest = "*"
 pytest-cov = "*"
 
 [packages]
 requests = "*"
+httpx = "*"
 fastapi = "*"
 uvicorn = "*"
 pydantic = ">=2"
 cryptography = "*"
+PyJWT = "*"
 scim2-filter-parser = "*"
 sqlalchemy = "*"
 pymongo = "*"
 psycopg2_binary = "*"
 pymysql = "*"
-pika = "*"
 ldap3 = "*"
 python-irodsclient = "*"
 

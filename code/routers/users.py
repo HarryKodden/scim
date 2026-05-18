@@ -14,13 +14,13 @@ from auth import api_key_auth
 
 from routers import BASE_PATH, PAGE_SIZE, \
     get_all_resources, resource_exists, patch_resource, \
-    SCIM_Route, SCIM_Response, \
-    broadcast
+    SCIM_Route, SCIM_Response
+
+from events.publisher import emit_group_event, emit_user_event
 
 # Needed to update groups when User resource is deleted
 # which is a member of a group
 from data.groups import get_group_resources, remove_member
-from routers.groups import broadcast_group
 from filter import Filter
 
 from data.users import \
@@ -37,17 +37,6 @@ router = APIRouter(
     tags=["SCIM Users"],
     dependencies=[Depends(api_key_auth)]
 )
-
-
-def broadcast_user(operation: str, user: UserResource) -> None:
-    broadcast(
-        {
-            'operation': operation,
-            'resource': json.loads(
-                user.model_dump_json(by_alias=True, exclude_none=True)
-            )
-        }
-    )
 
 
 @router.get("", response_class=SCIM_Response)
@@ -123,7 +112,7 @@ async def create_user(
     try:
         resource = put_user_resource(None, user)
 
-        broadcast_user("Create", resource)
+        emit_user_event("create", resource, base_path=BASE_PATH)
 
         return resource.model_dump(by_alias=True, exclude_none=True)
     except ValidationError:
@@ -177,7 +166,7 @@ async def update_user(id: str, user: User):
         if not resource:
             raise Exception(f"User {id} not found")
 
-        broadcast_user("Update", resource)
+        emit_user_event("put", resource, base_path=BASE_PATH)
 
         return resource.model_dump(by_alias=True, exclude_none=True)
 
@@ -200,9 +189,9 @@ async def delete_user(id: str):
                 )
             )
             if remove_member(group, id):
-                broadcast_group("Update", group)
+                emit_group_event("patch", group, base_path=BASE_PATH)
 
-        broadcast_user("Delete", resource)
+        emit_user_event("delete", resource, base_path=BASE_PATH)
         del_user_resource(id)
 
 
@@ -227,7 +216,12 @@ async def patch_user(id: str, patch: Patch):
 
         user = put_user_resource(id, User(**resource))
 
-        broadcast_user("Update", user)
+        emit_user_event(
+            "patch",
+            user,
+            patch_operations=patch.Operations,
+            base_path=BASE_PATH,
+        )
 
         return user.model_dump(by_alias=True, exclude_none=True)
     except HTTPException:

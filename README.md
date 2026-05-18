@@ -142,8 +142,12 @@ This image uses environment variables for configuration.
 | `GROUP_MAPPING` | A JSON string that specify how attribute values should be mapped to different attributes | '{"id": "displanNameuser_extension.eduPersonUniqueId"} | |
 | `USER_MODEL_NAME` | User model name | myUsers | Users |
 | `GROUP_MODEL_NAME` | Group model name | myGroups | Groups |
-| `AMQP` | (optional) the amqp address of the MQ Server to broadcast SCIM updates to | 'amqp://localhost' | |
-| `QUEUE` | (optional) the amqp queue name to broadcast SCIM updates to | | 'SCIM' |
+| `SET_ISSUER` | JWT `iss` claim for Security Event Tokens (RFC 9967) | `https://scim.example.com` | `scim` |
+| `SET_AUDIENCE` | Default JWT `aud` for SET delivery | `https://receiver.example.com` | |
+| `SET_PUSH_URL` | RFC 8935 push receiver URL for SET delivery | `https://receiver.example.com/scim/events` | |
+| `SET_PUSH_TOKEN` | Bearer token for SET push delivery | | |
+| `EVENT_MODE` | Provisioning event payload mode: `notice` or `full` | `notice` | `notice` |
+| `ASYNC_REQUEST` | Async SCIM capability: `none`, `long`, or `request` (Phase 2) | `none` | `none` |
 
 
 ## Handling data
@@ -178,36 +182,28 @@ will result in:
 | ------------------------------------ | ---------- |
 | 613277a6-aa52-440e-b604-9bbd14343558 | "hkodden5" |
 
-# AMQP
+# Security events (RFC 9967)
 
-Optionally a AMQP endpoint can be configured to which incoming SCIM updates will be reported. The data to this notification mechanism consist of the following details:
-* operation (Create/Update/Delete)
-* resource (Either User or Group Resource)
+SCIM resource changes are published as [Security Event Tokens (SETs)](https://www.rfc-editor.org/rfc/rfc9967.html) instead of the legacy AMQP `{operation, resource}` format.
 
-Example:
+Configure `SET_PUSH_URL` to deliver events to your receiver (RFC 8935 push). See `TODO.md` for the implementation roadmap.
+
+Configure `SET_PUSH_URL` on the server and point your receiver at that endpoint.
+
+Example SET shape (provisioning delete):
 
 ```json
 {
-  "operation": "Create",
-  "resource": {
-    "displayName": "service_group_mail_name",
-    "externalId": "9946ca40-2a53-40a8-bc63-fb0758e716e3@sram.surf.nl",
-    "members": [],
-    "urn:mace:surf.nl:sram:scim:extension:Group": {
-      "description": "Provisioned by service Mail Services - Mail group",
-      "urn": "uuc:ai_computing:mail-mail"
-    },
-    "schemas": [
-      "urn:ietf:params:scim:schemas:core:2.0:Group",
-      "urn:mace:surf.nl:sram:scim:extension:Group"
-    ],
-    "id": "e3e7f74e-fa90-46c9-995f-567494761128",
-    "meta": {
-      "created": "2024-09-11T09:33:36.571617",
-      "lastModified": "2024-09-11T09:33:36.571831",
-      "location": "/Groups/e3e7f74e-fa90-46c9-995f-567494761128",
-      "resourceType": "Group"
-    }
+  "iss": "https://scim.example.com",
+  "iat": 1715000000,
+  "jti": "6164f3bbf6ff41a88dc94f18cb0620e8",
+  "sub_id": {
+    "format": "scim",
+    "uri": "/Groups/e3e7f74e-fa90-46c9-995f-567494761128",
+    "externalId": "9946ca40-2a53-40a8-bc63-fb0758e716e3@sram.surf.nl"
+  },
+  "events": {
+    "urn:ietf:params:scim:event:prov:delete": {}
   }
 }
 ```

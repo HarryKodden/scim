@@ -1,7 +1,5 @@
 # routers/groups.py
 
-import json
-
 from fastapi import APIRouter, Depends, Body, status, HTTPException, Query
 
 import traceback
@@ -14,8 +12,9 @@ from auth import api_key_auth
 
 from routers import BASE_PATH, PAGE_SIZE, \
     get_all_resources, resource_exists, patch_resource, \
-    SCIM_Route, SCIM_Response, \
-    broadcast
+    SCIM_Route, SCIM_Response
+
+from events.publisher import emit_group_event
 
 from data.groups import \
     get_group_resource, \
@@ -31,18 +30,6 @@ router = APIRouter(
     tags=["SCIM Groups"],
     dependencies=[Depends(api_key_auth)]
 )
-
-
-def broadcast_group(operation: str, group: GroupResource) -> None:
-
-    broadcast(
-        {
-            'operation': operation,
-            'resource': json.loads(
-                group.model_dump_json(by_alias=True, exclude_none=True)
-            )
-        }
-    )
 
 
 @router.get("", response_class=SCIM_Response)
@@ -101,7 +88,7 @@ async def create_group(
     try:
         resource = put_group_resource(None, group)
 
-        broadcast_group("Create", resource)
+        emit_group_event("create", resource, base_path=BASE_PATH)
 
         return resource.model_dump(by_alias=True, exclude_none=True)
     except ValidationError:
@@ -146,7 +133,7 @@ async def update_group(id: str, group: Group):
         if not resource:
             raise Exception(f"Group {id} not found")
 
-        broadcast_group("Update", resource)
+        emit_group_event("put", resource, base_path=BASE_PATH)
 
         return resource.model_dump(by_alias=True, exclude_none=True)
     except Exception as e:
@@ -158,7 +145,7 @@ async def delete_group(id: str):
     """ Delete a Group Resource"""
     resource = get_group_resource(id)
     if resource:
-        broadcast_group("Delete", resource)
+        emit_group_event("delete", resource, base_path=BASE_PATH)
         del_group_resource(id)
 
 
@@ -183,7 +170,12 @@ async def patch_group(id: str, patch: Patch):
 
         group = put_group_resource(id, Group(**resource))
 
-        broadcast_group("Update", group)
+        emit_group_event(
+            "patch",
+            group,
+            patch_operations=patch.Operations,
+            base_path=BASE_PATH,
+        )
 
         return group.model_dump(by_alias=True, exclude_none=True)
 
