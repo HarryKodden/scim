@@ -142,8 +142,20 @@ This image uses environment variables for configuration.
 | `GROUP_MAPPING` | A JSON string that specify how attribute values should be mapped to different attributes | '{"id": "displanNameuser_extension.eduPersonUniqueId"} | |
 | `USER_MODEL_NAME` | User model name | myUsers | Users |
 | `GROUP_MODEL_NAME` | Group model name | myGroups | Groups |
-| `AMQP` | (optional) the amqp address of the MQ Server to broadcast SCIM updates to | 'amqp://localhost' | |
-| `QUEUE` | (optional) the amqp queue name to broadcast SCIM updates to | | 'SCIM' |
+| `SET_ISSUER` | JWT `iss` claim for Security Event Tokens (RFC 9967) | `https://scim.example.com` | `scim` |
+| `SET_AUDIENCE` | Default JWT `aud` for SET delivery | `https://receiver.example.com` | |
+| `SET_PUSH_URL` | RFC 8935 push receiver URL for SET delivery | `https://receiver.example.com/scim/events` | |
+| `SET_PUSH_TOKEN` | Bearer token for SET push delivery | | |
+| `EVENT_MODE` | Provisioning event payload mode: `notice` or `full` | `notice` | `notice` |
+| `ASYNC_REQUEST` | Async SCIM requests (RFC 9967 §2.5.1): `none`, `request`, or `long` — see [Async SCIM requests](#async-scim-requests) | `request` | `none` |
+| `SET_SIGNING_SECRET` | HMAC secret for JWS-signed SET push (`application/secevent+jwt`) | | |
+| `SET_SIGNING_ALGORITHM` | JWS algorithm when signing is enabled | `HS256` | `HS256` |
+| `SET_PUSH_REQUIRE_TLS` | Reject `http://` push URLs when `true` | `true` | `false` |
+| `SET_FEEDS` | Feed definitions (JSON array or comma-separated ids) | `[{"id":"default","displayName":"Default"}]` | `default` |
+| `SET_FEEDS_ENABLED` | Emit `feed:add` / `feed:remove` on membership changes | `true` | `true` |
+| `SET_GROUP_AS_FEED` | Map each Group to feed `/Events/Feeds/{groupId}` | `true` | `true` |
+| `SET_POLL_ENABLED` | Enable RFC 8936 poll at `/Events/Feeds/{id}/Stream` | `true` | `false` |
+| `SET_POLL_MAX_EVENTS` | Max SETs retained per feed stream (in-memory) | `10000` | `10000` |
 
 
 ## Handling data
@@ -178,39 +190,218 @@ will result in:
 | ------------------------------------ | ---------- |
 | 613277a6-aa52-440e-b604-9bbd14343558 | "hkodden5" |
 
-# AMQP
+# Security events (RFC 9967)
 
-Optionally a AMQP endpoint can be configured to which incoming SCIM updates will be reported. The data to this notification mechanism consist of the following details:
-* operation (Create/Update/Delete)
-* resource (Either User or Group Resource)
+SCIM resource changes are published as [Security Event Tokens (SETs)](https://www.rfc-editor.org/rfc/rfc9967.html) instead of the legacy AMQP `{operation, resource}` format.
 
-Example:
+Configure `SET_PUSH_URL` on the server and point your receiver at that endpoint (RFC 8935 push). See `TODO.md` for the full roadmap.
+
+Example SET shape (provisioning delete):
 
 ```json
 {
-  "operation": "Create",
-  "resource": {
-    "displayName": "service_group_mail_name",
-    "externalId": "9946ca40-2a53-40a8-bc63-fb0758e716e3@sram.surf.nl",
-    "members": [],
-    "urn:mace:surf.nl:sram:scim:extension:Group": {
-      "description": "Provisioned by service Mail Services - Mail group",
-      "urn": "uuc:ai_computing:mail-mail"
-    },
-    "schemas": [
-      "urn:ietf:params:scim:schemas:core:2.0:Group",
-      "urn:mace:surf.nl:sram:scim:extension:Group"
-    ],
-    "id": "e3e7f74e-fa90-46c9-995f-567494761128",
-    "meta": {
-      "created": "2024-09-11T09:33:36.571617",
-      "lastModified": "2024-09-11T09:33:36.571831",
-      "location": "/Groups/e3e7f74e-fa90-46c9-995f-567494761128",
-      "resourceType": "Group"
+  "iss": "https://scim.example.com",
+  "iat": 1715000000,
+  "jti": "6164f3bbf6ff41a88dc94f18cb0620e8",
+  "sub_id": {
+    "format": "scim",
+    "uri": "/Groups/e3e7f74e-fa90-46c9-995f-567494761128",
+    "externalId": "9946ca40-2a53-40a8-bc63-fb0758e716e3@sram.surf.nl"
+  },
+  "events": {
+    "urn:ietf:params:scim:event:prov:delete": {}
+  }
+}
+```
+
+### Async SCIM requests
+
+When `ASYNC_REQUEST` is not `none`, the server can accept mutating operations (POST, PUT, PATCH, DELETE) asynchronously per [RFC 9967 §2.5.1](https://www.rfc-editor.org/rfc/rfc9967.html#section-2.5.1).
+
+| `ASYNC_REQUEST` | Meaning |
+| --------------- | ------- |
+| `none` | Async disabled; all mutations run synchronously (default). |
+| `request` | Async only when the client sends `Prefer: respond-async`. |
+| `long` | If the operation does not finish within `wait=N` seconds (from `Prefer: wait=N`), the server switches to async and returns 202. |
+
+`ServiceProviderConfig` exposes the active mode in `securityEvents.asyncRequest` and lists `urn:ietf:params:scim:event:misc:asyncresp` in `eventUris` when async is enabled.
+
+#### Client: start an async mutation
+
+Send the usual SCIM request with an extra header:
+
+```http
+POST /Users HTTP/1.1
+Content-Type: application/scim+json
+Prefer: respond-async
+Authorization: Bearer <API_KEY>
+```
+
+Optional wait hint (used with `ASYNC_REQUEST=long`):
+
+```http
+Prefer: respond-async, wait=5
+```
+
+The server responds immediately with **202 Accepted** and an empty body:
+
+| Header | Value |
+| ------ | ----- |
+| `Set-Txn` | Transaction id (UUID) for this operation |
+| `Preference-Applied` | `respond-async` |
+| `Location` | URL to fetch the result, e.g. `/Async/{txn}` (prefixed by `BASE_PATH` if set) |
+
+Example:
+
+```http
+HTTP/1.1 202 Accepted
+Set-Txn: 3bbc08f4-7575-40fc-aa65-5438f91ae866
+Preference-Applied: respond-async
+Location: /Async/3bbc08f4-7575-40fc-aa65-5438f91ae866
+```
+
+The mutation continues in the background. Provisioning SETs (`prov:create`, `prov:patch`, and so on) are still emitted when the operation completes, as for synchronous requests.
+
+#### Client: poll the result
+
+Authenticated GET on the `Location` from the 202 response:
+
+```http
+GET /Async/3bbc08f4-7575-40fc-aa65-5438f91ae866 HTTP/1.1
+Authorization: Bearer <API_KEY>
+```
+
+Response body (SCIM JSON) describes the finished operation:
+
+```json
+{
+  "method": "POST",
+  "status": "201",
+  "location": "/Users/7e1bcf2e-8d0e-45e1-8003-0e460350c5e5",
+  "response": {
+    "id": "7e1bcf2e-8d0e-45e1-8003-0e460350c5e5",
+    "userName": "async-user",
+    "meta": { "location": "/Users/7e1bcf2e-8d0e-45e1-8003-0e460350c5e5", "resourceType": "User" },
+    "schemas": ["urn:ietf:params:scim:schemas:core:2.0:User"]
+  }
+}
+```
+
+On failure, `status` reflects the HTTP status and `response` contains a SCIM error object.
+
+#### Receiver: completion SET (`misc:asyncresp`)
+
+When `SET_PUSH_URL` is configured, a completion SET is pushed with the same `txn` as `Set-Txn`:
+
+```json
+{
+  "iss": "https://scim.example.com",
+  "iat": 1715000000,
+  "jti": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "txn": "3bbc08f4-7575-40fc-aa65-5438f91ae866",
+  "sub_id": {
+    "format": "scim",
+    "uri": "/Users"
+  },
+  "events": {
+    "urn:ietf:params:scim:event:misc:asyncresp": {
+      "method": "POST",
+      "status": "201",
+      "location": "/Users/7e1bcf2e-8d0e-45e1-8003-0e460350c5e5",
+      "response": { }
     }
   }
 }
 ```
+
+Event subscribers can correlate `txn` with the original 202 response instead of polling `GET /Async/{txn}`.
+
+#### Deployment example
+
+```bash
+export ASYNC_REQUEST=request
+export SET_PUSH_URL=https://receiver.example.com/scim/events
+export SET_ISSUER=https://scim.example.com
+```
+
+Without `Prefer: respond-async`, behavior is unchanged (synchronous 201/200/204 responses).
+
+**Note:** Async results are stored in memory per process. For multiple workers or restarts, use the completion SET or add a shared store (not included yet).
+
+### ETag and resource versions
+
+Resources include `meta.version` (and matching `ETag` response headers) on every write. Clients may send `If-Match` on PUT/PATCH; a mismatch returns **412 Precondition Failed**. `ServiceProviderConfig.etag.supported` is `true`.
+
+Provisioning SETs in notice mode include a `version` field when present. Use `EVENT_MODE=full` to receive full resource bodies in `prov:*:full` events (listed in `securityEvents.eventUris`).
+
+### User activate / deactivate events
+
+When `User.active` changes on PUT or PATCH, additional SETs are emitted:
+
+- `urn:ietf:params:scim:event:prov:activate`
+- `urn:ietf:params:scim:event:prov:deactivate`
+
+These are advertised in `securityEvents.eventUris` alongside standard provisioning events.
+
+### SET signing (optional)
+
+Set `SET_SIGNING_SECRET` to deliver compact JWS SETs (`Content-Type: application/secevent+jwt`). Without it, SETs are posted as JSON for simpler receiver development.
+
+In production, set `SET_PUSH_REQUIRE_TLS=true` so only `https://` push URLs are accepted.
+
+### Event feeds (RFC 9967 §2.3 + RFC 8936 poll)
+
+Feeds are listed at `GET /Events/Feeds`. Each feed has metadata at `GET /Events/Feeds/{id}` including member resource URIs.
+
+When `SET_GROUP_AS_FEED=true` (default), each Group is an event feed. Adding or removing group members emits:
+
+- `urn:ietf:params:scim:event:feed:add`
+- `urn:ietf:params:scim:event:feed:remove`
+
+The SET `aud` claim targets the feed URL (e.g. `https://scim.example.com/Events/Feeds/{groupId}`). `ServiceProviderConfig.securityEvents.feeds` lists available feed URIs.
+
+**Poll delivery** (`SET_POLL_ENABLED=true`):
+
+```http
+GET /Events/Feeds/default/Stream?after={jti}&limit=100
+Authorization: Bearer <API_KEY>
+```
+
+Returns stored SETs for receivers without a push webhook. All published SETs (provisioning and feed) are appended to the matching feed stream(s).
+
+### Bulk operations (RFC 7644 §3.7)
+
+`POST /Bulk` runs multiple operations in one request. `ServiceProviderConfig.bulk.supported` is `true` (up to 1000 operations).
+
+```http
+POST /Bulk HTTP/1.1
+Content-Type: application/scim+json
+
+{
+  "schemas": ["urn:ietf:params:scim:api:messages:2.0:BulkRequest"],
+  "failOnErrors": 1,
+  "Operations": [
+    {
+      "method": "POST",
+      "path": "/Users",
+      "bulkId": "newuser",
+      "data": { "userName": "alice", "active": true }
+    },
+    {
+      "method": "PATCH",
+      "path": "/Users/bulkId:newuser",
+      "data": {
+        "schemas": ["urn:ietf:params:scim:api:messages:2.0:PatchOp"],
+        "Operations": [{ "op": "replace", "path": "active", "value": false }]
+      }
+    }
+  ]
+}
+```
+
+The response uses `BulkResponse` with per-operation `status`, `location`, and optional `response`.
+
+With `ASYNC_REQUEST=request` and `Prefer: respond-async`, bulk returns **202** and one `misc:asyncresp` SET per operation with `txn` values `{Set-Txn}:0`, `{Set-Txn}:1`, … The full bulk result is available at `GET /Async/{Set-Txn}` when processing completes.
 
 ## CI/CD
 

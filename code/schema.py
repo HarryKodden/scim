@@ -21,6 +21,8 @@ SCIM_API_MESSAGES = "urn:ietf:params:scim:api:messages:2.0"
 
 # SCIM 2.0 Patch Operation URIs
 SCIM_PATCH_OP = SCIM_API_MESSAGES + ":PatchOp"
+SCIM_BULK_REQUEST = SCIM_API_MESSAGES + ":BulkRequest"
+SCIM_BULK_RESPONSE = SCIM_API_MESSAGES + ":BulkResponse"
 
 # SCIM 2.0 Content Types
 SCIM_CONTENT_TYPE = 'application/scim+json'
@@ -138,6 +140,34 @@ class ListResponse(BaseModel):
     itemsPerPage: int
     schemas: List[str]
     Resources: List[Any] = Field(alias="Resources")
+
+
+class BulkOperation(BaseModel):
+    method: str
+    path: str
+    bulkId: Optional[str] = None
+    version: Optional[str] = None
+    data: Optional[Any] = None
+
+
+class BulkRequest(BaseModel):
+    schemas: List[str]
+    Operations: List[BulkOperation]
+    failOnErrors: Optional[int] = None
+
+
+class BulkResponseOperation(BaseModel):
+    method: str
+    bulkId: Optional[str] = None
+    version: Optional[str] = None
+    location: Optional[str] = None
+    status: str
+    response: Optional[Any] = None
+
+
+class BulkResponse(BaseModel):
+    schemas: List[str]
+    Operations: List[BulkResponseOperation]
 
 
 def register_model(name, attributes, fields={}, __base__=(BaseModel)) -> Any:

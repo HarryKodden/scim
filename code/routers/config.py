@@ -3,6 +3,7 @@
 from typing import Any
 from fastapi import APIRouter
 from routers import BASE_PATH
+from events import security_events_config
 
 import logging
 logger = logging.getLogger(__name__)
@@ -49,7 +50,7 @@ async def get_config() -> Any:
         "urn:ietf:params:scim:schemas:core:2.0:ServiceProviderConfig"
       ],
       "etag": {
-        "supported": False
+        "supported": True
       },
       "sort": {
         "supported": False
@@ -57,9 +58,10 @@ async def get_config() -> Any:
       "bulk": {
         "maxPayloadSize": 1048576,
         "maxOperations": 1000,
-        "supported": False
+        "supported": True
       },
       "changePassword": {
         "supported": False
-      }
+      },
+      "securityEvents": security_events_config(),
     }

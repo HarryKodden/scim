@@ -121,7 +121,7 @@ def test_update_user(test_app):
       json=user.model_dump(by_alias=True, exclude_none=True),
       headers=headers
     )
-    assert response.status_code == 409
+    assert response.status_code == 404
 
     response = test_app.put(
       f"/Users/{id}",
@@ -215,7 +215,7 @@ def test_delete_user(test_app):
     response = test_app.post(
       "/Users",
       json={
-        "userName": "testuser",
+        "userName": "delete-testuser",
         "emails": [
           {
             "primary": True,

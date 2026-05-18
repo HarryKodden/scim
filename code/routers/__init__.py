@@ -1,12 +1,9 @@
 # routers/__init__.py
 
+import asyncio
 import time
 import json
 import re
-try:
-    import pika
-except ImportError:
-    pika = None
 
 from fastapi import HTTPException, Request, Response
 from fastapi.routing import APIRoute
@@ -16,6 +13,9 @@ from schema import SCIM_API_MESSAGES, SCIM_CONTENT_TYPE, ListResponse
 from filter import Filter
 from typing import Callable, Any
 
+from events.async_jobs import accept_async_response
+from events.config import load_event_config
+from events.prefer import parse_wait_seconds, wants_respond_async
 from data.users import get_user_resources
 from data.groups import get_group_resources
 
@@ -26,6 +26,15 @@ logger = logging.getLogger(__name__)
 
 BASE_PATH = os.environ.get('BASE_PATH', '')
 PAGE_SIZE = int(os.environ.get('PAGE_SIZE', 100))
+
+
+def is_bulk_endpoint(request: Request) -> bool:
+    """Bulk has dedicated async handling (RFC 9967 §2.5.1.2)."""
+    path = request.url.path.rstrip("/")
+    suffix = (BASE_PATH.rstrip("/") + "/Bulk") if BASE_PATH else "/Bulk"
+    return path == suffix or path.endswith("/Bulk")
+
+
 REDACTED_KEYS = {
     "password",
     "token",
@@ -61,46 +70,6 @@ def redact_request_body(raw_body: str) -> str:
         return json.dumps(_redact_sensitive(parsed))
     except Exception:
         return raw_body
-
-
-def broadcast(data: Any) -> None:
-
-    AMQP = os.environ.get('AMQP', None)
-    QUEUE = os.environ.get('QUEUE', 'SCIM')
-
-    if not AMQP:
-        return
-
-    if pika is None:
-        logger.warning("AMQP configured but pika is not installed; skipping broadcast")
-        return
-
-    try:
-        parameters = pika.URLParameters(AMQP)
-        connection = pika.BlockingConnection(parameters)
-    except Exception as e:
-        logger.error(f"Exception connecting to: {AMQP}, error: {str(e)}")
-        return
-
-    channel = connection.channel()
-
-    channel.queue_declare(
-        queue=QUEUE,
-        durable=True
-    )
-
-    logger.debug(f"Broadcasting: {QUEUE}, data: {json.dumps(data)}")
-
-    channel.basic_publish(
-        exchange='',
-        routing_key=QUEUE,
-        body=json.dumps(data),
-        properties=pika.BasicProperties(
-            delivery_mode=2,  # Make message persistent
-        )
-    )
-
-    connection.close()
 
 
 class SCIM_Response(Response):
@@ -139,8 +108,48 @@ class SCIM_Route(APIRoute):
 
             verify_content_type('request', request.headers)
 
+            cfg = load_event_config()
+            prefer = request.headers.get("prefer", "")
+            wait_seconds = parse_wait_seconds(prefer)
+            respond_async = wants_respond_async(prefer)
+            mutating = request.method in body_methods
+
+            async_enabled = cfg.async_request in ("request", "long")
+            use_async = (
+                mutating
+                and async_enabled
+                and (
+                    (cfg.async_request == "request" and respond_async)
+                    or (cfg.async_request == "long" and wait_seconds is not None)
+                )
+            )
+
+            if (
+                use_async
+                and cfg.async_request == "request"
+                and respond_async
+                and not is_bulk_endpoint(request)
+            ):
+                return await accept_async_response(request, original_route_handler)
+
             try:
-                response: Response = await original_route_handler(request)
+                if (
+                    mutating
+                    and cfg.async_request == "long"
+                    and wait_seconds is not None
+                    and not is_bulk_endpoint(request)
+                ):
+                    try:
+                        response: Response = await asyncio.wait_for(
+                            original_route_handler(request),
+                            timeout=wait_seconds,
+                        )
+                    except asyncio.TimeoutError:
+                        return await accept_async_response(
+                            request, original_route_handler
+                        )
+                else:
+                    response: Response = await original_route_handler(request)
             except HTTPException as exc:
                 logger.error(
                     "[REQ FAIL] %s %s status=%s detail=%s content_type=%s body=%s",

@@ -8,6 +8,7 @@ from datetime import datetime
 from schema import CORE_SCHEMA_GROUP, Schemas, GroupResource, Group, Meta
 from filter import Filter
 from data import Groups
+from versioning import bump_resource_meta
 from data.users import get_user_resource
 
 import logging
@@ -82,6 +83,7 @@ def put_group_resource(id: str, group: Group) -> GroupResource:
             resource.schemas.append(field)
 
     resource.meta.lastModified = datetime.now()
+    bump_resource_meta(resource)
 
     mapping = json.loads(os.environ.get('GROUP_MAPPING', "{}"))
     for k, v in mapping.items():
