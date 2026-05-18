@@ -11,6 +11,7 @@ from events.config import EventConfig, load_event_config
 from events.delivery.push import deliver_set_push
 from events.mapping import (
     DEFAULT_NOTICE_EVENT_URIS,
+    MISC_ASYNC_RESP,
     PROV_CREATE_FULL,
     PROV_PATCH_FULL,
     PROV_PUT_FULL,
@@ -44,6 +45,10 @@ def security_events_config(config: EventConfig = None) -> Dict[str, Any]:
         ]
     else:
         event_uris = list(DEFAULT_NOTICE_EVENT_URIS)
+
+    if cfg.async_request in ("request", "long"):
+        if MISC_ASYNC_RESP not in event_uris:
+            event_uris.append(MISC_ASYNC_RESP)
 
     return {
         "asyncRequest": cfg.async_request,

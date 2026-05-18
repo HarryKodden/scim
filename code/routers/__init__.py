@@ -1,5 +1,6 @@
 # routers/__init__.py
 
+import asyncio
 import time
 import json
 import re
@@ -12,6 +13,9 @@ from schema import SCIM_API_MESSAGES, SCIM_CONTENT_TYPE, ListResponse
 from filter import Filter
 from typing import Callable, Any
 
+from events.async_jobs import accept_async_response
+from events.config import load_event_config
+from events.prefer import parse_wait_seconds, wants_respond_async
 from data.users import get_user_resources
 from data.groups import get_group_resources
 
@@ -95,8 +99,42 @@ class SCIM_Route(APIRoute):
 
             verify_content_type('request', request.headers)
 
+            cfg = load_event_config()
+            prefer = request.headers.get("prefer", "")
+            wait_seconds = parse_wait_seconds(prefer)
+            respond_async = wants_respond_async(prefer)
+            mutating = request.method in body_methods
+
+            async_enabled = cfg.async_request in ("request", "long")
+            use_async = (
+                mutating
+                and async_enabled
+                and (
+                    (cfg.async_request == "request" and respond_async)
+                    or (cfg.async_request == "long" and wait_seconds is not None)
+                )
+            )
+
+            if use_async and cfg.async_request == "request" and respond_async:
+                return await accept_async_response(request, original_route_handler)
+
             try:
-                response: Response = await original_route_handler(request)
+                if (
+                    mutating
+                    and cfg.async_request == "long"
+                    and wait_seconds is not None
+                ):
+                    try:
+                        response: Response = await asyncio.wait_for(
+                            original_route_handler(request),
+                            timeout=wait_seconds,
+                        )
+                    except asyncio.TimeoutError:
+                        return await accept_async_response(
+                            request, original_route_handler
+                        )
+                else:
+                    response: Response = await original_route_handler(request)
             except HTTPException as exc:
                 logger.error(
                     "[REQ FAIL] %s %s status=%s detail=%s content_type=%s body=%s",

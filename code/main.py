@@ -8,7 +8,7 @@ from fastapi import Request, FastAPI, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse, RedirectResponse
 from schema import HealthCheck
-from routers import BASE_PATH, config, resource, schema, users, groups
+from routers import BASE_PATH, async_results, config, resource, schema, users, groups
 
 LOGLEVEL = os.environ.get('LOGLEVEL', 'ERROR').upper()
 logging.basicConfig(level=LOGLEVEL)
@@ -56,6 +56,7 @@ app.include_router(resource.router)
 app.include_router(schema.router)
 app.include_router(users.router)
 app.include_router(groups.router)
+app.include_router(async_results.router)
 
 if len(BASE_PATH) > 1:
     @app.get("/")

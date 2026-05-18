@@ -147,7 +147,7 @@ This image uses environment variables for configuration.
 | `SET_PUSH_URL` | RFC 8935 push receiver URL for SET delivery | `https://receiver.example.com/scim/events` | |
 | `SET_PUSH_TOKEN` | Bearer token for SET push delivery | | |
 | `EVENT_MODE` | Provisioning event payload mode: `notice` or `full` | `notice` | `notice` |
-| `ASYNC_REQUEST` | Async SCIM capability: `none`, `long`, or `request` (Phase 2) | `none` | `none` |
+| `ASYNC_REQUEST` | Async SCIM requests (RFC 9967 §2.5.1): `none`, `request`, or `long` — see [Async SCIM requests](#async-scim-requests) | `request` | `none` |
 
 
 ## Handling data
@@ -186,9 +186,7 @@ will result in:
 
 SCIM resource changes are published as [Security Event Tokens (SETs)](https://www.rfc-editor.org/rfc/rfc9967.html) instead of the legacy AMQP `{operation, resource}` format.
 
-Configure `SET_PUSH_URL` to deliver events to your receiver (RFC 8935 push). See `TODO.md` for the implementation roadmap.
-
-Configure `SET_PUSH_URL` on the server and point your receiver at that endpoint.
+Configure `SET_PUSH_URL` on the server and point your receiver at that endpoint (RFC 8935 push). See `TODO.md` for the full roadmap.
 
 Example SET shape (provisioning delete):
 
@@ -207,6 +205,120 @@ Example SET shape (provisioning delete):
   }
 }
 ```
+
+### Async SCIM requests
+
+When `ASYNC_REQUEST` is not `none`, the server can accept mutating operations (POST, PUT, PATCH, DELETE) asynchronously per [RFC 9967 §2.5.1](https://www.rfc-editor.org/rfc/rfc9967.html#section-2.5.1).
+
+| `ASYNC_REQUEST` | Meaning |
+| --------------- | ------- |
+| `none` | Async disabled; all mutations run synchronously (default). |
+| `request` | Async only when the client sends `Prefer: respond-async`. |
+| `long` | If the operation does not finish within `wait=N` seconds (from `Prefer: wait=N`), the server switches to async and returns 202. |
+
+`ServiceProviderConfig` exposes the active mode in `securityEvents.asyncRequest` and lists `urn:ietf:params:scim:event:misc:asyncresp` in `eventUris` when async is enabled.
+
+#### Client: start an async mutation
+
+Send the usual SCIM request with an extra header:
+
+```http
+POST /Users HTTP/1.1
+Content-Type: application/scim+json
+Prefer: respond-async
+Authorization: Bearer <API_KEY>
+```
+
+Optional wait hint (used with `ASYNC_REQUEST=long`):
+
+```http
+Prefer: respond-async, wait=5
+```
+
+The server responds immediately with **202 Accepted** and an empty body:
+
+| Header | Value |
+| ------ | ----- |
+| `Set-Txn` | Transaction id (UUID) for this operation |
+| `Preference-Applied` | `respond-async` |
+| `Location` | URL to fetch the result, e.g. `/Async/{txn}` (prefixed by `BASE_PATH` if set) |
+
+Example:
+
+```http
+HTTP/1.1 202 Accepted
+Set-Txn: 3bbc08f4-7575-40fc-aa65-5438f91ae866
+Preference-Applied: respond-async
+Location: /Async/3bbc08f4-7575-40fc-aa65-5438f91ae866
+```
+
+The mutation continues in the background. Provisioning SETs (`prov:create`, `prov:patch`, and so on) are still emitted when the operation completes, as for synchronous requests.
+
+#### Client: poll the result
+
+Authenticated GET on the `Location` from the 202 response:
+
+```http
+GET /Async/3bbc08f4-7575-40fc-aa65-5438f91ae866 HTTP/1.1
+Authorization: Bearer <API_KEY>
+```
+
+Response body (SCIM JSON) describes the finished operation:
+
+```json
+{
+  "method": "POST",
+  "status": "201",
+  "location": "/Users/7e1bcf2e-8d0e-45e1-8003-0e460350c5e5",
+  "response": {
+    "id": "7e1bcf2e-8d0e-45e1-8003-0e460350c5e5",
+    "userName": "async-user",
+    "meta": { "location": "/Users/7e1bcf2e-8d0e-45e1-8003-0e460350c5e5", "resourceType": "User" },
+    "schemas": ["urn:ietf:params:scim:schemas:core:2.0:User"]
+  }
+}
+```
+
+On failure, `status` reflects the HTTP status and `response` contains a SCIM error object.
+
+#### Receiver: completion SET (`misc:asyncresp`)
+
+When `SET_PUSH_URL` is configured, a completion SET is pushed with the same `txn` as `Set-Txn`:
+
+```json
+{
+  "iss": "https://scim.example.com",
+  "iat": 1715000000,
+  "jti": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "txn": "3bbc08f4-7575-40fc-aa65-5438f91ae866",
+  "sub_id": {
+    "format": "scim",
+    "uri": "/Users"
+  },
+  "events": {
+    "urn:ietf:params:scim:event:misc:asyncresp": {
+      "method": "POST",
+      "status": "201",
+      "location": "/Users/7e1bcf2e-8d0e-45e1-8003-0e460350c5e5",
+      "response": { }
+    }
+  }
+}
+```
+
+Event subscribers can correlate `txn` with the original 202 response instead of polling `GET /Async/{txn}`.
+
+#### Deployment example
+
+```bash
+export ASYNC_REQUEST=request
+export SET_PUSH_URL=https://receiver.example.com/scim/events
+export SET_ISSUER=https://scim.example.com
+```
+
+Without `Prefer: respond-async`, behavior is unchanged (synchronous 201/200/204 responses).
+
+**Note:** Async results are stored in memory per process. For multiple workers or restarts, use the completion SET or add a shared store (not included yet).
 
 ## CI/CD
 
