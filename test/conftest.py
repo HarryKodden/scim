@@ -51,6 +51,35 @@ def register_schemas():
     yield
 
 
+@pytest.fixture(autouse=True)
+def reset_file_backed_data(setup_data):
+    """Clear in-memory/file users and groups between tests to avoid name collisions."""
+    from data import Users, Groups
+
+    for resource_id in list(Users):
+        del Users[resource_id]
+    for resource_id in list(Groups):
+        del Groups[resource_id]
+
+    try:
+        from events.async_jobs import clear_async_results
+        clear_async_results()
+    except ImportError:
+        pass
+
+    try:
+        from events.delivery.poll import clear_poll_streams
+        clear_poll_streams()
+    except ImportError:
+        pass
+
+    try:
+        from events.feed_registry import clear_feed_registry
+        clear_feed_registry()
+    except ImportError:
+        pass
+
+
 @pytest.fixture(scope="module")
 def test_app(setup_data):
     from main import app

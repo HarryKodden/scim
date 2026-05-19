@@ -205,3 +205,174 @@ def test_async_bulk_emits_per_operation_txn(mock_deliver, test_app, async_bulk_e
     assert bulk_result.status_code == 200
     assert SCIM_BULK_RESPONSE in bulk_result.json()["schemas"]
     assert len(bulk_result.json()["Operations"]) == 2
+
+
+def _user_payload(user_name: str, email: str):
+    return {
+        "userName": user_name,
+        "active": True,
+        "emails": [{"primary": True, "value": email}],
+    }
+
+
+def test_bulk_put_and_delete_user(test_app):
+    create = test_app.post(
+        "/Bulk",
+        json={
+            "schemas": [SCIM_BULK_REQUEST],
+            "Operations": [
+                {
+                    "method": "POST",
+                    "path": "/Users",
+                    "bulkId": "u1",
+                    "data": _user_payload("bulk-put-user", "bulkput@test.example"),
+                },
+                {
+                    "method": "PUT",
+                    "path": "/Users/bulkId:u1",
+                    "data": _user_payload("bulk-put-user", "bulkput@test.example"),
+                },
+                {
+                    "method": "DELETE",
+                    "path": "/Users/bulkId:u1",
+                },
+            ],
+        },
+        headers=_bulk_headers(),
+    )
+    assert create.status_code == 200
+    ops = create.json()["Operations"]
+    assert ops[0]["status"] == "201"
+    assert ops[1]["status"] == "200"
+    assert ops[2]["status"] == "204"
+    assert test_app.get(
+        f"/Users/{ops[0]['response']['id']}",
+        headers={"x-api-key": "secret"},
+    ).status_code == 404
+
+
+def test_bulk_put_user_if_match_mismatch(test_app):
+    response = test_app.post(
+        "/Bulk",
+        json={
+            "schemas": [SCIM_BULK_REQUEST],
+            "Operations": [
+                {
+                    "method": "POST",
+                    "path": "/Users",
+                    "bulkId": "u1",
+                    "data": _user_payload("bulk-etag-user", "bulketag@test.example"),
+                },
+                {
+                    "method": "PUT",
+                    "path": "/Users/bulkId:u1",
+                    "version": 'W/"stale"',
+                    "data": _user_payload("bulk-etag-user", "bulketag@test.example"),
+                },
+            ],
+        },
+        headers=_bulk_headers(),
+    )
+    ops = response.json()["Operations"]
+    assert ops[0]["status"] == "201"
+    assert ops[1]["status"] == "412"
+
+
+def test_bulk_group_crud(test_app):
+    response = test_app.post(
+        "/Bulk",
+        json={
+            "schemas": [SCIM_BULK_REQUEST],
+            "Operations": [
+                {
+                    "method": "POST",
+                    "path": "/Groups",
+                    "bulkId": "g1",
+                    "data": {"displayName": "bulk-group-crud"},
+                },
+                {
+                    "method": "PATCH",
+                    "path": "/Groups/bulkId:g1",
+                    "data": {
+                        "schemas": [SCIM_PATCH_OP],
+                        "Operations": [{
+                            "op": "replace",
+                            "path": "displayName",
+                            "value": "bulk-group-renamed",
+                        }],
+                    },
+                },
+                {
+                    "method": "PUT",
+                    "path": "/Groups/bulkId:g1",
+                    "data": {"displayName": "bulk-group-final"},
+                },
+                {
+                    "method": "DELETE",
+                    "path": "/Groups/bulkId:g1",
+                },
+            ],
+        },
+        headers=_bulk_headers(),
+    )
+    ops = response.json()["Operations"]
+    assert ops[0]["status"] == "201"
+    assert ops[1]["status"] == "200"
+    assert ops[1]["response"]["displayName"] == "bulk-group-renamed"
+    assert ops[2]["status"] == "200"
+    assert ops[3]["status"] == "204"
+
+
+def test_bulk_unknown_path_returns_404(test_app):
+    response = test_app.post(
+        "/Bulk",
+        json={
+            "schemas": [SCIM_BULK_REQUEST],
+            "Operations": [{
+                "method": "POST",
+                "path": "/Widgets",
+                "data": {"displayName": "nope"},
+            }],
+        },
+        headers=_bulk_headers(),
+    )
+    op = response.json()["Operations"][0]
+    assert op["status"] == "404"
+    assert "Unknown path" in op["response"]["detail"]
+
+
+def test_bulk_method_not_allowed_returns_405(test_app):
+    response = test_app.post(
+        "/Bulk",
+        json={
+            "schemas": [SCIM_BULK_REQUEST],
+            "Operations": [{
+                "method": "GET",
+                "path": "/Users",
+            }],
+        },
+        headers=_bulk_headers(),
+    )
+    op = response.json()["Operations"][0]
+    assert op["status"] == "405"
+
+
+def test_bulk_unknown_bulk_id_returns_400(test_app):
+    response = test_app.post(
+        "/Bulk",
+        json={
+            "schemas": [SCIM_BULK_REQUEST],
+            "Operations": [{
+                "method": "PATCH",
+                "path": "/Users/bulkId:missing",
+                "data": {
+                    "schemas": [SCIM_PATCH_OP],
+                    "Operations": [{"op": "replace", "path": "active", "value": False}],
+                },
+            }],
+        },
+        headers=_bulk_headers(),
+    )
+    op = response.json()["Operations"][0]
+    assert op["status"] == "400"
+    assert "bulkId" in op["response"]["detail"]

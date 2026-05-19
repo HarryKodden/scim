@@ -112,3 +112,103 @@ def test_security_events_async_request(test_app, async_env):
     security = response.json()[SCIM_EVENTS_EXTENSION]
     assert security["asyncRequest"] == "request"
     assert MISC_ASYNC_RESP in security["eventUris"]
+
+
+@pytest.fixture
+def long_async_env(monkeypatch):
+    monkeypatch.setenv("ASYNC_REQUEST", "long")
+    monkeypatch.setenv("ASYNC_INLINE", "1")
+    monkeypatch.setenv("SET_PUSH_URL", "https://receiver.test/scim/events")
+    monkeypatch.setenv("SET_ISSUER", "https://scim.test")
+    clear_async_results()
+    yield
+    clear_async_results()
+
+
+@patch("events.async_jobs.deliver_set", return_value=True)
+def test_long_async_wait_timeout_returns_202(mock_deliver, test_app, long_async_env):
+    headers = {
+        "x-api-key": "secret",
+        "content-type": "application/scim+json",
+        "Prefer": "wait=0",
+    }
+    response = test_app.post(
+        "/Users",
+        json={
+            "userName": "long-async-user",
+            "emails": [{"primary": True, "value": "long@test.example"}],
+            "active": True,
+        },
+        headers=headers,
+    )
+    assert response.status_code == 202
+    txn = response.headers[SET_TXN_HEADER]
+    assert txn
+
+    result_resp = test_app.get(f"/Async/{txn}", headers={"x-api-key": "secret"})
+    assert result_resp.status_code == 200
+    result = result_resp.json()
+    assert result["status"] == "201"
+    assert result["method"] == "POST"
+
+    async_sets = [
+        c[0][0]
+        for c in mock_deliver.call_args_list
+        if MISC_ASYNC_RESP in c[0][0].get("events", {})
+    ]
+    assert any(s["txn"] == txn for s in async_sets)
+
+
+def test_security_events_long_async_request(test_app, long_async_env):
+    response = test_app.get("/ServiceProviderConfig")
+    from scim_errors import SCIM_EVENTS_EXTENSION
+
+    security = response.json()[SCIM_EVENTS_EXTENSION]
+    assert security["asyncRequest"] == "long"
+
+
+@patch("events.async_jobs.deliver_set", return_value=True)
+def test_async_patch_failure_stored_in_result(mock_deliver, test_app, async_env):
+    headers = {
+        "x-api-key": "secret",
+        "content-type": "application/scim+json",
+        "Prefer": "respond-async",
+    }
+    response = test_app.patch(
+        "/Users/nonexistent-async-user",
+        json={
+            "schemas": ["urn:ietf:params:scim:api:messages:2.0:PatchOp"],
+            "Operations": [{"op": "replace", "path": "active", "value": False}],
+        },
+        headers=headers,
+    )
+    assert response.status_code == 202
+    txn = response.headers[SET_TXN_HEADER]
+
+    result_resp = test_app.get(f"/Async/{txn}", headers={"x-api-key": "secret"})
+    assert result_resp.status_code == 200
+    result = result_resp.json()
+    assert result["status"] == "404"
+    assert result["response"]["schemas"] == [
+        "urn:ietf:params:scim:api:messages:2.0:Error"
+    ]
+
+    async_sets = [
+        c[0][0]
+        for c in mock_deliver.call_args_list
+        if MISC_ASYNC_RESP in c[0][0].get("events", {})
+    ]
+    assert any(
+        s["events"][MISC_ASYNC_RESP]["status"] == "404" for s in async_sets
+    )
+
+
+def test_async_result_not_found(test_app, async_env):
+    response = test_app.get(
+        "/Async/unknown-txn-id",
+        headers={"x-api-key": "secret"},
+    )
+    assert response.status_code == 404
+    assert response.json()["schemas"] == [
+        "urn:ietf:params:scim:api:messages:2.0:Error"
+    ]

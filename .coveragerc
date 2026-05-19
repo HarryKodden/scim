@@ -1,2 +1,10 @@
 [run]
 relative_files = True
+omit =
+    code/data/plugins/ldap.py
+    code/data/plugins/mongo.py
+    code/data/plugins/sql.py
+    code/data/plugins/scim.py
+    code/data/plugins/irods.py
+    code/data/plugins/jumpcloud.py
+    code/data/__init__.py

@@ -1,5 +1,6 @@
 # test/test_feeds.py
 
+import uuid
 from unittest.mock import patch
 
 import pytest
@@ -56,12 +57,13 @@ def test_group_member_add_emits_feed_add(mock_deliver, test_app, feed_env, push_
         "x-api-key": "secret",
         "content-type": "application/scim+json",
     }
+    feed_member = f"feed-member-{uuid.uuid4().hex[:8]}"
     user_resp = test_app.post(
         "/Users",
         json={
-            "userName": "feed-member",
+            "userName": feed_member,
             "active": True,
-            "emails": [{"primary": True, "value": "feed@test.example"}],
+            "emails": [{"primary": True, "value": f"{feed_member}@test.example"}],
         },
         headers=headers,
     )
@@ -69,7 +71,7 @@ def test_group_member_add_emits_feed_add(mock_deliver, test_app, feed_env, push_
 
     group_resp = test_app.post(
         "/Groups",
-        json={"displayName": "feed-group"},
+        json={"displayName": f"feed-group-{uuid.uuid4().hex[:8]}"},
         headers=headers,
     )
     group_id = group_resp.json()["id"]
@@ -106,12 +108,13 @@ def test_poll_stream_returns_stored_sets(_mock_push, test_app, feed_env, push_en
         "x-api-key": "secret",
         "content-type": "application/scim+json",
     }
+    poll_user = f"poll-user-{uuid.uuid4().hex[:8]}"
     test_app.post(
         "/Users",
         json={
-            "userName": "poll-user",
+            "userName": poll_user,
             "active": True,
-            "emails": [{"primary": True, "value": "poll@test.example"}],
+            "emails": [{"primary": True, "value": f"{poll_user}@test.example"}],
         },
         headers=headers,
     )
@@ -127,6 +130,15 @@ def test_poll_stream_returns_stored_sets(_mock_push, test_app, feed_env, push_en
     assert body["sets"][0]["events"]
 
 
+def test_poll_stream_unknown_feed_returns_404(test_app, feed_env, monkeypatch):
+    monkeypatch.setenv("SET_GROUP_AS_FEED", "false")
+    response = test_app.get(
+        "/Events/Feeds/unknown-feed/Stream",
+        headers={"x-api-key": "secret"},
+    )
+    assert response.status_code == 404
+
+
 def test_poll_disabled_returns_501(test_app, monkeypatch):
     monkeypatch.setenv("SET_POLL_ENABLED", "false")
     response = test_app.get(
@@ -134,3 +146,69 @@ def test_poll_disabled_returns_501(test_app, monkeypatch):
         headers={"x-api-key": "secret"},
     )
     assert response.status_code == 501
+
+
+def test_get_feed_by_id(test_app, feed_env):
+    response = test_app.get(
+        "/Events/Feeds/default",
+        headers={"x-api-key": "secret"},
+    )
+    assert response.status_code == 200
+    body = response.json()
+    assert body["id"] == "default"
+    assert body["poll"]["supported"] is True
+    assert body["poll"]["stream"].endswith("/Events/Feeds/default/Stream")
+    assert isinstance(body["members"], list)
+
+
+def test_get_unknown_feed_returns_404(test_app, feed_env, monkeypatch):
+    monkeypatch.setenv("SET_GROUP_AS_FEED", "false")
+    response = test_app.get(
+        "/Events/Feeds/no-such-feed",
+        headers={"x-api-key": "secret"},
+    )
+    assert response.status_code == 404
+    assert response.json()["schemas"] == [
+        "urn:ietf:params:scim:api:messages:2.0:Error"
+    ]
+
+
+@patch("events.delivery.push.deliver_set_push", return_value=True)
+def test_poll_stream_after_cursor(_mock_push, test_app, feed_env, push_env):
+    headers = {
+        "x-api-key": "secret",
+        "content-type": "application/scim+json",
+    }
+    for idx in range(3):
+        poll_user = f"poll-cursor-{idx}-{uuid.uuid4().hex[:6]}"
+        test_app.post(
+            "/Users",
+            json={
+                "userName": poll_user,
+                "active": True,
+                "emails": [{
+                    "primary": True,
+                    "value": f"{poll_user}@test.example",
+                }],
+            },
+            headers=headers,
+        )
+
+    first = test_app.get(
+        "/Events/Feeds/default/Stream",
+        headers={"x-api-key": "secret"},
+    )
+    assert first.status_code == 200
+    sets = first.json()["sets"]
+    assert len(sets) >= 3
+    first_jti = sets[0]["jti"]
+
+    page = test_app.get(
+        f"/Events/Feeds/default/Stream?after={first_jti}&limit=1",
+        headers={"x-api-key": "secret"},
+    )
+    assert page.status_code == 200
+    body = page.json()
+    assert len(body["sets"]) == 1
+    assert body["sets"][0]["jti"] != first_jti
+    assert body["moreAvailable"] is True
