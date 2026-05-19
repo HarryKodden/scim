@@ -54,8 +54,8 @@
             </div>
         </aside>
         <h2>
-            <span class="text">68 statements &nbsp;</span>
-            <button type="button" class="run button_toggle_run" value="run" data-shortcut="r" title="Toggle lines run">68<span class="text"> run</span></button>
+            <span class="text">70 statements &nbsp;</span>
+            <button type="button" class="run button_toggle_run" value="run" data-shortcut="r" title="Toggle lines run">70<span class="text"> run</span></button>
             <button type="button" class="mis show_mis button_toggle_mis" value="mis" data-shortcut="m" title="Toggle lines missing">0<span class="text"> missing</span></button>
             <button type="button" class="exc show_exc button_toggle_exc" value="exc" data-shortcut="x" title="Toggle lines excluded">0<span class="text"> excluded</span></button>
         </h2>
@@ -65,7 +65,7 @@
             <a id="nextFileLink" class="nav" href="z_36f028580bb02cc8_test_events_config_py.html">&#xbb; next</a>
             &nbsp; &nbsp; &nbsp;
             <a class="nav" href="https://coverage.readthedocs.io/en/7.13.5">coverage.py v7.13.5</a>,
-            created at 2026-05-18 12:29 +0000
+            created at 2026-05-19 07:04 +0000
         </p>
         <aside class="hidden">
             <button type="button" class="button_next_chunk" data-shortcut="j"></button>
@@ -225,9 +225,12 @@
     <p class="run"><span class="n"><a id="t143" href="#t143">143</a></span><span class="t">    <span class="nam">response</span> <span class="op">=</span> <span class="nam">test_app</span><span class="op">.</span><span class="nam">get</span><span class="op">(</span><span class="str">"/ServiceProviderConfig"</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t144" href="#t144">144</a></span><span class="t">    <span class="key">assert</span> <span class="nam">response</span><span class="op">.</span><span class="nam">status_code</span> <span class="op">==</span> <span class="num">200</span>&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t145" href="#t145">145</a></span><span class="t">    <span class="nam">body</span> <span class="op">=</span> <span class="nam">response</span><span class="op">.</span><span class="nam">json</span><span class="op">(</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
-    <p class="run"><span class="n"><a id="t146" href="#t146">146</a></span><span class="t">    <span class="key">assert</span> <span class="str">"securityEvents"</span> <span class="key">in</span> <span class="nam">body</span>&nbsp;</span><span class="r"></span></p>
-    <p class="run"><span class="n"><a id="t147" href="#t147">147</a></span><span class="t">    <span class="key">assert</span> <span class="nam">body</span><span class="op">[</span><span class="str">"securityEvents"</span><span class="op">]</span><span class="op">[</span><span class="str">"asyncRequest"</span><span class="op">]</span> <span class="op">==</span> <span class="str">"none"</span>&nbsp;</span><span class="r"></span></p>
-    <p class="run"><span class="n"><a id="t148" href="#t148">148</a></span><span class="t">    <span class="key">assert</span> <span class="str">"urn:ietf:params:scim:event:prov:delete"</span> <span class="key">in</span> <span class="nam">body</span><span class="op">[</span><span class="str">"securityEvents"</span><span class="op">]</span><span class="op">[</span><span class="str">"eventUris"</span><span class="op">]</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run"><span class="n"><a id="t146" href="#t146">146</a></span><span class="t">    <span class="key">from</span> <span class="nam">scim_errors</span> <span class="key">import</span> <span class="nam">SCIM_EVENTS_EXTENSION</span>&nbsp;</span><span class="r"></span></p>
+    <p class="pln"><span class="n"><a id="t147" href="#t147">147</a></span><span class="t">&nbsp;</span><span class="r"></span></p>
+    <p class="run"><span class="n"><a id="t148" href="#t148">148</a></span><span class="t">    <span class="key">assert</span> <span class="nam">SCIM_EVENTS_EXTENSION</span> <span class="key">in</span> <span class="nam">body</span><span class="op">.</span><span class="nam">get</span><span class="op">(</span><span class="str">"schemas"</span><span class="op">,</span> <span class="op">[</span><span class="op">]</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run"><span class="n"><a id="t149" href="#t149">149</a></span><span class="t">    <span class="nam">security</span> <span class="op">=</span> <span class="nam">body</span><span class="op">[</span><span class="nam">SCIM_EVENTS_EXTENSION</span><span class="op">]</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run"><span class="n"><a id="t150" href="#t150">150</a></span><span class="t">    <span class="key">assert</span> <span class="nam">security</span><span class="op">[</span><span class="str">"asyncRequest"</span><span class="op">]</span> <span class="op">==</span> <span class="str">"none"</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run"><span class="n"><a id="t151" href="#t151">151</a></span><span class="t">    <span class="key">assert</span> <span class="str">"urn:ietf:params:scim:event:prov:delete"</span> <span class="key">in</span> <span class="nam">security</span><span class="op">[</span><span class="str">"eventUris"</span><span class="op">]</span>&nbsp;</span><span class="r"></span></p>
 </main>
 <footer>
     <div class="content">
@@ -237,7 +240,7 @@
             <a class="nav" href="z_36f028580bb02cc8_test_events_config_py.html">&#xbb; next</a>
             &nbsp; &nbsp; &nbsp;
             <a class="nav" href="https://coverage.readthedocs.io/en/7.13.5">coverage.py v7.13.5</a>,
-            created at 2026-05-18 12:29 +0000
+            created at 2026-05-19 07:04 +0000
         </p>
     </div>
 </footer>
