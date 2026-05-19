@@ -73,3 +73,20 @@ def test_get_schemas(test_app):
 def test_get_invalid_schemas(test_app):
     response = test_app.get("Schemas/foobar")
     assert response.status_code == 404
+    body = response.json()
+    assert body["schemas"] == ["urn:ietf:params:scim:api:messages:2.0:Error"]
+    assert body["status"] == "404"
+
+
+def test_group_schema_members_ref_attribute(test_app):
+    group_schema_id = "urn:ietf:params:scim:schemas:core:2.0:Group"
+    response = test_app.get(f"/Schemas/{group_schema_id}")
+    assert response.status_code == 200
+    members = next(
+        a for a in response.json()["attributes"] if a["name"] == "members"
+    )
+    ref_attr = next(
+        s for s in members["subAttributes"] if s["name"] == "$ref"
+    )
+    assert ref_attr["type"] == "reference"
+    assert "alias" not in ref_attr

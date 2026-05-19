@@ -60,6 +60,16 @@ def normalize_scim_type(attr_type: str) -> str:
     return mapping.get(attr_type, attr_type)
 
 
+def scim_python_field_name(scim_attr_name: str) -> tuple[str, Optional[str]]:
+    """Map SCIM attribute names to valid Pydantic field names."""
+    if scim_attr_name == "$ref":
+        return "ref", "$ref"
+    if scim_attr_name.startswith("$") or not scim_attr_name.isidentifier():
+        safe = scim_attr_name.lstrip("$").replace("-", "_") or "attr"
+        return safe, scim_attr_name
+    return scim_attr_name, None
+
+
 def normalize_attribute_definition(attribute: Dict[str, Any]) -> Dict[str, Any]:
     """Normalize schema attribute definition to SCIM-compatible values."""
     normalized = dict(attribute)
@@ -82,7 +92,19 @@ def normalize_attribute_definition(attribute: Dict[str, Any]) -> Dict[str, Any]:
             normalize_attribute_definition(sub) for sub in sub_attributes
         ]
 
+    # Schema export uses attribute names only — not Pydantic field aliases.
+    alias = normalized.pop("alias", None)
+    if alias:
+        normalized["name"] = alias
+
     return normalized
+
+
+def dump_scim_model(model: BaseModel, **kwargs: Any) -> Dict[str, Any]:
+    """Serialize a model for SCIM JSON (omit nulls, honor aliases)."""
+    kwargs.setdefault("by_alias", True)
+    kwargs.setdefault("exclude_none", True)
+    return model.model_dump(**kwargs)
 
 
 class HealthCheck(BaseModel):
@@ -173,11 +195,12 @@ class BulkResponse(BaseModel):
 def register_model(name, attributes, fields={}, __base__=(BaseModel)) -> Any:
     for attr in attributes:
         attr = normalize_attribute_definition(attr)
-        attr_name = attr.get('name')
+        scim_name = attr.get('name')
+        attr_name, forced_alias = scim_python_field_name(scim_name)
         attr_type = attr.get('type', 'string')
         attr_required = attr.get('required', False)
         attr_multi_valued = attr.get('multiValued', False)
-        attr_alias = attr.get('alias')
+        attr_alias = attr.get('alias') or forced_alias
 
         # Map JSON schema types to Python types
         type_mapping = {
@@ -263,11 +286,14 @@ def register_resource_type(resource_name, schema_uri, attributes):
     # Store in Schemas dictionary
     Schemas[resource_name][schema_uri] = resource_model
 
+    normalized_attributes = [
+        normalize_attribute_definition(attr) for attr in attributes
+    ]
     SchemaResources[schema_uri] = {
         "id": schema_uri,
         "name": resource_name,
         "description": f"Schema definition for {resource_name}",
-        "attributes": attributes,
+        "attributes": normalized_attributes,
         "meta": {
             "location": f"/Schemas/{schema_uri}",
             "resourceType": "Schema"

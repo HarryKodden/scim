@@ -143,6 +143,9 @@ def test_security_events_in_service_provider_config(test_app):
     response = test_app.get("/ServiceProviderConfig")
     assert response.status_code == 200
     body = response.json()
-    assert "securityEvents" in body
-    assert body["securityEvents"]["asyncRequest"] == "none"
-    assert "urn:ietf:params:scim:event:prov:delete" in body["securityEvents"]["eventUris"]
+    from scim_errors import SCIM_EVENTS_EXTENSION
+
+    assert SCIM_EVENTS_EXTENSION in body.get("schemas", [])
+    security = body[SCIM_EVENTS_EXTENSION]
+    assert security["asyncRequest"] == "none"
+    assert "urn:ietf:params:scim:event:prov:delete" in security["eventUris"]

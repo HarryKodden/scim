@@ -107,6 +107,8 @@ def test_async_result_requires_auth(test_app, async_env):
 def test_security_events_async_request(test_app, async_env):
     response = test_app.get("/ServiceProviderConfig")
     assert response.status_code == 200
-    security = response.json()["securityEvents"]
+    from scim_errors import SCIM_EVENTS_EXTENSION
+
+    security = response.json()[SCIM_EVENTS_EXTENSION]
     assert security["asyncRequest"] == "request"
     assert MISC_ASYNC_RESP in security["eventUris"]

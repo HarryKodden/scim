@@ -41,7 +41,9 @@ def test_list_feeds(test_app, feed_env):
 
 def test_security_events_includes_feed_uris(test_app, feed_env):
     response = test_app.get("/ServiceProviderConfig")
-    security = response.json()["securityEvents"]
+    from scim_errors import SCIM_EVENTS_EXTENSION
+
+    security = response.json()[SCIM_EVENTS_EXTENSION]
     assert FEED_ADD in security["eventUris"]
     assert FEED_REMOVE in security["eventUris"]
     assert "feeds" in security

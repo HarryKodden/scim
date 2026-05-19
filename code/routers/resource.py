@@ -4,7 +4,7 @@ from fastapi import APIRouter, HTTPException
 from routers import BASE_PATH, SCIM_Response
 from typing import Any
 
-from schema import SCIM_API_MESSAGES, ListResponse, resourceTypes
+from schema import SCIM_API_MESSAGES, ListResponse, dump_scim_model, resourceTypes
 
 import logging
 logger = logging.getLogger(__name__)
@@ -23,7 +23,7 @@ async def get_resource_types() -> ListResponse:
 
     for r in resourceTypes:
         logger.debug(r)
-        resources.append(r.model_dump(by_alias=True))
+        resources.append(dump_scim_model(r))
 
     return ListResponse(
         Resources=resources,
@@ -42,6 +42,6 @@ async def get_resource(id: str) -> Any:
 
     for resource in resourceTypes:
         if resource.id == id:
-            return resource.model_dump(by_alias=True)
+            return dump_scim_model(resource)
 
     raise HTTPException(status_code=404, detail=f"Resource {id} not found")

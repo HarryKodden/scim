@@ -44,10 +44,14 @@
           "required": false
         },
         {
-          "name": "ref",
-          "type": "string",
+          "name": "$ref",
+          "description": "$ref",
+          "type": "reference",
+          "multiValued": false,
           "required": false,
-          "alias": "$ref"
+          "mutability": "readWrite",
+          "returned": "default",
+          "caseExact": false
         }
       ]
     }

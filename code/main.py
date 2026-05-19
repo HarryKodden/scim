@@ -5,10 +5,10 @@ import logging
 import uvicorn
 
 from fastapi import Request, FastAPI, status
-from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse, RedirectResponse
+from fastapi.responses import RedirectResponse
 from schema import HealthCheck
 from routers import BASE_PATH, async_results, bulk, config, feeds, resource, schema, users, groups
+from scim_errors import register_scim_exception_handlers
 
 LOGLEVEL = os.environ.get('LOGLEVEL', 'ERROR').upper()
 logging.basicConfig(level=LOGLEVEL)
@@ -60,24 +60,12 @@ app.include_router(bulk.router)
 app.include_router(feeds.router)
 app.include_router(async_results.router)
 
+register_scim_exception_handlers(app, BASE_PATH)
+
 if len(BASE_PATH) > 1:
     @app.get("/")
     async def redirect():
         return RedirectResponse(url=BASE_PATH)
-
-
-@app.exception_handler(RequestValidationError)
-async def validation_exception_handler(
-    request: Request,
-    exc: RequestValidationError
-):
-    exc_str = f'{exc}'.replace('\n', ' ').replace('   ', ' ')
-    logging.error(f"{request}: {exc_str}")
-    content = {'status_code': 10422, 'message': exc_str}
-    return JSONResponse(
-        content=content,
-        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY
-    )
 
 
 @app.get(
