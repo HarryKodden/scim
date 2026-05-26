@@ -229,7 +229,7 @@ def async_background_env(monkeypatch):
 
 @patch("events.async_jobs.deliver_set", return_value=True)
 def test_async_post_background_without_inline(mock_deliver, test_app, async_background_env):
-    """Async job runs via create_task; body must be cached before handoff."""
+    """Async job runs after 202 via Starlette BackgroundTask (not ASYNC_INLINE)."""
     user_name = f"async-bg-{uuid.uuid4().hex[:8]}"
     headers = {
         "x-api-key": "secret",
@@ -249,14 +249,19 @@ def test_async_post_background_without_inline(mock_deliver, test_app, async_back
     txn = response.headers[SET_TXN_HEADER]
     assert txn
 
-    result = None
-    for _ in range(100):
-        result_resp = test_app.get(f"/Async/{txn}", headers={"x-api-key": "secret"})
-        if result_resp.status_code == 200:
-            result = result_resp.json()
-            break
-        time.sleep(0.02)
-    assert result is not None
+    # TestClient runs response background tasks before returning from POST.
+    result_resp = test_app.get(f"/Async/{txn}", headers={"x-api-key": "secret"})
+    if result_resp.status_code != 200:
+        for _ in range(50):
+            time.sleep(0.05)
+            result_resp = test_app.get(
+                f"/Async/{txn}",
+                headers={"x-api-key": "secret"},
+            )
+            if result_resp.status_code == 200:
+                break
+    assert result_resp.status_code == 200, result_resp.text
+    result = result_resp.json()
     assert result["status"] == "201"
     assert result["method"] == "POST"
     assert result["response"]["userName"] == user_name

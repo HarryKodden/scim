@@ -10,6 +10,7 @@ from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
 
 from fastapi import HTTPException, Request, Response
+from starlette.background import BackgroundTask
 from starlette.responses import Response as StarletteResponse
 
 from events.builder import build_set_envelope, build_sub_id, new_txn
@@ -187,18 +188,6 @@ def _inline_async_enabled() -> bool:
     return os.environ.get("ASYNC_INLINE", "").lower() in ("1", "true", "yes")
 
 
-async def schedule_async_request(
-    request: Request,
-    handler,
-    txn: str,
-) -> None:
-    """Run SCIM mutation in background and publish misc:asyncresp when done."""
-    if _inline_async_enabled():
-        await _execute_async_job(request, handler, txn)
-        return
-    asyncio.create_task(_execute_async_job(request, handler, txn))
-
-
 async def _execute_bulk_async(
     base_txn: str,
     operations: List[Dict[str, Any]],
@@ -252,15 +241,18 @@ async def accept_bulk_async_response(
     """202 Accepted for async bulk with per-operation txn suffix SETs."""
     base_txn = new_txn()
     location = async_result_location(base_txn)
+    background = None
     if _inline_async_enabled():
         await _execute_bulk_async(
             base_txn, operations, fail_on_errors, max_operations
         )
     else:
-        asyncio.create_task(
-            _execute_bulk_async(
-                base_txn, operations, fail_on_errors, max_operations
-            )
+        background = BackgroundTask(
+            _execute_bulk_async,
+            base_txn,
+            operations,
+            fail_on_errors,
+            max_operations,
         )
     return StarletteResponse(
         status_code=202,
@@ -269,6 +261,7 @@ async def accept_bulk_async_response(
             PREFERENCE_APPLIED_HEADER: PREFERENCE_APPLIED_VALUE,
             "Location": location,
         },
+        background=background,
     )
 
 
@@ -280,10 +273,11 @@ async def accept_async_response(
     """Build 202 Accepted with RFC 9967 required headers."""
     txn = txn or new_txn()
     location = async_result_location(txn)
+    background = None
     if _inline_async_enabled():
         await _execute_async_job(request, handler, txn)
     else:
-        asyncio.create_task(_execute_async_job(request, handler, txn))
+        background = BackgroundTask(_execute_async_job, request, handler, txn)
     return StarletteResponse(
         status_code=202,
         headers={
@@ -291,4 +285,5 @@ async def accept_async_response(
             PREFERENCE_APPLIED_HEADER: PREFERENCE_APPLIED_VALUE,
             "Location": location,
         },
+        background=background,
     )
