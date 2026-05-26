@@ -14,7 +14,10 @@ def test_apidoc(test_app):
     assert SCIM_EVENTS_EXTENSION in body.get("schemas", [])
     security = body.get(SCIM_EVENTS_EXTENSION)
     assert security is not None
-    assert security.get("asyncRequest") == "none"
+    assert security.get("asyncRequest") == "request"
+    from events.mapping import MISC_ASYNC_RESP
+
+    assert MISC_ASYNC_RESP in security.get("eventUris", [])
     for uri in DEFAULT_NOTICE_EVENT_URIS:
         assert uri in security.get("eventUris", [])
     auth_types = {s["type"] for s in body.get("authenticationSchemes", [])}

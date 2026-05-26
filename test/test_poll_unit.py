@@ -22,8 +22,13 @@ def reset_poll_streams():
     clear_poll_streams()
 
 
-def test_poll_enabled_false_by_default(monkeypatch):
+def test_poll_enabled_true_by_default(monkeypatch):
     monkeypatch.delenv("SET_POLL_ENABLED", raising=False)
+    assert poll_enabled() is True
+
+
+def test_poll_enabled_false_when_disabled(monkeypatch):
+    monkeypatch.setenv("SET_POLL_ENABLED", "false")
     assert poll_enabled() is False
 
 
@@ -38,7 +43,7 @@ def test_max_events_invalid_env_defaults(monkeypatch):
 
 
 def test_store_skipped_when_poll_disabled(monkeypatch):
-    monkeypatch.delenv("SET_POLL_ENABLED", raising=False)
+    monkeypatch.setenv("SET_POLL_ENABLED", "false")
     store_set_for_poll({"jti": "j1", "aud": "https://scim.test/Events/Feeds/default"})
     sets, more = poll_feed("default")
     assert sets == []

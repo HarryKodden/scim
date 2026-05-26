@@ -19,7 +19,7 @@ def _max_events() -> int:
 
 
 def poll_enabled() -> bool:
-    return os.environ.get("SET_POLL_ENABLED", "false").lower() in (
+    return os.environ.get("SET_POLL_ENABLED", "true").lower() in (
         "1",
         "true",
         "yes",

@@ -34,9 +34,9 @@ def load_event_config() -> EventConfig:
     if event_mode not in {"notice", "full"}:
         event_mode = "notice"
 
-    async_request = os.environ.get("ASYNC_REQUEST", "none").lower()
+    async_request = os.environ.get("ASYNC_REQUEST", "request").lower()
     if async_request not in {"none", "long", "request"}:
-        async_request = "none"
+        async_request = "request"
 
     signing_algorithm = os.environ.get("SET_SIGNING_ALGORITHM", "HS256")
     push_require_tls = os.environ.get(
@@ -59,6 +59,6 @@ def load_event_config() -> EventConfig:
         signing_secret=os.environ.get("SET_SIGNING_SECRET"),
         signing_algorithm=signing_algorithm,
         push_require_tls=push_require_tls,
-        poll_enabled=os.environ.get("SET_POLL_ENABLED", "false").lower()
+        poll_enabled=os.environ.get("SET_POLL_ENABLED", "true").lower()
         in ("1", "true", "yes"),
     )

@@ -147,5 +147,8 @@ def test_security_events_in_service_provider_config(test_app):
 
     assert SCIM_EVENTS_EXTENSION in body.get("schemas", [])
     security = body[SCIM_EVENTS_EXTENSION]
-    assert security["asyncRequest"] == "none"
+    assert security["asyncRequest"] == "request"
+    from events.mapping import MISC_ASYNC_RESP
+
+    assert MISC_ASYNC_RESP in security["eventUris"]
     assert "urn:ietf:params:scim:event:prov:delete" in security["eventUris"]

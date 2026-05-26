@@ -1,5 +1,7 @@
 # test/test_async_requests.py
 
+import time
+import uuid
 from unittest.mock import patch
 
 import pytest
@@ -212,3 +214,49 @@ def test_async_result_not_found(test_app, async_env):
     assert response.json()["schemas"] == [
         "urn:ietf:params:scim:api:messages:2.0:Error"
     ]
+
+
+@pytest.fixture
+def async_background_env(monkeypatch):
+    monkeypatch.setenv("ASYNC_REQUEST", "request")
+    monkeypatch.delenv("ASYNC_INLINE", raising=False)
+    monkeypatch.setenv("SET_PUSH_URL", "https://receiver.test/scim/events")
+    monkeypatch.setenv("SET_ISSUER", "https://scim.test")
+    clear_async_results()
+    yield
+    clear_async_results()
+
+
+@patch("events.async_jobs.deliver_set", return_value=True)
+def test_async_post_background_without_inline(mock_deliver, test_app, async_background_env):
+    """Async job runs via create_task; body must be cached before handoff."""
+    user_name = f"async-bg-{uuid.uuid4().hex[:8]}"
+    headers = {
+        "x-api-key": "secret",
+        "content-type": "application/scim+json",
+        "Prefer": "respond-async",
+    }
+    response = test_app.post(
+        "/Users",
+        json={
+            "userName": user_name,
+            "emails": [{"primary": True, "value": f"{user_name}@test.example"}],
+            "active": True,
+        },
+        headers=headers,
+    )
+    assert response.status_code == 202
+    txn = response.headers[SET_TXN_HEADER]
+    assert txn
+
+    result = None
+    for _ in range(100):
+        result_resp = test_app.get(f"/Async/{txn}", headers={"x-api-key": "secret"})
+        if result_resp.status_code == 200:
+            result = result_resp.json()
+            break
+        time.sleep(0.02)
+    assert result is not None
+    assert result["status"] == "201"
+    assert result["method"] == "POST"
+    assert result["response"]["userName"] == user_name

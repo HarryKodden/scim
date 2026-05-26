@@ -130,6 +130,7 @@ class SCIM_Route(APIRoute):
                 and respond_async
                 and not is_bulk_endpoint(request)
             ):
+                await request.body()
                 return await accept_async_response(request, original_route_handler)
 
             try:
@@ -145,6 +146,7 @@ class SCIM_Route(APIRoute):
                             timeout=wait_seconds,
                         )
                     except asyncio.TimeoutError:
+                        await request.body()
                         return await accept_async_response(
                             request, original_route_handler
                         )

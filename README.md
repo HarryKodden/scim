@@ -147,14 +147,14 @@ This image uses environment variables for configuration.
 | `SET_PUSH_URL` | RFC 8935 push receiver URL for SET delivery | `https://receiver.example.com/scim/events` | |
 | `SET_PUSH_TOKEN` | Bearer token for SET push delivery | | |
 | `EVENT_MODE` | Provisioning event payload mode: `notice` or `full` | `notice` | `notice` |
-| `ASYNC_REQUEST` | Async SCIM requests (RFC 9967 §2.5.1): `none`, `request`, or `long` — see [Async SCIM requests](#async-scim-requests) | `request` | `none` |
+| `ASYNC_REQUEST` | Async SCIM requests (RFC 9967 §2.5.1): `none`, `request`, or `long` — see [Async SCIM requests](#async-scim-requests). Default `request` only enables async when the client sends `Prefer: respond-async`. | `request` | `request` |
 | `SET_SIGNING_SECRET` | HMAC secret for JWS-signed SET push (`application/secevent+jwt`) | | |
 | `SET_SIGNING_ALGORITHM` | JWS algorithm when signing is enabled | `HS256` | `HS256` |
 | `SET_PUSH_REQUIRE_TLS` | Reject `http://` push URLs when `true` | `true` | `false` |
 | `SET_FEEDS` | Feed definitions (JSON array or comma-separated ids) | `[{"id":"default","displayName":"Default"}]` | `default` |
 | `SET_FEEDS_ENABLED` | Emit `feed:add` / `feed:remove` on membership changes | `true` | `true` |
 | `SET_GROUP_AS_FEED` | Map each Group to feed `/Events/Feeds/{groupId}` | `true` | `true` |
-| `SET_POLL_ENABLED` | Enable RFC 8936 poll at `/Events/Feeds/{id}/Stream` | `true` | `false` |
+| `SET_POLL_ENABLED` | Enable RFC 8936 poll at `/Events/Feeds/{id}/Stream` | `true` | `true` |
 | `SET_POLL_MAX_EVENTS` | Max SETs retained per feed stream (in-memory) | `10000` | `10000` |
 
 
@@ -220,11 +220,11 @@ When `ASYNC_REQUEST` is not `none`, the server can accept mutating operations (P
 
 | `ASYNC_REQUEST` | Meaning |
 | --------------- | ------- |
-| `none` | Async disabled; all mutations run synchronously (default). |
-| `request` | Async only when the client sends `Prefer: respond-async`. |
+| `none` | Async disabled; all mutations run synchronously. |
+| `request` | Default. Async only when the client sends `Prefer: respond-async`; without that header, mutations stay synchronous. |
 | `long` | If the operation does not finish within `wait=N` seconds (from `Prefer: wait=N`), the server switches to async and returns 202. |
 
-`ServiceProviderConfig` exposes the active mode in `securityEvents.asyncRequest` and lists `urn:ietf:params:scim:event:misc:asyncresp` in `eventUris` when async is enabled.
+`ServiceProviderConfig` exposes the active mode in `securityEvents.asyncRequest` and lists `urn:ietf:params:scim:event:misc:asyncresp` in `eventUris` when async is enabled (`request` or `long`).
 
 #### Client: start an async mutation
 

@@ -10,11 +10,13 @@ def test_load_event_config_defaults(monkeypatch):
     monkeypatch.delenv("SET_PUSH_URL", raising=False)
     monkeypatch.delenv("EVENT_MODE", raising=False)
     monkeypatch.delenv("ASYNC_REQUEST", raising=False)
+    monkeypatch.delenv("SET_POLL_ENABLED", raising=False)
 
     cfg = load_event_config()
     assert cfg.issuer == "scim"
     assert cfg.event_mode == "notice"
-    assert cfg.async_request == "none"
+    assert cfg.async_request == "request"
+    assert cfg.poll_enabled
     assert not cfg.push_enabled
     assert not cfg.signing_enabled
     assert not cfg.push_require_tls
