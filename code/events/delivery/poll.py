@@ -32,6 +32,7 @@ def append_set_to_feed(feed_id: str, set_token: Dict[str, Any]) -> None:
     entry = {
         "jti": set_token.get("jti"),
         "iat": set_token.get("iat"),
+        "txn": set_token.get("txn"),
         "set": set_token,
     }
     with _lock:
@@ -77,7 +78,9 @@ def poll_feed(
     limit: int = 100,
 ) -> Tuple[List[Dict[str, Any]], bool]:
     """
-    Return SET entries after after_jti (exclusive), up to limit.
+    Return stream entries after after_jti (exclusive), up to limit.
+
+    Each entry includes top-level jti, txn, iat, and set (full SET object).
     Second value is moreAvailable hint.
     """
     limit = max(1, min(limit, 1000))
@@ -94,7 +97,7 @@ def poll_feed(
 
     selected = stream[:limit]
     more = len(stream) > limit
-    return [entry["set"] for entry in selected], more
+    return selected, more
 
 
 def clear_poll_streams() -> None:

@@ -65,12 +65,15 @@ def test_async_post_returns_202_and_completion_set(mock_deliver, test_app, async
     assert event["method"] == "POST"
     assert event["status"] == "201"
     assert "response" in event
+    assert async_set["sub_id"]["uri"].startswith("/Users/")
 
     result_resp = test_app.get(f"/Async/{txn}", headers={"x-api-key": "secret"})
     assert result_resp.status_code == 200
     result = result_resp.json()
     assert result["method"] == "POST"
     assert result["status"] == "201"
+    assert result.get("location", "").startswith("/Users/")
+    assert result["response"]["meta"]["location"] == result["location"]
 
 
 @patch("events.publisher.deliver_set", return_value=True)
@@ -265,3 +268,13 @@ def test_async_post_background_without_inline(mock_deliver, test_app, async_back
     assert result["status"] == "201"
     assert result["method"] == "POST"
     assert result["response"]["userName"] == user_name
+    assert result.get("location", "").startswith("/Users/")
+    assert result["location"] == result["response"]["meta"]["location"]
+
+    async_set = next(
+        c[0][0]
+        for c in mock_deliver.call_args_list
+        if MISC_ASYNC_RESP in c[0][0].get("events", {})
+    )
+    assert async_set["sub_id"]["uri"] == result["location"]
+    assert async_set["events"][MISC_ASYNC_RESP]["location"] == result["location"]

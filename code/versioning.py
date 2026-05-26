@@ -76,7 +76,11 @@ def set_etag_header(response: Response, version: Optional[str]) -> None:
 def dump_resource(resource: Any, response: Optional[Response] = None) -> Dict[str, Any]:
     data = resource.model_dump(by_alias=True, exclude_none=True)
     if response is not None:
-        set_etag_header(response, (data.get("meta") or {}).get("version"))
+        meta = data.get("meta") or {}
+        set_etag_header(response, meta.get("version"))
+        location = meta.get("location")
+        if location:
+            response.headers["Location"] = str(location)
     return data
 
 

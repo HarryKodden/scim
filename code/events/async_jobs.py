@@ -94,12 +94,58 @@ def bulk_operation_txn(base_txn: str, index: int) -> str:
     return f"{base_txn}:{index}"
 
 
+def _location_from_response(
+    response: Response,
+    body: Optional[Any],
+) -> Optional[str]:
+    loc = response.headers.get("location")
+    if loc:
+        return str(loc)
+    if isinstance(body, dict):
+        meta = body.get("meta") or {}
+        if isinstance(meta, dict) and meta.get("location"):
+            return str(meta["location"])
+    return None
+
+
+def _version_from_response(
+    response: Response,
+    body: Optional[Any],
+) -> Optional[str]:
+    version = response.headers.get("etag")
+    if version:
+        return str(version)
+    if isinstance(body, dict):
+        meta = body.get("meta") or {}
+        if isinstance(meta, dict):
+            return meta.get("version") or meta.get("etag")
+    return None
+
+
+def _sub_id_for_async_record(record: AsyncJobRecord) -> Dict[str, Any]:
+    """sub_id.uri targets the affected resource, not only the collection path."""
+    uri: Optional[str] = record.location
+    resource_id: Optional[str] = None
+    external_id: Optional[str] = None
+    body = record.response_body
+    if isinstance(body, dict):
+        resource_id = body.get("id")
+        external_id = body.get("externalId")
+        if not uri:
+            meta = body.get("meta") or {}
+            if isinstance(meta, dict) and meta.get("location"):
+                uri = str(meta["location"])
+    if not uri:
+        uri = _resource_uri_from_request_path(record.path)
+    return build_sub_id(uri, external_id=external_id, resource_id=resource_id)
+
+
 def build_async_response_set(
     record: AsyncJobRecord,
     txn: str,
 ) -> Dict[str, Any]:
     payload = _operation_result(record)
-    sub_id = build_sub_id(_resource_uri_from_request_path(record.path))
+    sub_id = _sub_id_for_async_record(record)
     return build_set_envelope(MISC_ASYNC_RESP, payload, sub_id, txn=txn)
 
 
@@ -108,7 +154,18 @@ def build_bulk_async_response_set(
     txn: str,
 ) -> Dict[str, Any]:
     """misc:asyncresp for a single bulk response operation (RFC 9967 §2.5.1.2)."""
-    sub_id = build_sub_id("/Bulk")
+    uri = operation_result.get("location") or "/Bulk"
+    response_body = operation_result.get("response")
+    resource_id = None
+    external_id = None
+    if isinstance(response_body, dict):
+        resource_id = response_body.get("id")
+        external_id = response_body.get("externalId")
+        if not uri or uri == "/Bulk":
+            meta = response_body.get("meta") or {}
+            if isinstance(meta, dict) and meta.get("location"):
+                uri = str(meta["location"])
+    sub_id = build_sub_id(uri, external_id=external_id, resource_id=resource_id)
     return build_set_envelope(MISC_ASYNC_RESP, operation_result, sub_id, txn=txn)
 
 
@@ -155,9 +212,9 @@ async def _execute_async_job(
     try:
         response: Response = await handler(request)
         record.status = str(response.status_code)
-        record.location = response.headers.get("location")
-        record.version = response.headers.get("etag")
         record.response_body = _response_body_from_response(response)
+        record.location = _location_from_response(response, record.response_body)
+        record.version = _version_from_response(response, record.response_body)
         record.completed = True
         await store_async_result(record)
     except HTTPException as exc:
@@ -271,6 +328,7 @@ async def accept_async_response(
     txn: Optional[str] = None,
 ) -> Response:
     """Build 202 Accepted with RFC 9967 required headers."""
+    await request.body()
     txn = txn or new_txn()
     location = async_result_location(txn)
     background = None

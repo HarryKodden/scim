@@ -80,10 +80,20 @@ async def poll_feed_stream(
             detail=f"Feed not found: {feed_id}",
         )
 
-    sets, more = poll_feed(feed_id, after_jti=after, limit=limit)
+    entries, more = poll_feed(feed_id, after_jti=after, limit=limit)
+    sets = [entry["set"] for entry in entries if entry.get("set")]
     return {
         "schemas": ["urn:ietf:params:scim:api:messages:2.0:FeedStream"],
         "feed": feed_id,
+        "events": [
+            {
+                "jti": entry.get("jti"),
+                "txn": entry.get("txn"),
+                "iat": entry.get("iat"),
+                "set": entry.get("set"),
+            }
+            for entry in entries
+        ],
         "sets": sets,
         "moreAvailable": more,
     }

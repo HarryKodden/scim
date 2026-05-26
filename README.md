@@ -148,6 +148,7 @@ This image uses environment variables for configuration.
 | `SET_PUSH_TOKEN` | Bearer token for SET push delivery | | |
 | `EVENT_MODE` | Provisioning event payload mode: `notice` or `full` | `notice` | `notice` |
 | `ASYNC_REQUEST` | Async SCIM requests (RFC 9967 §2.5.1): `none`, `request`, or `long` — see [Async SCIM requests](#async-scim-requests). Default `request` only enables async when the client sends `Prefer: respond-async`. | `request` | `request` |
+| `ASYNC_INLINE` | Run async jobs inline before returning 202 (dev/tests only) | `1` | unset |
 | `SET_SIGNING_SECRET` | HMAC secret for JWS-signed SET push (`application/secevent+jwt`) | | |
 | `SET_SIGNING_ALGORITHM` | JWS algorithm when signing is enabled | `HS256` | `HS256` |
 | `SET_PUSH_REQUIRE_TLS` | Reject `http://` push URLs when `true` | `true` | `false` |
@@ -224,6 +225,8 @@ When `ASYNC_REQUEST` is not `none`, the server can accept mutating operations (P
 | `request` | Default. Async only when the client sends `Prefer: respond-async`; without that header, mutations stay synchronous. |
 | `long` | If the operation does not finish within `wait=N` seconds (from `Prefer: wait=N`), the server switches to async and returns 202. |
 
+Under `long`, **`Prefer: wait=0`** means “return **202 immediately**” (the server does not wait for the handler). Omitting `wait` entirely does **not** trigger async under `long`—only `wait=N` with N ≥ 0 does.
+
 `ServiceProviderConfig` exposes the active mode in `securityEvents.asyncRequest` and lists `urn:ietf:params:scim:event:misc:asyncresp` in `eventUris` when async is enabled (`request` or `long`).
 
 #### Client: start an async mutation
@@ -236,6 +239,8 @@ Content-Type: application/scim+json
 Prefer: respond-async
 Authorization: Bearer <API_KEY>
 ```
+
+Authentication: the API accepts **`Authorization: Bearer <API_KEY>`** (same value as the `API_KEY` environment variable) or the **`X-API-Key: <API_KEY>`** header. Both appear in the OpenAPI schema.
 
 Optional wait hint (used with `ASYNC_REQUEST=long`):
 
@@ -301,7 +306,8 @@ When `SET_PUSH_URL` is configured, a completion SET is pushed with the same `txn
   "txn": "3bbc08f4-7575-40fc-aa65-5438f91ae866",
   "sub_id": {
     "format": "scim",
-    "uri": "/Users"
+    "uri": "/Users/7e1bcf2e-8d0e-45e1-8003-0e460350c5e5",
+    "id": "7e1bcf2e-8d0e-45e1-8003-0e460350c5e5"
   },
   "events": {
     "urn:ietf:params:scim:event:misc:asyncresp": {
@@ -326,7 +332,17 @@ export SET_ISSUER=https://scim.example.com
 
 Without `Prefer: respond-async`, behavior is unchanged (synchronous 201/200/204 responses).
 
-**Note:** Async results are stored in memory per process. For multiple workers or restarts, use the completion SET or add a shared store (not included yet).
+#### Multi-worker and scaling
+
+Async poll results (`GET /Async/{txn}`), feed poll streams (`GET /Events/Feeds/{id}/Stream`), and in-memory feed membership are **per process**. They are not shared across workers or preserved across restarts.
+
+| Setting | Use |
+| ------- | --- |
+| Default (no `ASYNC_INLINE`) | Production: use completion SETs (`misc:asyncresp`) and/or poll; requires **sticky sessions** to the same worker when using `GET /Async/{txn}`, or accept that poll may 404 on another worker |
+| `ASYNC_INLINE=1` | Single-worker dev/tests only — runs the async job before returning 202 |
+| Shared store (not included) | Optional follow-up: Redis (or similar) for `_async_results` and poll streams for horizontal scale |
+
+For HA deployments, prefer **push** (`SET_PUSH_URL`) and correlate via `txn` / `jti` rather than relying on in-memory poll alone.
 
 ### ETag and resource versions
 
@@ -358,9 +374,9 @@ When `SET_GROUP_AS_FEED=true` (default), each Group is an event feed. Adding or 
 - `urn:ietf:params:scim:event:feed:add`
 - `urn:ietf:params:scim:event:feed:remove`
 
-The SET `aud` claim targets the feed URL (e.g. `https://scim.example.com/Events/Feeds/{groupId}`). `ServiceProviderConfig.securityEvents.feeds` lists available feed URIs.
+The SET `aud` claim targets the feed URL (e.g. `https://scim.example.com/Events/Feeds/{groupId}`). When poll is enabled and feeds are configured, `ServiceProviderConfig.securityEvents.feeds` lists feed URIs for discovery.
 
-**Poll delivery** (`SET_POLL_ENABLED=true`):
+**Poll delivery** (`SET_POLL_ENABLED=true` by default):
 
 ```http
 GET /Events/Feeds/default/Stream?after={jti}&limit=100
@@ -368,6 +384,25 @@ Authorization: Bearer <API_KEY>
 ```
 
 Returns stored SETs for receivers without a push webhook. All published SETs (provisioning and feed) are appended to the matching feed stream(s).
+
+Each stream item includes top-level **`jti`**, **`txn`** (when present on the SET), **`iat`**, and **`set`** (full SET object). The `events` array is the preferred shape for correlation; `sets` repeats the SET bodies for backward compatibility.
+
+```json
+{
+  "schemas": ["urn:ietf:params:scim:api:messages:2.0:FeedStream"],
+  "feed": "default",
+  "moreAvailable": false,
+  "events": [
+    {
+      "jti": "6164f3bbf6ff41a88dc94f18cb0620e8",
+      "txn": "3bbc08f4-7575-40fc-aa65-5438f91ae866",
+      "iat": 1715000000,
+      "set": { "iss": "https://scim.example.com", "events": { } }
+    }
+  ],
+  "sets": [ { "iss": "https://scim.example.com", "events": { } } ]
+}
+```
 
 ### Bulk operations (RFC 7644 §3.7)
 

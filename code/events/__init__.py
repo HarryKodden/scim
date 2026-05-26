@@ -64,10 +64,14 @@ def security_events_config(config: EventConfig = None) -> Dict[str, Any]:
         if uri not in event_uris:
             event_uris.append(uri)
 
+    feed_uris = []
+    if cfg.poll_enabled and feeds_meta:
+        feed_uris = [f["uri"] for f in feeds_meta]
+
     result = {
         "asyncRequest": cfg.async_request,
         "eventUris": event_uris,
-        "feeds": [f["uri"] for f in feeds_meta],
+        "feeds": feed_uris,
     }
     return result
 

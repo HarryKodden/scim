@@ -81,10 +81,15 @@ def test_feed_ids_from_aud_fallback_to_known_feed(monkeypatch):
 def test_append_and_poll_with_cursor(monkeypatch):
     monkeypatch.setenv("SET_POLL_ENABLED", "true")
     for idx in range(3):
-        append_set_to_feed("default", {"jti": f"jti-{idx}", "events": {}})
-    all_sets, _ = poll_feed("default")
-    assert len(all_sets) == 3
+        append_set_to_feed(
+            "default",
+            {"jti": f"jti-{idx}", "txn": f"txn-{idx}", "events": {}},
+        )
+    all_entries, _ = poll_feed("default")
+    assert len(all_entries) == 3
+    assert all_entries[0]["txn"] == "txn-0"
     page, more = poll_feed("default", after_jti="jti-0", limit=1)
     assert len(page) == 1
     assert page[0]["jti"] == "jti-1"
+    assert page[0]["txn"] == "txn-1"
     assert more is True

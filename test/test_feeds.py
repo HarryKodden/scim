@@ -128,6 +128,9 @@ def test_poll_stream_returns_stored_sets(_mock_push, test_app, feed_env, push_en
     assert body["moreAvailable"] is False
     assert len(body["sets"]) >= 1
     assert body["sets"][0]["events"]
+    assert len(body["events"]) >= 1
+    assert body["events"][0]["jti"]
+    assert body["events"][0]["set"]["events"]
 
 
 def test_poll_stream_unknown_feed_returns_404(test_app, feed_env, monkeypatch):
@@ -210,5 +213,7 @@ def test_poll_stream_after_cursor(_mock_push, test_app, feed_env, push_env):
     assert page.status_code == 200
     body = page.json()
     assert len(body["sets"]) == 1
-    assert body["sets"][0]["jti"] != first_jti
+    assert len(body["events"]) == 1
+    assert body["events"][0]["jti"] != first_jti
+    assert body["events"][0]["txn"] == body["sets"][0].get("txn")
     assert body["moreAvailable"] is True
