@@ -440,7 +440,36 @@ With `ASYNC_REQUEST=request` and `Prefer: respond-async`, bulk returns **202** a
 
 ## CI/CD
 
-Committing changes to this repository initiates the CI pipeline that will result in a docker image creation and uploading to dockerhub.
+Pushes to `main` run tests (`.github/workflows/ci.yml`) and publish `harrykodden/scim:latest` (`.github/workflows/image.yml`).
+
+### Releases
+
+Versioned images are published when you create a **GitHub release** (`.github/workflows/release.yml`).
+
+**Prerequisites**
+
+- [GitHub CLI](https://cli.github.com/) (`gh auth login`)
+- Repository secrets `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN` (already used for `main` builds)
+
+**Publish a release**
+
+```bash
+# From a clean main branch after CI is green:
+make release
+```
+
+`make release` bumps the **minor** version from the latest tag (e.g. `v1.2.3` → `v1.3.0`; first release → `v1.0.0`). Use `make version` to preview the next version. Override with `make release VERSION=2.0.0` when needed.
+
+This creates the tag and a GitHub release. CI then runs tests and pushes:
+
+| Docker tag | Example |
+| ---------- | ------- |
+| Exact version | `harrykodden/scim:1.0.0` |
+| Minor series | `harrykodden/scim:1.0` |
+| Major series | `harrykodden/scim:1` |
+| Latest release | `harrykodden/scim:latest` |
+
+Use `make release-draft` to prepare a draft release and publish it from the GitHub UI when ready.
 
 For CD the **argo** is supported to automatacally refresh the application in your kubernetes cluster.
 Assuming you have **argo** running in your cluster, just apply thius manifest:
