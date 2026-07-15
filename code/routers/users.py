@@ -61,34 +61,39 @@ async def create_user(
     response: Response,
     user: User = Body(
         examples={
-            "externalId": "string",
-            "active": True,
-            "name": {
-                "familyName": "string",
-                "givenName": "string"
+            "default": {
+                "summary": "Create user",
+                "value": {
+                    "externalId": "string",
+                    "active": True,
+                    "name": {
+                        "familyName": "string",
+                        "givenName": "string",
+                    },
+                    "displayName": "string",
+                    "emails": [
+                        {
+                            "primary": True,
+                            "value": "string",
+                        }
+                    ],
+                    "userName": "string",
+                    "urn:mace:surf.nl:sram:scim:extension:User": {
+                        "eduPersonScopedAffiliation": "string",
+                        "eduPersonUniqueId": "string",
+                        "voPersonExternalAffiliation": "string",
+                        "voPersonExternalId": "string",
+                    },
+                    "x509Certificates": [
+                        {
+                            "value": "string",
+                        }
+                    ],
+                    "schemas": [
+                        "urn:ietf:params:scim:schemas:core:2.0:User",
+                    ],
+                },
             },
-            "displayName": "string",
-            "emails": [
-                {
-                    "primary": True,
-                    "value": "string"
-                }
-            ],
-            "userName": "string",
-            "urn:mace:surf.nl:sram:scim:extension:User": {
-                "eduPersonScopedAffiliation": "string",
-                "eduPersonUniqueId": "string",
-                "voPersonExternalAffiliation": "string",
-                "voPersonExternalId": "string"
-            },
-            "x509Certificates": [
-                {
-                    "value": "string"
-                }
-            ],
-            "schemas": [
-                "string"
-            ]
         },
     ),
 ) -> Any:

@@ -56,26 +56,31 @@ async def create_group(
     response: Response,
     group: Group = Body(
         examples={
-            "displayName": "Student",
-            "externalId": "273aca56-d86a-4f05-a159-51856b5cb1b3@sram.surf.nl",
-            "members": [
-                {
-                    "displayName": "John Doe",
-                    "value": "25854263-01ee-4e45-a4de-e34e04e9830b"
+            "default": {
+                "summary": "Create group",
+                "value": {
+                    "displayName": "Student",
+                    "externalId": "273aca56-d86a-4f05-a159-51856b5cb1b3@sram.surf.nl",
+                    "members": [
+                        {
+                            "displayName": "John Doe",
+                            "value": "25854263-01ee-4e45-a4de-e34e04e9830b",
+                        },
+                        {
+                            "displayName": "Peter Doe",
+                            "value": "89a7c3ca-1e8b-48ed-bc17-831611078a52",
+                        },
+                    ],
+                    "schemas": [
+                        "urn:ietf:params:scim:schemas:core:2.0:Group",
+                    ],
+                    "urn:mace:surf.nl:sram:scim:extension:Group": {
+                        "description": "Student users group",
+                        "labels": [],
+                        "urn": "uuc:collab01:students",
+                    },
                 },
-                {
-                    "displayName": "Peter Doe",
-                    "value": "89a7c3ca-1e8b-48ed-bc17-831611078a52"
-                },
-            ],
-            "schemas": [
-                "urn:ietf:params:scim:schemas:core:2.0:Group"
-            ],
-            "urn:mace:surf.nl:sram:scim:extension:Group": {
-                "description": "Student users group",
-                "labels": [],
-                "urn": "uuc:collab01:students"
-            }
+            },
         },
     ),
 ) -> Any:

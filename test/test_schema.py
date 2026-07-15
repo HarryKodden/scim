@@ -90,3 +90,32 @@ def test_group_schema_members_ref_attribute(test_app):
     )
     assert ref_attr["type"] == "reference"
     assert "alias" not in ref_attr
+
+
+def test_openapi_nested_user_models_are_not_accumulated(test_app):
+    """Nested SCIM models must not share a mutable field registry (Swagger hang)."""
+    schema = test_app.app.openapi()
+    components = schema["components"]["schemas"]
+
+    assert set(components["User_name"]["properties"]) == {
+        "familyName",
+        "givenName",
+    }
+    assert set(components["User_emails"]["properties"]) == {
+        "value",
+        "type",
+    }
+    assert set(components["User_x509Certificates"]["properties"]) == {
+        "value",
+        "type",
+    }
+
+    post = schema["paths"]["/Users"]["post"]
+    request_body = post["requestBody"]["content"]["application/json"]
+    request_schema = request_body["schema"]
+    assert "$ref" in request_schema
+    examples = request_schema.get("examples") or request_body.get("examples", {})
+    assert set(examples.keys()) == {"default"}
+    assert "value" in examples["default"]
+
+    assert len(str(schema).encode("utf-8")) < 30_000
