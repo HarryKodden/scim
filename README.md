@@ -32,11 +32,11 @@
 | code/routers/bulk.py                 |       29 |        3 |     90% | 35, 63-64 |
 | code/routers/config.py               |       12 |        0 |    100% |           |
 | code/routers/feeds.py                |       32 |        0 |    100% |           |
-| code/routers/groups.py               |       81 |       11 |     86% |134-138, 146, 154-155, 173, 177, 202-205 |
+| code/routers/groups.py               |       81 |       11 |     86% |139-143, 151, 159-160, 178, 182, 207-210 |
 | code/routers/resource.py             |       20 |        0 |    100% |           |
 | code/routers/schema.py               |       18 |        0 |    100% |           |
-| code/routers/users.py                |       99 |       17 |     83% |127-129, 158, 164-168, 176, 185-186, 196-205, 226, 252-253 |
-| code/schema.py                       |      157 |       10 |     94% |68-69, 98, 230, 245, 368-369, 397-400 |
+| code/routers/users.py                |       99 |       17 |     83% |132-134, 163, 169-173, 181, 190-191, 201-210, 231, 257-258 |
+| code/schema.py                       |      159 |       10 |     94% |68-69, 98, 232, 247, 369-370, 398-401 |
 | code/scim\_errors.py                 |       58 |        6 |     90% |42, 109, 119-125, 146 |
 | code/services/\_\_init\_\_.py        |        0 |        0 |    100% |           |
 | code/services/groups.py              |       83 |       16 |     81% |36-37, 53-54, 73-74, 79, 84, 92-93, 105, 108, 112-113, 137-138 |
@@ -60,12 +60,12 @@
 | test/test\_push.py                   |       58 |        0 |    100% |           |
 | test/test\_resource.py               |       22 |        0 |    100% |           |
 | test/test\_routers\_utils.py         |       57 |        0 |    100% |           |
-| test/test\_schema.py                 |       57 |        0 |    100% |           |
+| test/test\_schema.py                 |       71 |        0 |    100% |           |
 | test/test\_scim\_errors.py           |       76 |        0 |    100% |           |
 | test/test\_services.py               |      113 |        0 |    100% |           |
 | test/test\_user.py                   |       67 |        0 |    100% |           |
 | test/test\_validation.py             |       10 |        0 |    100% |           |
-| **TOTAL**                            | **3773** |  **303** | **92%** |           |
+| **TOTAL**                            | **3789** |  **303** | **92%** |           |
 
 
 ## Setup coverage badge
