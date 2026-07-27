@@ -118,6 +118,8 @@ This image uses environment variables for configuration.
 | Available variables | Description | Example | Default |
 | ------------------- | ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- | ------------------------------- |
 | `LOGLEVEL` | The application logging level | ERROR | INFO |
+| `RELEASE` | Version shown in Swagger API docs (`info.version`). Set at image build from the Git tag; override at runtime if needed. Falls back to `VERSION`, then `dev`. | `1.2.0` | `dev` |
+| `VERSION` | Alternate version source for API docs when `RELEASE` is unset | `1.2.0` | |
 | `API_KEY` | The API key to authenticate with | mysecret | secret |
 | `PAGE_SIZE` | The maximum number of resources returned in 1 response. | 10 | 100 |
 | `BASE_PATH` | The base path of all API endpoints | /api/v2 | / |

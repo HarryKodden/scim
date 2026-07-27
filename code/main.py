@@ -15,8 +15,23 @@ logging.basicConfig(level=LOGLEVEL)
 logger = logging.getLogger(__name__)
 
 
+def resolve_app_version(
+    release: str | None = None,
+    version: str | None = None,
+) -> str:
+    """Version shown in Swagger/OpenAPI info.version."""
+    raw = release if release is not None else os.environ.get("RELEASE")
+    if not raw:
+        raw = version if version is not None else os.environ.get("VERSION")
+    return (raw or "dev").lstrip("v")
+
+
+APP_VERSION = resolve_app_version()
+
+
 app = FastAPI(
     title="SCIM",
+    version=APP_VERSION,
     docs_url=BASE_PATH if BASE_PATH.startswith('/') else '/',
     redoc_url=None,
     openapi_url=BASE_PATH + '/openapi.json',

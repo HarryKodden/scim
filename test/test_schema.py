@@ -92,6 +92,20 @@ def test_group_schema_members_ref_attribute(test_app):
     assert "alias" not in ref_attr
 
 
+def test_resolve_app_version():
+    from main import resolve_app_version
+
+    assert resolve_app_version(release="v1.2.3") == "1.2.3"
+    assert resolve_app_version(release="", version="2.0.0") == "2.0.0"
+    assert resolve_app_version(release="", version="") == "dev"
+
+
+def test_openapi_shows_app_version(test_app):
+    schema = test_app.app.openapi()
+    assert schema["info"]["version"] == test_app.app.version
+    assert schema["info"]["version"]
+
+
 def test_openapi_nested_user_models_are_not_accumulated(test_app):
     """Nested SCIM models must not share a mutable field registry (Swagger hang)."""
     schema = test_app.app.openapi()
