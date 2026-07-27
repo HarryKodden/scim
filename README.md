@@ -26,7 +26,7 @@
 | code/events/publisher.py             |       37 |        7 |     81% |60, 67-74, 111-117 |
 | code/events/signing.py               |       11 |        0 |    100% |           |
 | code/filter.py                       |      197 |       32 |     84% |138-139, 162-165, 201, 217-243, 260-261, 268, 290, 299, 306 |
-| code/main.py                         |       41 |        5 |     88% |66-68, 90, 94 |
+| code/main.py                         |       47 |        5 |     89% |81-83, 105, 109 |
 | code/routers/\_\_init\_\_.py         |      211 |       20 |     91% |67, 106-107, 180, 239, 245, 250, 256-257, 286, 306, 326-327, 358, 362-364, 379-380, 383 |
 | code/routers/async\_results.py       |       11 |        0 |    100% |           |
 | code/routers/bulk.py                 |       29 |        3 |     90% | 35, 63-64 |
@@ -60,12 +60,12 @@
 | test/test\_push.py                   |       58 |        0 |    100% |           |
 | test/test\_resource.py               |       22 |        0 |    100% |           |
 | test/test\_routers\_utils.py         |       57 |        0 |    100% |           |
-| test/test\_schema.py                 |       71 |        0 |    100% |           |
+| test/test\_schema.py                 |       80 |        0 |    100% |           |
 | test/test\_scim\_errors.py           |       76 |        0 |    100% |           |
 | test/test\_services.py               |      113 |        0 |    100% |           |
 | test/test\_user.py                   |       67 |        0 |    100% |           |
 | test/test\_validation.py             |       10 |        0 |    100% |           |
-| **TOTAL**                            | **3789** |  **303** | **92%** |           |
+| **TOTAL**                            | **3804** |  **303** | **92%** |           |
 
 
 ## Setup coverage badge
