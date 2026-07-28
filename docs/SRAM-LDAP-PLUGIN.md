@@ -54,6 +54,13 @@ gh pr create --title "Add SRAM ordered LDAP plugin with flat derive" ...
 SDP deploy track: [`../SDP/scim-server/docs/PLSC-MIGRATION.md`](../../SDP/scim-server/docs/PLSC-MIGRATION.md)
 (or the copy under your SDP checkout).
 
+## Compatibility vs SRAM service LDAP
+
+Playground SCIM LDAP was compared to a real SRAM service LDAP
+(`ldaps://ldap.sram.surf.nl`). Findings and follow-ups:
+
+→ [`SRAM-LDAP-COMPATIBILITY.md`](SRAM-LDAP-COMPATIBILITY.md)
+
 ## Status
 
 Unit tests + local OpenLDAP integration fixtures (`minimal`, `lifecycle`,
