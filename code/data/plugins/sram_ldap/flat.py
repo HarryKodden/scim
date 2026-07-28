@@ -6,7 +6,7 @@ import copy
 import logging
 from typing import Any, Dict, List, Optional
 
-from data.plugins.sram_ldap import dit, sram_format
+from data.plugins.sram_ldap import dit, mapping
 
 logger = logging.getLogger(__name__)
 
@@ -47,6 +47,18 @@ def flat_group_entry(
     entry = copy.deepcopy(ordered_entry)
     entry["cn"] = [f"{co_identifier}.{group_cn}"]
     entry["member"] = list(flat_member_dns)
+    # Ordered groups may carry [scim_id, externalId…]; SRAM flat keeps the
+    # bare client correlation id only (service LDAP shape).
+    uids = entry.get("uniqueIdentifier") or []
+    if isinstance(uids, list) and len(uids) > 1:
+        _scim_id, external_id = mapping.split_scim_store_identifiers(uids)
+        bare = (
+            mapping.bare_unique_identifier(external_id) if external_id else None
+        )
+        if bare:
+            entry["uniqueIdentifier"] = [bare]
+        elif external_id:
+            entry["uniqueIdentifier"] = [external_id]
     # SRAM projects CO mail + organizationalStatus onto flat groups.
     if co_attrs:
         if co_attrs.get("mail") and not entry.get("mail"):

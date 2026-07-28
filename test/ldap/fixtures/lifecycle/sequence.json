@@ -294,13 +294,13 @@
         {
           "dn": "cn=@all,ou=Groups,o=orglife.c1,dc=ordered,${LDAP_BASENAME}",
           "attrs": {
-            "displayName": ["Lifecycle CO Renamed"]
+            "displayName": ["All Members of Lifecycle CO Renamed"]
           }
         },
         {
           "dn": "cn=orglife.c1.@all,ou=Groups,dc=flat,${LDAP_BASENAME}",
           "attrs": {
-            "displayName": ["Lifecycle CO Renamed"],
+            "displayName": ["All Members of Lifecycle CO Renamed"],
             "member": [
               "uid=bob,ou=People,dc=flat,${LDAP_BASENAME}"
             ]

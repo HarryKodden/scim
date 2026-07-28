@@ -230,6 +230,29 @@ def test_merge_vo_person_status():
     assert flat.merge_vo_person_status(["expired", "expired"]) == "expired"
 
 
+def test_scim_store_identifiers_keeps_server_id_first():
+    values = mapping.scim_store_identifiers(
+        "server-uuid-1",
+        "client-uuid-1@sram.surf.nl",
+    )
+    assert values[0] == "server-uuid-1"
+    assert "client-uuid-1@sram.surf.nl" in values
+    assert "client-uuid-1" in values
+    scim_id, external_id = mapping.split_scim_store_identifiers(values)
+    assert scim_id == "server-uuid-1"
+    assert external_id == "client-uuid-1@sram.surf.nl"
+
+
+def test_plugin_id_is_server_generated_not_external_id():
+    from data.plugins.sram_ldap.plugin import SRAM_LDAP_Plugin
+
+    plugin = object.__new__(SRAM_LDAP_Plugin)
+    first = plugin.id({"externalId": "always-the-same@sram.surf.nl"})
+    second = plugin.id({"externalId": "always-the-same@sram.surf.nl"})
+    assert first != "always-the-same@sram.surf.nl"
+    assert first != second
+
+
 def test_rewrite_members_to_flat():
     base = "dc=svc,dc=example,dc=org"
     ordered = [

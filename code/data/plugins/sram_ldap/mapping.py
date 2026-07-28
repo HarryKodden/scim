@@ -38,6 +38,43 @@ def bare_unique_identifier(value: Optional[str]) -> Optional[str]:
     return value.split("@", 1)[0]
 
 
+def scim_store_identifiers(
+    scim_id: str, external_id: Optional[str] = None
+) -> List[str]:
+    """LDAP uniqueIdentifier values for the SCIM store overlay.
+
+    First value is the server-generated SCIM ``id``. Extra values are the
+    client ``externalId`` (and its bare UUID form) so Group ``members.value``
+    can resolve whether the client sends the server id or its own id.
+    """
+    values: List[str] = []
+    if scim_id:
+        values.append(str(scim_id))
+    if external_id:
+        ext = str(external_id)
+        bare = bare_unique_identifier(ext) or ext
+        for candidate in (ext, bare):
+            if candidate and candidate not in values:
+                values.append(candidate)
+    return values
+
+
+def split_scim_store_identifiers(
+    values: Optional[List[Any]],
+) -> tuple[Optional[str], Optional[str]]:
+    """Return (canonical_scim_id, external_id) from stored uniqueIdentifier."""
+    if not values:
+        return None, None
+    if not isinstance(values, list):
+        values = [values]
+    cleaned = [str(v) for v in values if v is not None and str(v) != ""]
+    if not cleaned:
+        return None, None
+    scim_id = cleaned[0]
+    external_id = cleaned[1] if len(cleaned) > 1 else cleaned[0]
+    return scim_id, external_id
+
+
 def _primary_email(resource: dict) -> Optional[str]:
     for email in resource.get("emails") or []:
         if email.get("primary"):

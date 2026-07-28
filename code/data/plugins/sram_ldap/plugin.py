@@ -31,14 +31,6 @@ def _unique_id_filter(attr: str, scim_id: str) -> str:
     return f"(|({attr}={scim_id})({attr}={bare}))"
 
 
-def _scim_id_from_ldap(unique_id: str) -> str:
-    """Prefer uuid@realm for SCIM list/get when LDAP stores a bare UUID."""
-    if not unique_id or "@" in unique_id:
-        return unique_id
-    realm = os.environ.get("SRAM_ID_REALM", "sram.surf.nl")
-    return f"{unique_id}@{realm}"
-
-
 class SRAM_LDAP_Plugin(Plugin):
     """LDAP backend for ``LDAP_LAYOUT=sram-ordered``.
 
@@ -85,10 +77,7 @@ class SRAM_LDAP_Plugin(Plugin):
         self._ensure_roots()
 
     def id(self, details: dict) -> str:
-        """Prefer SBS externalId so Group members.value resolve after User create."""
-        external = details.get("externalId") if isinstance(details, dict) else None
-        if external:
-            return str(external)
+        """Server-generated SCIM id (RFC7643). Client correlation stays in externalId."""
         return str(uuid.uuid4())
 
     def _ensure_roots(self) -> None:
@@ -166,6 +155,28 @@ class SRAM_LDAP_Plugin(Plugin):
             clean[attr] = values
         return clean
 
+    @staticmethod
+    def _apply_person_scim_overlay(
+        ldap_attrs: Dict[str, List[Any]],
+        scim_id: Optional[str] = None,
+        external_id: Optional[str] = None,
+    ) -> Dict[str, List[Any]]:
+        """Attach SCIM id (+ optional externalId) as uniqueIdentifier on ordered persons.
+
+        Requires extensibleObject. Flat derive strips both so service LDAP stays
+        SRAM-shaped.
+        """
+        if scim_id:
+            ldap_attrs["uniqueIdentifier"] = mapping.scim_store_identifiers(
+                scim_id, external_id
+            )
+        if ldap_attrs.get("uniqueIdentifier"):
+            ocs = list(ldap_attrs.get("objectClass") or [])
+            if not any(str(oc).lower() == "extensibleobject" for oc in ocs):
+                ocs.append("extensibleObject")
+                ldap_attrs["objectClass"] = ocs
+        return ldap_attrs
+
     def _upsert(self, dn: str, attributes: Dict[str, List[Any]]) -> None:
         attributes = self._sanitize_attributes(attributes)
         is_group = any(
@@ -219,7 +230,7 @@ class SRAM_LDAP_Plugin(Plugin):
         return result
 
     def _member_uids(self, resource: dict) -> List[str]:
-        """Resolve SCIM members to LDAP uids (look up User resources by id)."""
+        """Resolve SCIM members to LDAP uids (look up User by id or externalId)."""
         uids: List[str] = []
         for member in resource.get("members") or []:
             member_id = member.get("value")
@@ -236,24 +247,32 @@ class SRAM_LDAP_Plugin(Plugin):
         return uids
 
     def _load_user_by_id(self, user_id: str) -> Optional[dict]:
-        """Read a SCIM User from ordered People by externalId/cn or from sibling plugin.
+        """Read a SCIM User from ordered People by SCIM id or externalId.
 
-        During group writes, Users may already exist under one or more COs.
-        We search ordered tree for eduPersonUniqueId / cn matching the SCIM id.
+        ``members.value`` should be the server id; also accept externalId for
+        clients that send their own correlation id.
         """
-        # Prefer an already-written person entry
+        id_filter = _unique_id_filter("uniqueIdentifier", user_id)
         people = self._search(
             dit.ordered_base(self.ldap_basename),
-            f"(&(objectClass=person)(|(uniqueIdentifier={user_id})"
+            f"(&(objectClass=person)(|{id_filter}"
             f"(eduPersonUniqueId={user_id})(cn={user_id})))",
-            attributes=["uid", "eduPersonUniqueId", "cn", "displayName",
-                        "uniqueIdentifier"],
+            attributes=[
+                "uid",
+                "eduPersonUniqueId",
+                "cn",
+                "displayName",
+                "uniqueIdentifier",
+            ],
         )
         if people:
             attrs = next(iter(people.values()))
             uid = attrs.get("uid")
             uid_val = uid[0] if isinstance(uid, list) else uid
-            return {"id": user_id, "userName": uid_val}
+            scim_id, _ext = mapping.split_scim_store_identifiers(
+                attrs.get("uniqueIdentifier")
+            )
+            return {"id": scim_id or user_id, "userName": uid_val}
 
         # Fallback: if this instance is Groups, ask Users store via module
         try:
@@ -277,9 +296,10 @@ class SRAM_LDAP_Plugin(Plugin):
                 attributes=["uniqueIdentifier", "eduPersonUniqueId", "cn"],
             )
             for attrs in people.values():
-                key = attrs.get("uniqueIdentifier") or attrs.get(
-                    "eduPersonUniqueId"
-                ) or attrs.get("cn")
+                scim_id, _ = mapping.split_scim_store_identifiers(
+                    attrs.get("uniqueIdentifier")
+                )
+                key = scim_id or attrs.get("eduPersonUniqueId") or attrs.get("cn")
                 if isinstance(key, list):
                     key = key[0] if key else None
                 if key and key not in seen:
@@ -292,27 +312,40 @@ class SRAM_LDAP_Plugin(Plugin):
                 attributes=["uniqueIdentifier", "cn"],
             )
             for attrs in groups.values():
-                uid = attrs.get("uniqueIdentifier")
-                if isinstance(uid, list):
-                    uid = uid[0] if uid else None
+                scim_id, _ = mapping.split_scim_store_identifiers(
+                    attrs.get("uniqueIdentifier")
+                )
                 # Skip stub groups (e.g. cn=@all created before collaboration write).
-                if not uid:
+                if not scim_id:
                     continue
-                yield _scim_id_from_ldap(str(uid))
+                yield scim_id
 
     def __delitem__(self, id: str) -> None:
         if self.resource_type == self.USERS:
+            id_filter = _unique_id_filter("uniqueIdentifier", id)
             people = self._search(
                 dit.ordered_base(self.ldap_basename),
-                f"(&(objectClass=person)(|(uniqueIdentifier={id})"
+                f"(&(objectClass=person)(|{id_filter}"
                 f"(eduPersonUniqueId={id})(cn={id})))",
+                attributes=["uid"],
             )
-            for dn in people:
+            uids: set[str] = set()
+            for dn, attrs in people.items():
+                uid = attrs.get("uid")
+                if isinstance(uid, list):
+                    uid = uid[0] if uid else None
+                if uid:
+                    uids.add(str(uid))
                 self.session.delete(dn)
             if self.flat_derive:
+                # Flat persons strip uniqueIdentifier — delete by uid.
+                for uid in uids:
+                    self._delete_if_exists(
+                        dit.flat_person_dn(uid, self.ldap_basename)
+                    )
                 flat_people = self._search(
                     dit.flat_base(self.ldap_basename),
-                    f"(&(objectClass=person)(|(uniqueIdentifier={id})"
+                    f"(&(objectClass=person)(|{id_filter}"
                     f"(eduPersonUniqueId={id})(cn={id})))",
                 )
                 for dn in flat_people:
@@ -351,9 +384,10 @@ class SRAM_LDAP_Plugin(Plugin):
     # --- Users --------------------------------------------------------------
 
     def _get_user(self, id: str) -> Optional[dict]:
+        id_filter = _unique_id_filter("uniqueIdentifier", id)
         people = self._search(
             dit.ordered_base(self.ldap_basename),
-            f"(&(objectClass=person)(|(uniqueIdentifier={id})"
+            f"(&(objectClass=person)(|{id_filter}"
             f"(eduPersonUniqueId={id})(cn={id})))",
             attributes=["*"],
         )
@@ -374,7 +408,11 @@ class SRAM_LDAP_Plugin(Plugin):
         family = first("sn") or "n/a"
         edu_unique = first("eduPersonUniqueId")
         status = first("voPersonStatus", "active")
-        scim_id = first("uniqueIdentifier") or edu_unique or id
+        scim_id, external_id = mapping.split_scim_store_identifiers(
+            attrs.get("uniqueIdentifier")
+        )
+        scim_id = scim_id or edu_unique or id
+        external_id = external_id or edu_unique
 
         resource = {
             "id": scim_id,
@@ -384,7 +422,7 @@ class SRAM_LDAP_Plugin(Plugin):
             ],
             "userName": uid_val,
             "displayName": display_val,
-            "externalId": scim_id,
+            "externalId": external_id,
             "active": status == "active",
             "name": {
                 "givenName": given,
@@ -410,10 +448,11 @@ class SRAM_LDAP_Plugin(Plugin):
 
     def _set_user(self, id: str, resource: dict) -> None:
         ldap_attrs = mapping.scim_user_to_ldap(resource)
-        # SCIM-store overlay: SRAM persons omit uniqueIdentifier, but the LDAP
-        # backend needs it so GET/PUT /Users/{externalId} and Group members
-        # resolve. Flat derive strips this again (see flat_person_entry).
-        ldap_attrs["uniqueIdentifier"] = [id]
+        # SCIM-store overlay: server id + client externalId for membership
+        # lookup. Flat derive strips uniqueIdentifier again.
+        self._apply_person_scim_overlay(
+            ldap_attrs, id, resource.get("externalId")
+        )
         uid = ldap_attrs["uid"][0]
 
         # Refresh under every CO where this uid already exists; if none, stash
@@ -507,18 +546,24 @@ class SRAM_LDAP_Plugin(Plugin):
             if rdn.lower().startswith("uid="):
                 members.append({"value": rdn.split("=", 1)[1], "display": rdn})
 
+        scim_id, external_id = mapping.split_scim_store_identifiers(
+            attrs.get("uniqueIdentifier")
+        )
+        scim_id = scim_id or id
+        external_id = external_id or scim_id
+
         return {
-            "id": id,
+            "id": scim_id,
             "schemas": [
                 "urn:ietf:params:scim:schemas:core:2.0:Group",
                 mapping.sram_group_schema(),
             ],
             "displayName": first("displayName"),
-            "externalId": id,
+            "externalId": external_id,
             "members": members,
             "meta": {
                 "resourceType": "Group",
-                "location": f"/Groups/{id}",
+                "location": f"/Groups/{scim_id}",
             },
             mapping.sram_group_schema(): {
                 "urn": urn,
@@ -635,10 +680,11 @@ class SRAM_LDAP_Plugin(Plugin):
             group_cn,
             co_display_name=str(co_display),
         )
-        # Prefer bare UUID in LDAP (SRAM parity); still accept @realm SCIM ids.
-        grp_attrs["uniqueIdentifier"] = [
-            mapping.bare_unique_identifier(id) or id
-        ]
+        # Server SCIM id first; bare/full externalId also stored for lookup +
+        # SRAM flat projection (see flat.flat_group_entry).
+        grp_attrs["uniqueIdentifier"] = mapping.scim_store_identifiers(
+            id, resource.get("externalId")
+        )
         member_uids = self._member_uids(resource)
 
         # Ensure each member exists under this CO's People
@@ -670,13 +716,9 @@ class SRAM_LDAP_Plugin(Plugin):
                     normalized = mapping.scim_user_to_ldap(
                         {"userName": uid, "displayName": uid, "active": True}
                     )
-                else:
-                    ocs = [
-                        oc
-                        for oc in normalized["objectClass"]
-                        if str(oc).lower() != "extensibleobject"
-                    ]
-                    normalized["objectClass"] = ocs
+                # Keep uniqueIdentifier + extensibleObject together (do not
+                # strip extensibleObject while uniqueIdentifier remains).
+                self._apply_person_scim_overlay(normalized)
                 self._upsert(person_dn, normalized)
                 for mail in normalized.get("mail") or []:
                     if mail and mail not in member_mails:

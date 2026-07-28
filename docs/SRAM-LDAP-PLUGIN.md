@@ -23,6 +23,10 @@ LDAP_LAYOUT=sram-ordered
 LDAP_FLAT_DERIVE=true
 ```
 
+SCIM ``id`` is always server-generated (UUID). Client correlation stays in
+``externalId``. Group ``members.value`` resolves by server ``id`` first, with
+``externalId`` as a fallback for SBS quirks.
+
 ## Local test LDAP
 
 ```bash
