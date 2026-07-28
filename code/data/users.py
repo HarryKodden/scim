@@ -31,6 +31,8 @@ def get_user_resources(filter: Filter) -> [Any]:
 
     for id in Users:
         resource = get_user_resource(id)
+        if not resource:
+            continue
         if filter.match(resource):
             result.append(
                 json.loads(

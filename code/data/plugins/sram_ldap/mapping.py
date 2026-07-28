@@ -158,8 +158,9 @@ def scim_user_to_ldap(resource: dict) -> Dict[str, List[Any]]:
 
     ssh_keys = _ssh_keys(resource)
     if ssh_keys:
-        # Prefer sshPublicKey via extensibleObject; ldapPublicKey OC needs
-        # openssh-lpk schema which may not be loaded in all deployments.
+        # Requires openssh-lpk schema (sshPublicKey + ldapPublicKey).
+        if "ldapPublicKey" not in record["objectClass"]:
+            record["objectClass"].append("ldapPublicKey")
         record["sshPublicKey"] = ssh_keys
 
     record.update(_policy_agreement_attrs(resource))

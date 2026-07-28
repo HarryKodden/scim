@@ -32,6 +32,8 @@ def get_group_resources(filter: Filter) -> [Any]:
 
     for id in Groups:
         resource = get_group_resource(id)
+        if not resource:
+            continue
         if filter.match(resource):
             result.append(
                 json.loads(

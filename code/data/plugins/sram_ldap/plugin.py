@@ -31,6 +31,14 @@ def _unique_id_filter(attr: str, scim_id: str) -> str:
     return f"(|({attr}={scim_id})({attr}={bare}))"
 
 
+def _scim_id_from_ldap(unique_id: str) -> str:
+    """Prefer uuid@realm for SCIM list/get when LDAP stores a bare UUID."""
+    if not unique_id or "@" in unique_id:
+        return unique_id
+    realm = os.environ.get("SRAM_ID_REALM", "sram.surf.nl")
+    return f"{unique_id}@{realm}"
+
+
 class SRAM_LDAP_Plugin(Plugin):
     """LDAP backend for ``LDAP_LAYOUT=sram-ordered``.
 
@@ -283,14 +291,14 @@ class SRAM_LDAP_Plugin(Plugin):
                 "(objectClass=groupOfMembers)",
                 attributes=["uniqueIdentifier", "cn"],
             )
-            for dn, attrs in groups.items():
+            for attrs in groups.values():
                 uid = attrs.get("uniqueIdentifier")
                 if isinstance(uid, list):
                     uid = uid[0] if uid else None
-                if uid:
-                    yield uid
-                else:
-                    yield dn
+                # Skip stub groups (e.g. cn=@all created before collaboration write).
+                if not uid:
+                    continue
+                yield _scim_id_from_ldap(str(uid))
 
     def __delitem__(self, id: str) -> None:
         if self.resource_type == self.USERS:
