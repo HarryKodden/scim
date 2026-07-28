@@ -126,9 +126,16 @@ LDAP_FLAT_DERIVE=true
 SRAM_SCIM_SCHEMA=urn:mace:surf.nl:sram:scim:extension
 ```
 
-SCIM Groups must include the SRAM extension `urn` (collaboration `org.co` or
-subgroup `org.co:group`). Collaborations should include `links` (`sbs_url` / `logo`)
-as produced by SBS outbound SCIM.
+SCIM Groups must include the SRAM extension `urn`. SBS `global_urn` forms:
+
+| urn | Ordered LDAP |
+| --- | --- |
+| `surf:demo1` | `o=surf.demo1` + `cn=@all` |
+| `surf:demo1:admin` | `o=surf.demo1` + `cn=admin` |
+| `org.co` / `org.co:group` | same (dotted CO already) |
+
+Collaborations should include `links` (`sbs_url` / `logo`) as produced by SBS
+outbound SCIM.
 
 The actual Plugin is selected by providing the corresponding envrionment variables, see below.
 

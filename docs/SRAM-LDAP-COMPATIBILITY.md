@@ -10,7 +10,10 @@ Compared:
 
 Goal: SCIM-written LDAP must be **layout- and attribute-compatible** with SRAM’s own service LDAP so consumers can switch without remapping.
 
-> Note: `code/data/plugins/sram_ldap/dit.py` on this branch already defines CO-as-`o=` DNs matching SRAM. Playground still showed an **org-level** ordered tree (`o=surf` + `cn=demo1.admin`). Treat that as a **bug / stale deploy / wrong mapping of CO identifiers** until playground matches the DIT helpers below.
+> **Root cause of playground layout mismatch:** `parse_group_urn` treated SBS
+> `surf:demo1:admin` as CO=`surf` + group=`demo1.admin`. Fixed to CO=`surf.demo1`
+> + `cn=admin` (see `dit.parse_group_urn`). Rebuild the SDP image from this
+> branch tip and re-provision to verify.
 
 ## 1. Ordered DIT layout (critical)
 

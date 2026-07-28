@@ -7,6 +7,7 @@ import os
 from typing import Any, Dict, List, Optional
 
 DEFAULT_SRAM_SCHEMA = "urn:mace:surf.nl:sram:scim:extension"
+VOPERSON_SCHEMA = "urn:temporaryNamespace:scim:schemas:voPerson:User"
 
 
 def sram_schema_base() -> str:
@@ -26,6 +27,13 @@ def _extension(resource: dict, schema: str) -> dict:
     return ext if isinstance(ext, dict) else {}
 
 
+def bare_unique_identifier(value: Optional[str]) -> Optional[str]:
+    """SRAM CO uniqueIdentifier is a bare UUID (no @realm suffix)."""
+    if not value:
+        return None
+    return value.split("@", 1)[0]
+
+
 def _primary_email(resource: dict) -> Optional[str]:
     for email in resource.get("emails") or []:
         if email.get("primary"):
@@ -34,6 +42,15 @@ def _primary_email(resource: dict) -> Optional[str]:
     if emails:
         return emails[0].get("value")
     return None
+
+
+def _all_emails(resource: dict) -> List[str]:
+    values: List[str] = []
+    for email in resource.get("emails") or []:
+        value = email.get("value") if isinstance(email, dict) else email
+        if value and value not in values:
+            values.append(value)
+    return values
 
 
 def _ssh_keys(resource: dict) -> List[str]:
@@ -48,6 +65,39 @@ def _ssh_keys(resource: dict) -> List[str]:
             # Already plain OpenSSH key material
             keys.append(value)
     return keys
+
+
+def _labeled_uris(ext: dict) -> List[str]:
+    labeled: List[str] = []
+    for link in ext.get("links") or []:
+        name = link.get("name")
+        value = link.get("value")
+        if name and value:
+            labeled.append(f"{value.strip().replace(' ', '%20')} {name}")
+    return labeled
+
+
+def _policy_agreement_attrs(resource: dict) -> Dict[str, List[Any]]:
+    """Map voPersonPolicyAgreement → LDAP option attrs ``;time-<epoch>``."""
+    out: Dict[str, List[Any]] = {}
+    for schema in (VOPERSON_SCHEMA, sram_user_schema()):
+        ext = _extension(resource, schema)
+        agreements = ext.get("voPersonPolicyAgreement") or []
+        if isinstance(agreements, dict):
+            agreements = [agreements]
+        for item in agreements:
+            if not isinstance(item, dict):
+                continue
+            url = item.get("value")
+            if not url:
+                continue
+            time = item.get("time")
+            if time is None:
+                out.setdefault("voPersonPolicyAgreement", []).append(url)
+            else:
+                key = f"voPersonPolicyAgreement;time-{time}"
+                out.setdefault(key, []).append(url)
+    return out
 
 
 def scim_user_to_ldap(resource: dict) -> Dict[str, List[Any]]:
@@ -67,6 +117,7 @@ def scim_user_to_ldap(resource: dict) -> Dict[str, List[Any]]:
     active = resource.get("active", True)
     status = "active" if active else "expired"
 
+    # Match SRAM service LDAP objectClasses (no extensibleObject on persons).
     record: Dict[str, List[Any]] = {
         "objectClass": [
             "inetOrgPerson",
@@ -74,7 +125,6 @@ def scim_user_to_ldap(resource: dict) -> Dict[str, List[Any]]:
             "eduPerson",
             "voPerson",
             "sramPerson",
-            "extensibleObject",
         ],
         "uid": [uid],
         "cn": [edu_unique],
@@ -109,6 +159,8 @@ def scim_user_to_ldap(resource: dict) -> Dict[str, List[Any]]:
         record["objectClass"].append("ldapPublicKey")
         record["sshPublicKey"] = ssh_keys
 
+    record.update(_policy_agreement_attrs(resource))
+
     return record
 
 
@@ -131,7 +183,9 @@ def scim_group_to_co_ldap(resource: dict, co_identifier: str) -> Dict[str, List[
         "objectClass": ["top", "organization", "extensibleObject"],
         "o": [co_identifier],
     }
-    external_id = resource.get("externalId") or resource.get("id")
+    external_id = bare_unique_identifier(
+        resource.get("externalId") or resource.get("id")
+    )
     if external_id:
         entry["uniqueIdentifier"] = [external_id]
     if resource.get("displayName"):
@@ -141,14 +195,35 @@ def scim_group_to_co_ldap(resource: dict, co_identifier: str) -> Dict[str, List[
     if ext.get("labels"):
         entry["businessCategory"] = list(ext["labels"])
 
-    labeled: List[str] = []
-    for link in ext.get("links") or []:
-        name = link.get("name")
-        value = link.get("value")
-        if name and value:
-            labeled.append(f"{value.strip().replace(' ', '%20')} {name}")
+    labeled = _labeled_uris(ext)
     if labeled:
         entry["labeledURI"] = labeled
+
+    # Contact mails: core emails[] and/or extension mail/emails (SBS may send either).
+    mails = _all_emails(resource)
+    for key in ("mail", "emails"):
+        raw = ext.get(key)
+        if isinstance(raw, str):
+            if raw not in mails:
+                mails.append(raw)
+        elif isinstance(raw, list):
+            for item in raw:
+                value = item.get("value") if isinstance(item, dict) else item
+                if value and value not in mails:
+                    mails.append(value)
+    if mails:
+        entry["mail"] = mails
+
+    # SRAM organizationalStatus: active | … — derive from SCIM active when present.
+    status = ext.get("organizationalStatus")
+    if status:
+        entry["organizationalStatus"] = [status]
+    elif "active" in resource:
+        entry["organizationalStatus"] = [
+            "active" if resource.get("active") else "expired"
+        ]
+    else:
+        entry["organizationalStatus"] = ["active"]
 
     return entry
 
@@ -169,4 +244,7 @@ def scim_group_to_group_ldap(
         entry["displayName"] = [resource["displayName"]]
     if ext.get("description"):
         entry["description"] = [ext["description"]]
+    labeled = _labeled_uris(ext)
+    if labeled:
+        entry["labeledURI"] = labeled
     return entry

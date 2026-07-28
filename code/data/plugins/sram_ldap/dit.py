@@ -57,20 +57,39 @@ def flat_group_dn(co_identifier: str, group_cn: str, ldap_basename: str) -> str:
 def parse_group_urn(urn: str) -> Tuple[str, Optional[str]]:
     """Split an SRAM group urn into (co_identifier, group_cn|None).
 
-    Collaboration (@all): ``org.co`` → ``("org.co", None)``
-    Subgroup: ``org.co:group`` or ``org.co.group`` → ``("org.co", "group")``
+    SBS ``global_urn`` forms (preferred)::
 
-    Colon form is preferred (SBS ``global_urn``). Dot form assumes the last
-    segment is the group short name when more than two segments exist.
+        org:co           → ("org.co", None)          # collaboration → cn=@all
+        org:co:group     → ("org.co", "group")       # subgroup
+        org:co:a:b       → ("org.co", "a.b")
+
+    Also accepted (fixtures / legacy)::
+
+        org.co           → ("org.co", None)
+        org.co:group     → ("org.co", "group")       # dotted CO + colon group
+        org.co.group     → ("org.co", "group")       # all dots (last segment = group)
+
+    Important: do **not** treat only the first colon segment as the CO.
+    ``surf:demo1:admin`` must become ``o=surf.demo1`` + ``cn=admin``, not
+    ``o=surf`` + ``cn=demo1.admin`` (SRAM service LDAP layout).
     """
     if not urn:
         raise ValueError("group urn is required")
 
     urn = urn.strip()
     if ":" in urn:
-        co, _, group = urn.partition(":")
-        group = group.replace(":", ".")
-        return co, group or None
+        parts = [p for p in urn.split(":") if p]
+        if len(parts) >= 3:
+            # org:co:group[:…]
+            return f"{parts[0]}.{parts[1]}", ".".join(parts[2:])
+        if len(parts) == 2:
+            left, right = parts
+            if "." in left:
+                # org.co:group (dotted CO already)
+                return left, right
+            # org:co collaboration
+            return f"{left}.{right}", None
+        return parts[0], None
 
     parts = urn.split(".")
     if len(parts) <= 2:
