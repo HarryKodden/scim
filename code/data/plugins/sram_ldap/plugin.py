@@ -23,6 +23,14 @@ def _env_bool(name: str, default: bool = False) -> bool:
     return raw.strip().lower() in ("1", "true", "yes", "on")
 
 
+def _unique_id_filter(attr: str, scim_id: str) -> str:
+    """Match LDAP uniqueIdentifier as bare UUID or SCIM id with @realm."""
+    bare = mapping.bare_unique_identifier(scim_id) or scim_id
+    if bare == scim_id:
+        return f"({attr}={scim_id})"
+    return f"(|({attr}={scim_id})({attr}={bare}))"
+
+
 class SRAM_LDAP_Plugin(Plugin):
     """LDAP backend for ``LDAP_LAYOUT=sram-ordered``.
 
@@ -108,13 +116,16 @@ class SRAM_LDAP_Plugin(Plugin):
 
     def _ensure_co_containers(self, co_identifier: str) -> None:
         co_dn = dit.co_dn(co_identifier, self.ldap_basename)
-        # Organization body is written by collaboration group upsert.
+        # Minimal org body (collaboration upsert enriches displayName/links/mail).
+        short = co_identifier.split(".")[-1] if co_identifier else co_identifier
         if not self.session.search(co_dn, "(objectClass=*)", search_scope="BASE"):
             self._ensure_entry(
                 co_dn,
                 {
                     "objectClass": ["top", "organization", "extensibleObject"],
                     "o": [co_identifier],
+                    "displayName": [short],
+                    "organizationalStatus": ["active"],
                 },
             )
         for ou in ("People", "Groups"):
@@ -122,6 +133,17 @@ class SRAM_LDAP_Plugin(Plugin):
                 f"ou={ou},{co_dn}",
                 {"objectClass": ["top", "organizationalUnit"], "ou": [ou]},
             )
+        # SRAM always has cn=@all under each CO; create a stub if missing so the
+        # DIT matches before the collaboration SCIM resource arrives.
+        all_dn = dit.ordered_group_dn("@all", co_identifier, self.ldap_basename)
+        self._ensure_entry(
+            all_dn,
+            {
+                "objectClass": ["extensibleObject", "groupOfMembers"],
+                "cn": ["@all"],
+                "displayName": ["@all"],
+            },
+        )
 
     def _sanitize_attributes(
         self, attributes: Dict[str, List[Any]]
@@ -138,6 +160,10 @@ class SRAM_LDAP_Plugin(Plugin):
 
     def _upsert(self, dn: str, attributes: Dict[str, List[Any]]) -> None:
         attributes = self._sanitize_attributes(attributes)
+        is_group = any(
+            str(oc).lower() == "groupofmembers"
+            for oc in (attributes.get("objectClass") or [])
+        )
         if self.session.search(dn, "(objectClass=*)", search_scope="BASE", attributes=["*"]):
             changes = {}
             for attr, values in attributes.items():
@@ -148,8 +174,8 @@ class SRAM_LDAP_Plugin(Plugin):
                 changes["objectClass"] = [
                     ("MODIFY_REPLACE", attributes["objectClass"])
                 ]
-            # Clear member when the SCIM group has no members
-            if "member" not in attributes:
+            # Only clear member on groupOfMembers entries (never on organization).
+            if is_group and "member" not in attributes:
                 changes["member"] = [("MODIFY_DELETE", [])]
             ok = self.session.modify(dn, changes)
             # MODIFY_DELETE on missing member is fine to ignore
@@ -285,16 +311,17 @@ class SRAM_LDAP_Plugin(Plugin):
                     self.session.delete(dn)
             return
 
+        id_filter = _unique_id_filter("uniqueIdentifier", id)
         groups = self._search(
             dit.ordered_base(self.ldap_basename),
-            f"(&(objectClass=groupOfMembers)(uniqueIdentifier={id}))",
+            f"(&(objectClass=groupOfMembers){id_filter})",
         )
         for dn in groups:
             self.session.delete(dn)
         if self.flat_derive:
             flat_groups = self._search(
                 dit.flat_base(self.ldap_basename),
-                f"(&(objectClass=groupOfMembers)(uniqueIdentifier={id}))",
+                f"(&(objectClass=groupOfMembers){id_filter})",
             )
             for dn in flat_groups:
                 self.session.delete(dn)
@@ -339,17 +366,17 @@ class SRAM_LDAP_Plugin(Plugin):
         family = first("sn")
         edu_unique = first("eduPersonUniqueId")
         status = first("voPersonStatus", "active")
-        external_id = edu_unique or id
+        scim_id = first("uniqueIdentifier") or id
 
         resource = {
-            "id": first("uniqueIdentifier") or id,
+            "id": scim_id,
             "schemas": [
                 "urn:ietf:params:scim:schemas:core:2.0:User",
                 mapping.sram_user_schema(),
             ],
             "userName": uid_val,
             "displayName": display_val,
-            "externalId": external_id,
+            "externalId": scim_id,
             "active": status == "active",
             "name": {
                 "givenName": given,
@@ -360,7 +387,7 @@ class SRAM_LDAP_Plugin(Plugin):
             ),
             "meta": {
                 "resourceType": "User",
-                "location": f"/Users/{first('uniqueIdentifier') or id}",
+                "location": f"/Users/{scim_id}",
             },
             mapping.sram_user_schema(): {
                 "eduPersonUniqueId": edu_unique,
@@ -385,27 +412,29 @@ class SRAM_LDAP_Plugin(Plugin):
             dit.ordered_base(self.ldap_basename),
             f"(&(objectClass=person)(uid={uid}))",
         )
+        hold_ou = f"ou=People,{dit.ordered_base(self.ldap_basename)}"
+        hold_dn = f"uid={uid},{hold_ou}"
+
         if not existing:
             logger.info(
-                "User %s (%s) stored mapping only after CO membership; "
-                "no ordered People DN yet",
+                "User %s (%s) stored in holding OU until CO membership",
                 id,
                 uid,
             )
-            # Keep a transient cache entry under a well-known holding OU so
-            # group membership resolution can find userName by SCIM id.
-            hold_ou = f"ou=People,{dit.ordered_base(self.ldap_basename)}"
+            # Transient cache so group membership can resolve userName by SCIM id.
             self._ensure_entry(
                 hold_ou,
                 {"objectClass": ["top", "organizationalUnit"], "ou": ["People"]},
             )
-            hold_dn = f"uid={uid},{hold_ou}"
-            # Annotate with SCIM id in cn/eduPersonUniqueId already in ldap_attrs
             self._upsert(hold_dn, ldap_attrs)
             return
 
         for dn in existing:
             self._upsert(dn, ldap_attrs)
+
+        # Once under any Collaboration People OU, drop the holding copy.
+        if any(",o=" in dn for dn in existing):
+            self._delete_if_exists(hold_dn)
 
         if self.flat_derive:
             self._derive_flat_person(uid, ldap_attrs)
@@ -434,7 +463,8 @@ class SRAM_LDAP_Plugin(Plugin):
     def _get_group(self, id: str) -> Optional[dict]:
         groups = self._search(
             dit.ordered_base(self.ldap_basename),
-            f"(&(objectClass=groupOfMembers)(uniqueIdentifier={id}))",
+            f"(&(objectClass=groupOfMembers)"
+            f"{_unique_id_filter('uniqueIdentifier', id)})",
             attributes=["*"],
         )
         if not groups:
@@ -502,21 +532,33 @@ class SRAM_LDAP_Plugin(Plugin):
             self._upsert(dit.co_dn(co_identifier, self.ldap_basename), co_attrs)
 
         grp_attrs = mapping.scim_group_to_group_ldap(resource, group_cn)
-        grp_attrs["uniqueIdentifier"] = [id]
+        # Prefer bare UUID in LDAP (SRAM parity); still accept @realm SCIM ids.
+        grp_attrs["uniqueIdentifier"] = [
+            mapping.bare_unique_identifier(id) or id
+        ]
         member_uids = self._member_uids(resource)
 
         # Ensure each member exists under this CO's People
+        hold_base = dit.ordered_base(self.ldap_basename)
         member_dns: List[str] = []
         for uid in member_uids:
             person_dn = dit.person_dn(uid, co_identifier, self.ldap_basename)
+            hold_dn = f"uid={uid},ou=People,{hold_base}"
             # Copy from holding area or any existing person entry
             sources = self._search(
-                dit.ordered_base(self.ldap_basename),
+                hold_base,
                 f"(&(objectClass=person)(uid={uid}))",
                 attributes=["*"],
             )
             if sources:
-                src_attrs = next(iter(sources.values()))
+                # Prefer an existing CO-scoped copy over the holding OU.
+                src_attrs = None
+                for src_dn, attrs in sources.items():
+                    if ",o=" in src_dn:
+                        src_attrs = attrs
+                        break
+                if src_attrs is None:
+                    src_attrs = next(iter(sources.values()))
                 # ldap3 returns Attribute values; normalize to lists of scalars
                 normalized = {
                     k: (v if isinstance(v, list) else [v])
@@ -528,6 +570,9 @@ class SRAM_LDAP_Plugin(Plugin):
                         {"userName": uid, "displayName": uid, "active": True}
                     )
                 self._upsert(person_dn, normalized)
+                # SRAM has no holding OU — remove after placing under the CO.
+                if person_dn.lower() != hold_dn.lower():
+                    self._delete_if_exists(hold_dn)
             else:
                 logger.warning(
                     "No person entry for uid=%s when writing group %s", uid, id

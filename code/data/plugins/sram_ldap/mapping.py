@@ -193,8 +193,11 @@ def scim_group_to_co_ldap(resource: dict, co_identifier: str) -> Dict[str, List[
         entry["uniqueIdentifier"] = [external_id]
     if resource.get("displayName"):
         entry["displayName"] = [resource["displayName"]]
-    if ext.get("description"):
-        entry["description"] = [ext["description"]]
+    else:
+        entry["displayName"] = [co_identifier.split(".")[-1]]
+    description = ext.get("description") or resource.get("description")
+    if description:
+        entry["description"] = [description]
     if ext.get("labels"):
         entry["businessCategory"] = list(ext["labels"])
 
@@ -240,13 +243,17 @@ def scim_group_to_group_ldap(
         "objectClass": ["extensibleObject", "groupOfMembers"],
         "cn": [group_cn],
     }
-    external_id = resource.get("externalId") or resource.get("id")
+    # SRAM stores bare UUID (no @realm) on group uniqueIdentifier.
+    external_id = bare_unique_identifier(
+        resource.get("externalId") or resource.get("id")
+    )
     if external_id:
         entry["uniqueIdentifier"] = [external_id]
     if resource.get("displayName"):
         entry["displayName"] = [resource["displayName"]]
-    if ext.get("description"):
-        entry["description"] = [ext["description"]]
+    description = ext.get("description") or resource.get("description")
+    if description:
+        entry["description"] = [description]
     labeled = _labeled_uris(ext)
     if labeled:
         entry["labeledURI"] = labeled

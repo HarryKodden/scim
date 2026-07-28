@@ -130,6 +130,8 @@ def test_scim_group_to_co_ldap_sram_parity():
 def test_scim_group_to_group_ldap_labeled_uri():
     schema = mapping.sram_group_schema()
     resource = {
+        "id": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee@sram.surf.nl",
+        "externalId": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee@sram.surf.nl",
         "displayName": "admin",
         schema: {
             "urn": "surf:demo1:admin",
@@ -139,7 +141,19 @@ def test_scim_group_to_group_ldap_labeled_uri():
     }
     entry = mapping.scim_group_to_group_ldap(resource, "admin")
     assert entry["cn"] == ["admin"]
+    assert entry["uniqueIdentifier"] == [
+        "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
+    ]
     assert entry["labeledURI"] == ["https://example/g sbs_url"]
+    assert entry["description"] == ["Project administrator"]
+
+
+def test_bare_unique_identifier():
+    assert mapping.bare_unique_identifier(
+        "fb9ce3da-0242-4fe4-9ea5-462d0cdfec58@sram.surf.nl"
+    ) == "fb9ce3da-0242-4fe4-9ea5-462d0cdfec58"
+    assert mapping.bare_unique_identifier("plain-uuid") == "plain-uuid"
+    assert mapping.bare_unique_identifier(None) is None
 
 
 def test_is_collaboration_group():

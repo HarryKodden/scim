@@ -83,7 +83,10 @@ dc=pilot,…
 | `cn` | short name under CO (`admin`, `members`) | dotted under org | Fixed by correct ordered DIT |
 | `objectClass` | `groupOfMembers` + `extensibleObject` | same | OK |
 | `labeledURI` | sometimes present | often missing | Map when in SCIM |
-| `uniqueIdentifier` | UUID | different UUID | Expected if independent provisioning; same if same CO/group id sourced |
+| `uniqueIdentifier` | bare UUID | bare UUID (no `@realm`) | Aligned |
+| Holding OU people | none | transient until membership | Place under CO People and delete holding on group write |
+| `cn=@all` stub | always present | created with CO containers | Aligned |
+
 
 ### CO / organization entry
 
@@ -93,8 +96,8 @@ SCIM org entry observed as `o=surf` (wrong level) with similar URI/description p
 
 | Issue | Action |
 | --- | --- |
-| Missing `mail`, `organizationalStatus` on CO | Write from collaboration resource |
-| `uniqueIdentifier` suffix `@sram.surf.nl` vs bare UUID | Match SRAM (bare CO uuid) |
+| Missing `mail`, `organizationalStatus` on CO | Write from collaboration resource; stub CO gets displayName + status |
+| `uniqueIdentifier` suffix `@sram.surf.nl` vs bare UUID | Match SRAM (bare CO/group uuid) |
 
 ### Service base
 
