@@ -369,12 +369,12 @@ class SRAM_LDAP_Plugin(Plugin):
 
         uid_val = first("uid")
         mail_val = first("mail")
-        display_val = first("displayName")
-        given = first("givenName")
-        family = first("sn")
+        display_val = first("displayName") or uid_val or "n/a"
+        given = first("givenName") or "n/a"
+        family = first("sn") or "n/a"
         edu_unique = first("eduPersonUniqueId")
         status = first("voPersonStatus", "active")
-        scim_id = first("uniqueIdentifier") or id
+        scim_id = first("uniqueIdentifier") or edu_unique or id
 
         resource = {
             "id": scim_id,

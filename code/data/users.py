@@ -30,7 +30,11 @@ def get_user_resources(filter: Filter) -> [Any]:
     result: Any = []
 
     for id in Users:
-        resource = get_user_resource(id)
+        try:
+            resource = get_user_resource(id)
+        except Exception as exc:
+            logger.warning("Skipping malformed User %s: %s", id, exc)
+            continue
         if not resource:
             continue
         if filter.match(resource):

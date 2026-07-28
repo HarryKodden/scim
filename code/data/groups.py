@@ -31,7 +31,11 @@ def get_group_resources(filter: Filter) -> [Any]:
     result: Any = []
 
     for id in Groups:
-        resource = get_group_resource(id)
+        try:
+            resource = get_group_resource(id)
+        except Exception as exc:
+            logger.warning("Skipping malformed Group %s: %s", id, exc)
+            continue
         if not resource:
             continue
         if filter.match(resource):
