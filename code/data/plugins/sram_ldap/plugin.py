@@ -534,12 +534,25 @@ class SRAM_LDAP_Plugin(Plugin):
         co_identifier, group_cn = dit.parse_group_urn(urn)
         self._ensure_co_containers(co_identifier)
 
-        if group_cn is None or mapping.is_collaboration_group(resource):
+        is_collab = group_cn is None or mapping.is_collaboration_group(resource)
+        co_attrs: Optional[Dict[str, List[Any]]] = None
+        if is_collab:
             group_cn = "@all"
             co_attrs = mapping.scim_group_to_co_ldap(resource, co_identifier)
             self._upsert(dit.co_dn(co_identifier, self.ldap_basename), co_attrs)
 
-        grp_attrs = mapping.scim_group_to_group_ldap(resource, group_cn)
+        co_display = (
+            (co_attrs or {}).get("displayName")
+            or [resource.get("displayName") or co_identifier.split(".")[-1]]
+        )
+        if isinstance(co_display, list):
+            co_display = co_display[0] if co_display else co_identifier
+
+        grp_attrs = mapping.scim_group_to_group_ldap(
+            resource,
+            group_cn,
+            co_display_name=str(co_display),
+        )
         # Prefer bare UUID in LDAP (SRAM parity); still accept @realm SCIM ids.
         grp_attrs["uniqueIdentifier"] = [
             mapping.bare_unique_identifier(id) or id
@@ -549,6 +562,7 @@ class SRAM_LDAP_Plugin(Plugin):
         # Ensure each member exists under this CO's People
         hold_base = dit.ordered_base(self.ldap_basename)
         member_dns: List[str] = []
+        member_mails: List[str] = []
         for uid in member_uids:
             person_dn = dit.person_dn(uid, co_identifier, self.ldap_basename)
             hold_dn = f"uid={uid},ou=People,{hold_base}"
@@ -577,7 +591,18 @@ class SRAM_LDAP_Plugin(Plugin):
                     normalized = mapping.scim_user_to_ldap(
                         {"userName": uid, "displayName": uid, "active": True}
                     )
+                else:
+                    # Drop legacy extensibleObject so OCs match SRAM.
+                    ocs = [
+                        oc
+                        for oc in normalized["objectClass"]
+                        if str(oc).lower() != "extensibleobject"
+                    ]
+                    normalized["objectClass"] = ocs
                 self._upsert(person_dn, normalized)
+                for mail in normalized.get("mail") or []:
+                    if mail and mail not in member_mails:
+                        member_mails.append(mail)
                 # SRAM has no holding OU — remove after placing under the CO.
                 if person_dn.lower() != hold_dn.lower():
                     self._delete_if_exists(hold_dn)
@@ -588,6 +613,13 @@ class SRAM_LDAP_Plugin(Plugin):
                 continue
             member_dns.append(person_dn)
 
+        # SBS often omits Group.emails; SRAM CO mail is contact list — fill from
+        # member mails when the collaboration payload has none.
+        if is_collab and co_attrs is not None and not co_attrs.get("mail") and member_mails:
+            co_attrs = dict(co_attrs)
+            co_attrs["mail"] = member_mails
+            self._upsert(dit.co_dn(co_identifier, self.ldap_basename), co_attrs)
+
         if member_dns:
             grp_attrs["member"] = member_dns
         else:
@@ -596,7 +628,22 @@ class SRAM_LDAP_Plugin(Plugin):
         self._upsert(grp_dn, grp_attrs)
 
         if self.flat_derive:
-            self._derive_flat_group(co_identifier, group_cn, grp_attrs, member_dns)
+            if co_attrs is None:
+                co_dn = dit.co_dn(co_identifier, self.ldap_basename)
+                if self.session.search(
+                    co_dn,
+                    "(objectClass=*)",
+                    search_scope="BASE",
+                    attributes=["mail", "organizationalStatus", "displayName"],
+                ):
+                    raw = self.session.entries[0].entry_attributes_as_dict
+                    co_attrs = {
+                        k: (v if isinstance(v, list) else [v])
+                        for k, v in raw.items()
+                    }
+            self._derive_flat_group(
+                co_identifier, group_cn, grp_attrs, member_dns, co_attrs=co_attrs
+            )
             for uid in member_uids:
                 person = self._search(
                     dit.people_ou_dn(co_identifier, self.ldap_basename),
@@ -617,12 +664,17 @@ class SRAM_LDAP_Plugin(Plugin):
         group_cn: str,
         ordered_attrs: Dict[str, List[Any]],
         ordered_member_dns: List[str],
+        co_attrs: Optional[Dict[str, List[Any]]] = None,
     ) -> None:
         flat_members = flat.rewrite_members_to_flat(
             ordered_member_dns, self.ldap_basename
         )
         entry = flat.flat_group_entry(
-            ordered_attrs, co_identifier, group_cn, flat_members
+            ordered_attrs,
+            co_identifier,
+            group_cn,
+            flat_members,
+            co_attrs=co_attrs,
         )
         self._upsert(
             dit.flat_group_dn(co_identifier, group_cn, self.ldap_basename),

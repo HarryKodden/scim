@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import copy
 import logging
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from data.plugins.sram_ldap import dit
 
@@ -29,10 +29,23 @@ def flat_group_entry(
     co_identifier: str,
     group_cn: str,
     flat_member_dns: List[str],
+    *,
+    co_attrs: Optional[Dict[str, List[Any]]] = None,
 ) -> Dict[str, List[Any]]:
     entry = copy.deepcopy(ordered_entry)
     entry["cn"] = [f"{co_identifier}.{group_cn}"]
     entry["member"] = list(flat_member_dns)
+    # SRAM projects CO mail + organizationalStatus onto flat groups.
+    if co_attrs:
+        if co_attrs.get("mail") and not entry.get("mail"):
+            entry["mail"] = list(co_attrs["mail"])
+        status = co_attrs.get("organizationalStatus")
+        if status:
+            entry["organizationalStatus"] = list(status)
+        elif "organizationalStatus" not in entry:
+            entry["organizationalStatus"] = ["active"]
+    elif "organizationalStatus" not in entry:
+        entry["organizationalStatus"] = ["active"]
     return entry
 
 

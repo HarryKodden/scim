@@ -117,8 +117,8 @@ def scim_user_to_ldap(resource: dict) -> Dict[str, List[Any]]:
     active = resource.get("active", True)
     status = "active" if active else "expired"
 
-    # Keep extensibleObject so we can store SCIM/external id as uniqueIdentifier
-    # and sshPublicKey without requiring the openssh-lpk schema (ldapPublicKey OC).
+    # uniqueIdentifier (SCIM id) is a standard cosine attribute; sshPublicKey
+    # uses ldapPublicKey. Avoid extensibleObject so person OCs match SRAM.
     record: Dict[str, List[Any]] = {
         "objectClass": [
             "inetOrgPerson",
@@ -126,7 +126,6 @@ def scim_user_to_ldap(resource: dict) -> Dict[str, List[Any]]:
             "eduPerson",
             "voPerson",
             "sramPerson",
-            "extensibleObject",
         ],
         "uid": [uid],
         "cn": [edu_unique],
@@ -236,9 +235,16 @@ def scim_group_to_co_ldap(resource: dict, co_identifier: str) -> Dict[str, List[
 
 
 def scim_group_to_group_ldap(
-    resource: dict, group_cn: str
+    resource: dict,
+    group_cn: str,
+    *,
+    co_display_name: Optional[str] = None,
 ) -> Dict[str, List[Any]]:
-    """Build groupOfMembers attributes (members filled by caller)."""
+    """Build groupOfMembers attributes (members filled by caller).
+
+    For ``cn=@all``, use SRAM/PLSC labels:
+    ``All Members of <CO displayName>`` / ``All CO members``.
+    """
     ext = _extension(resource, sram_group_schema())
     entry: Dict[str, List[Any]] = {
         "objectClass": ["extensibleObject", "groupOfMembers"],
@@ -250,11 +256,22 @@ def scim_group_to_group_ldap(
     )
     if external_id:
         entry["uniqueIdentifier"] = [external_id]
-    if resource.get("displayName"):
-        entry["displayName"] = [resource["displayName"]]
-    description = ext.get("description") or resource.get("description")
-    if description:
-        entry["description"] = [description]
+
+    if group_cn == "@all":
+        label = (
+            co_display_name
+            or resource.get("displayName")
+            or "Collaboration"
+        )
+        entry["displayName"] = [f"All Members of {label}"]
+        entry["description"] = ["All CO members"]
+    else:
+        if resource.get("displayName"):
+            entry["displayName"] = [resource["displayName"]]
+        description = ext.get("description") or resource.get("description")
+        if description:
+            entry["description"] = [description]
+
     labeled = _labeled_uris(ext)
     if labeled:
         entry["labeledURI"] = labeled

@@ -83,7 +83,7 @@ def test_scim_user_to_ldap():
     assert entry["mail"] == ["laura@example.org"]
     assert entry["voPersonStatus"] == ["active"]
     assert "ldapPublicKey" in entry["objectClass"]
-    assert "extensibleObject" in entry["objectClass"]
+    assert "extensibleObject" not in entry["objectClass"]
     assert entry["sshPublicKey"] == ["ssh-ed25519 AAAA test@host"]
     assert entry["voPersonPolicyAgreement;time-1780989003"] == ["https://surf.nl"]
 
@@ -125,6 +125,45 @@ def test_scim_group_to_co_ldap_sram_parity():
     assert entry["organizationalStatus"] == ["active"]
     assert entry["mail"] == ["a@example.org", "b@example.org"]
     assert any(u.endswith(" sbs_url") for u in entry["labeledURI"])
+
+
+def test_scim_group_to_all_ldap_sram_labels():
+    schema = mapping.sram_group_schema()
+    resource = {
+        "displayName": "harry-test",
+        schema: {
+            "urn": "surf:harrytest",
+            "description": "S3 Project harry-test",
+        },
+    }
+    entry = mapping.scim_group_to_group_ldap(
+        resource, "@all", co_display_name="harry-test"
+    )
+    assert entry["cn"] == ["@all"]
+    assert entry["displayName"] == ["All Members of harry-test"]
+    assert entry["description"] == ["All CO members"]
+
+
+def test_flat_group_entry_copies_co_attrs():
+    ordered = {
+        "objectClass": ["groupOfMembers", "extensibleObject"],
+        "cn": ["@all"],
+        "displayName": ["All Members of harry-test"],
+        "description": ["All CO members"],
+    }
+    entry = flat.flat_group_entry(
+        ordered,
+        "surf.harrytest",
+        "@all",
+        ["uid=alice,ou=People,dc=flat,dc=x"],
+        co_attrs={
+            "mail": ["a@example.org"],
+            "organizationalStatus": ["active"],
+        },
+    )
+    assert entry["cn"] == ["surf.harrytest.@all"]
+    assert entry["mail"] == ["a@example.org"]
+    assert entry["organizationalStatus"] == ["active"]
 
 
 def test_scim_group_to_group_ldap_labeled_uri():

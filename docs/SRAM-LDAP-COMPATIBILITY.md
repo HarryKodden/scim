@@ -96,8 +96,16 @@ SCIM org entry observed as `o=surf` (wrong level) with similar URI/description p
 
 | Issue | Action |
 | --- | --- |
-| Missing `mail`, `organizationalStatus` on CO | Write from collaboration resource; stub CO gets displayName + status |
-| `uniqueIdentifier` suffix `@sram.surf.nl` vs bare UUID | Match SRAM (bare CO/group uuid) |
+## Remaining gaps (post 2026-07-28 sync)
+
+| Issue | Notes |
+| --- | --- |
+| Person `uniqueIdentifier` | SCIM keeps it for API id round-trip; SRAM omits on persons |
+| `voPersonPolicyAgreement;time-*` | Written when present in SCIM payload; SBS push often omits |
+| CO `mail` | From Group.emails when present; else filled from member mails on collab write |
+| `cn=@all` labels | Mapped to SRAM “All Members of …” / “All CO members” |
+| Flat `organizationalStatus` / `mail` | Copied from CO onto flat groups |
+
 
 ### Service base
 
