@@ -10,8 +10,12 @@ DEFAULT_SRAM_SCHEMA = "urn:mace:surf.nl:sram:scim:extension"
 VOPERSON_SCHEMA = "urn:temporaryNamespace:scim:schemas:voPerson:User"
 
 
+from data.plugins.sram_ldap import sram_format
+
+
 def sram_schema_base() -> str:
     return os.environ.get("SRAM_SCIM_SCHEMA", DEFAULT_SRAM_SCHEMA)
+
 
 
 def sram_user_schema() -> str:
@@ -117,16 +121,9 @@ def scim_user_to_ldap(resource: dict) -> Dict[str, List[Any]]:
     active = resource.get("active", True)
     status = "active" if active else "expired"
 
-    # uniqueIdentifier (SCIM id) is a standard cosine attribute; sshPublicKey
-    # uses ldapPublicKey. Avoid extensibleObject so person OCs match SRAM.
+    # Match SRAM person objectClass set (no extensibleObject).
     record: Dict[str, List[Any]] = {
-        "objectClass": [
-            "inetOrgPerson",
-            "person",
-            "eduPerson",
-            "voPerson",
-            "sramPerson",
-        ],
+        "objectClass": list(sram_format.SRAM_PERSON_OBJECT_CLASSES_BASE),
         "uid": [uid],
         "cn": [edu_unique],
         "eduPersonUniqueId": [edu_unique],
@@ -183,7 +180,7 @@ def scim_group_to_co_ldap(resource: dict, co_identifier: str) -> Dict[str, List[
     """Build organization entry attributes for a Collaboration."""
     ext = _extension(resource, sram_group_schema())
     entry: Dict[str, List[Any]] = {
-        "objectClass": ["top", "organization", "extensibleObject"],
+        "objectClass": list(sram_format.SRAM_CO_OBJECT_CLASSES),
         "o": [co_identifier],
     }
     external_id = bare_unique_identifier(
@@ -242,12 +239,11 @@ def scim_group_to_group_ldap(
 ) -> Dict[str, List[Any]]:
     """Build groupOfMembers attributes (members filled by caller).
 
-    For ``cn=@all``, use SRAM/PLSC labels:
-    ``All Members of <CO displayName>`` / ``All CO members``.
+    For ``cn=@all``, use SRAM labels from ``sram_format``.
     """
     ext = _extension(resource, sram_group_schema())
     entry: Dict[str, List[Any]] = {
-        "objectClass": ["extensibleObject", "groupOfMembers"],
+        "objectClass": list(sram_format.SRAM_ALL_GROUP_OBJECT_CLASSES),
         "cn": [group_cn],
     }
     # SRAM stores bare UUID (no @realm) on group uniqueIdentifier.
@@ -263,9 +259,10 @@ def scim_group_to_group_ldap(
             or resource.get("displayName")
             or "Collaboration"
         )
-        entry["displayName"] = [f"All Members of {label}"]
-        entry["description"] = ["All CO members"]
+        entry["displayName"] = [sram_format.sram_all_display_name(label)]
+        entry["description"] = [sram_format.SRAM_ALL_DESCRIPTION]
     else:
+        entry["objectClass"] = list(sram_format.SRAM_SUBGROUP_OBJECT_CLASSES)
         if resource.get("displayName"):
             entry["displayName"] = [resource["displayName"]]
         description = ext.get("description") or resource.get("description")

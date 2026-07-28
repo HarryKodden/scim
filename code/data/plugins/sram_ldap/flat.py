@@ -6,7 +6,7 @@ import copy
 import logging
 from typing import Any, Dict, List, Optional
 
-from data.plugins.sram_ldap import dit
+from data.plugins.sram_ldap import dit, sram_format
 
 logger = logging.getLogger(__name__)
 
@@ -18,8 +18,20 @@ def merge_vo_person_status(statuses: List[str]) -> str:
     return statuses[-1] if statuses else "expired"
 
 
-def flat_person_entry(ordered_entry: Dict[str, List[Any]], status: str) -> Dict[str, List[Any]]:
-    entry = copy.deepcopy(ordered_entry)
+def _strip_person_to_sram(entry: Dict[str, List[Any]]) -> Dict[str, List[Any]]:
+    """Drop SCIM-store overlays so flat persons match SRAM service LDAP."""
+    entry.pop("uniqueIdentifier", None)
+    ocs = entry.get("objectClass") or []
+    entry["objectClass"] = [
+        oc for oc in ocs if str(oc).lower() != "extensibleobject"
+    ]
+    return entry
+
+
+def flat_person_entry(
+    ordered_entry: Dict[str, List[Any]], status: str
+) -> Dict[str, List[Any]]:
+    entry = _strip_person_to_sram(copy.deepcopy(ordered_entry))
     entry["voPersonStatus"] = [status]
     return entry
 
@@ -58,7 +70,9 @@ def rewrite_members_to_flat(
         # uid=<uid>,ou=People,o=...,dc=ordered,...
         rdn = member_dn.split(",", 1)[0]
         if not rdn.lower().startswith("uid="):
-            logger.warning("Skipping non-uid member DN in flat rewrite: %s", member_dn)
+            logger.warning(
+                "Skipping non-uid member DN in flat rewrite: %s", member_dn
+            )
             continue
         uid = rdn.split("=", 1)[1]
         result.append(dit.flat_person_dn(uid, ldap_basename))

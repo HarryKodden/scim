@@ -96,15 +96,17 @@ SCIM org entry observed as `o=surf` (wrong level) with similar URI/description p
 
 | Issue | Action |
 | --- | --- |
-## Remaining gaps (post 2026-07-28 sync)
+## Remaining gaps (post 2026-07-29)
 
 | Issue | Notes |
 | --- | --- |
-| Person `uniqueIdentifier` | SCIM keeps it for API id round-trip; SRAM omits on persons |
-| `voPersonPolicyAgreement;time-*` | Written when present in SCIM payload; SBS push often omits |
-| CO `mail` | From Group.emails when present; else filled from member mails on collab write |
-| `cn=@all` labels | Mapped to SRAM “All Members of …” / “All CO members” |
-| Flat `organizationalStatus` / `mail` | Copied from CO onto flat groups |
+| Ordered person `uniqueIdentifier` | **SCIM-store overlay** for `/Users/{id}` + Group members; stripped again on flat persons. Mapping tests assert SRAM shape without it. |
+| `voPersonPolicyAgreement;time-*` | Written when present in SCIM User payload (`test_sram_format`) |
+| Holding `ou=People` under ordered | Transient only; deleted when empty |
+| Multi-value order (`labeledURI`, `sshPublicKey`) | Not significant for LDAP |
+
+Local verification: `pytest test/test_sram_format.py test/test_sram_ldap.py` (dictated shapes in `sram_format.py`).
+
 
 
 ### Service base
