@@ -106,8 +106,29 @@ At this moment the following Plugin Options are implementated:
 * MongoDB (No-SQL)
 * JumpCloud
 * SCIM (Proxy incomming SCIM requests to upstream SCIM Server)
-* LDAP
+* LDAP (generic `ou=Users` / `ou=Groups` store)
+* LDAP SRAM ordered (+ optional flat derive) — see `LDAP_LAYOUT`
 * iRODS (Integrated Rule-Oriented Data System)
+
+### SRAM LDAP layout (PLSC replacement)
+
+Branch `feature/sram-ldap-ordered-flat` adds `code/data/plugins/sram_ldap/` for the
+[SRAM directory structure](https://servicedesk.surf.nl/wiki/spaces/IAM/pages/74226137/LDAP+directory+structure):
+write **ordered**, optionally **derive flat**.
+
+```bash
+LDAP_HOSTNAME=ldap.example.org
+LDAP_BASENAME=dc=myservice,dc=services,dc=sram,dc=surf,dc=nl
+LDAP_USERNAME=cn=admin,dc=myservice,dc=services,dc=sram,dc=surf,dc=nl
+LDAP_PASSWORD=secret
+LDAP_LAYOUT=sram-ordered
+LDAP_FLAT_DERIVE=true
+SRAM_SCIM_SCHEMA=urn:mace:surf.nl:sram:scim:extension
+```
+
+SCIM Groups must include the SRAM extension `urn` (collaboration `org.co` or
+subgroup `org.co:group`). Collaborations should include `links` (`sbs_url` / `logo`)
+as produced by SBS outbound SCIM.
 
 The actual Plugin is selected by providing the corresponding envrionment variables, see below.
 
@@ -135,6 +156,9 @@ This image uses environment variables for configuration.
 | `LDAP_BASENAME` | Base name of tree in which the SCIM tree will be created | dc=example,dc=org | dc=example, + LDAP_BASENAME |
 | `LDAP_USERNAME` | bind user name | cn=admin,dc=example,dc=org | cn=admin,dc=example,dc=org |
 | `LDAP_PASSWORD` | bind password | | |
+| `LDAP_LAYOUT` | LDAP plugin layout: `generic` (default) or `sram-ordered` | sram-ordered | generic |
+| `LDAP_FLAT_DERIVE` | When `sram-ordered`, also project the flat subtree | true | true |
+| `SRAM_SCIM_SCHEMA` | Base URN for SRAM SCIM extensions (`:User` / `:Group` appended) | urn:mace:surf.nl:sram:scim:extension | urn:mace:surf.nl:sram:scim:extension |
 | `IRODS_HOST` | iRODS server hostname or IP address | irods.example.org | |
 | `IRODS_PORT` | iRODS server port | 1247 | 1247 |
 | `IRODS_ZONE` | iRODS zone name | tempZone | |

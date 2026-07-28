@@ -15,6 +15,9 @@ ldap_username = os.environ.get(
     "LDAP_USERNAME", f"cn=admin,{DEFAULT_LDAP_BASENAME}"
 )
 ldap_password = os.environ.get("LDAP_PASSWORD", None)
+# generic (default) | sram-ordered (SRAM DIT + optional flat derive)
+ldap_layout = os.environ.get("LDAP_LAYOUT", "generic").strip().lower()
+ldap_flat_derive = os.environ.get("LDAP_FLAT_DERIVE", "true")
 
 # Backend option: Mongo DB
 mongo_db = os.environ.get("MONGO_DB", None)
@@ -47,7 +50,27 @@ user_model = Plugin().USERS
 group_model = Plugin().GROUPS
 
 
-if ldap_hostname:
+if ldap_hostname and ldap_layout in ("sram-ordered", "sram"):
+    from data.plugins.sram_ldap import SRAM_LDAP_Plugin
+
+    _flat = ldap_flat_derive.strip().lower() in ("1", "true", "yes", "on")
+    Users = SRAM_LDAP_Plugin(
+        user_model,
+        ldap_hostname,
+        ldap_basename,
+        ldap_username,
+        ldap_password,
+        flat_derive=_flat,
+    )
+    Groups = SRAM_LDAP_Plugin(
+        group_model,
+        ldap_hostname,
+        ldap_basename,
+        ldap_username,
+        ldap_password,
+        flat_derive=_flat,
+    )
+elif ldap_hostname:
     from data.plugins.ldap import LDAP_Plugin
 
     def user_dn(cls):
