@@ -117,7 +117,8 @@ def scim_user_to_ldap(resource: dict) -> Dict[str, List[Any]]:
     active = resource.get("active", True)
     status = "active" if active else "expired"
 
-    # Match SRAM service LDAP objectClasses (no extensibleObject on persons).
+    # Keep extensibleObject so we can store SCIM/external id as uniqueIdentifier
+    # and sshPublicKey without requiring the openssh-lpk schema (ldapPublicKey OC).
     record: Dict[str, List[Any]] = {
         "objectClass": [
             "inetOrgPerson",
@@ -125,6 +126,7 @@ def scim_user_to_ldap(resource: dict) -> Dict[str, List[Any]]:
             "eduPerson",
             "voPerson",
             "sramPerson",
+            "extensibleObject",
         ],
         "uid": [uid],
         "cn": [edu_unique],
@@ -156,7 +158,8 @@ def scim_user_to_ldap(resource: dict) -> Dict[str, List[Any]]:
 
     ssh_keys = _ssh_keys(resource)
     if ssh_keys:
-        record["objectClass"].append("ldapPublicKey")
+        # Prefer sshPublicKey via extensibleObject; ldapPublicKey OC needs
+        # openssh-lpk schema which may not be loaded in all deployments.
         record["sshPublicKey"] = ssh_keys
 
     record.update(_policy_agreement_attrs(resource))

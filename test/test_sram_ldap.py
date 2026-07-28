@@ -82,8 +82,8 @@ def test_scim_user_to_ldap():
     assert entry["eduPersonUniqueId"] == ["47c1@sram.eduteams.org"]
     assert entry["mail"] == ["laura@example.org"]
     assert entry["voPersonStatus"] == ["active"]
-    assert "ldapPublicKey" in entry["objectClass"]
-    assert "extensibleObject" not in entry["objectClass"]
+    assert "ldapPublicKey" not in entry["objectClass"]
+    assert "extensibleObject" in entry["objectClass"]
     assert entry["sshPublicKey"] == ["ssh-ed25519 AAAA test@host"]
     assert entry["voPersonPolicyAgreement;time-1780989003"] == ["https://surf.nl"]
 

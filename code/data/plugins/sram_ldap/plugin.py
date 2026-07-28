@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import uuid
 from typing import Any, Dict, List, Optional
 
 from ldap3 import ALL, Connection, Server, SUBTREE
@@ -66,6 +67,13 @@ class SRAM_LDAP_Plugin(Plugin):
         )
         logger.info("SRAM LDAP connected (%s)", self.description)
         self._ensure_roots()
+
+    def id(self, details: dict) -> str:
+        """Prefer SBS externalId so Group members.value resolve after User create."""
+        external = details.get("externalId") if isinstance(details, dict) else None
+        if external:
+            return str(external)
+        return str(uuid.uuid4())
 
     def _ensure_roots(self) -> None:
         self._ensure_entry(
