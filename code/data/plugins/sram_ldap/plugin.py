@@ -51,7 +51,13 @@ class SRAM_LDAP_Plugin(Plugin):
         )
         self.description = f"SRAM-LDAP-{resource_type}"
 
-        server = Server(ldap_hostname, get_info=ALL)
+        # LDAP_HOSTNAME may be a host or URI (ldap://host:1389).
+        # Optional LDAP_PORT when hostname has no scheme (default 389).
+        if "://" in (ldap_hostname or ""):
+            server = Server(ldap_hostname, get_info=ALL)
+        else:
+            port = int(os.environ.get("LDAP_PORT", "389"))
+            server = Server(ldap_hostname, port=port, get_info=ALL)
         self.session = Connection(
             server,
             user=ldap_username,
@@ -109,16 +115,39 @@ class SRAM_LDAP_Plugin(Plugin):
                 {"objectClass": ["top", "organizationalUnit"], "ou": [ou]},
             )
 
+    def _sanitize_attributes(
+        self, attributes: Dict[str, List[Any]]
+    ) -> Dict[str, List[Any]]:
+        """Drop empty values — OpenLDAP rejects attributes with no values."""
+        clean: Dict[str, List[Any]] = {}
+        for attr, values in attributes.items():
+            if values is None:
+                continue
+            if isinstance(values, list) and len(values) == 0:
+                continue
+            clean[attr] = values
+        return clean
+
     def _upsert(self, dn: str, attributes: Dict[str, List[Any]]) -> None:
+        attributes = self._sanitize_attributes(attributes)
         if self.session.search(dn, "(objectClass=*)", search_scope="BASE", attributes=["*"]):
-            changes = {
-                attr: [("MODIFY_REPLACE", values)]
-                for attr, values in attributes.items()
-                if attr.lower() != "objectclass"
-            }
-            # objectClass may need replace as a whole when ssh keys appear
-            changes["objectClass"] = [("MODIFY_REPLACE", attributes["objectClass"])]
+            changes = {}
+            for attr, values in attributes.items():
+                if attr.lower() == "objectclass":
+                    continue
+                changes[attr] = [("MODIFY_REPLACE", values)]
+            if "objectClass" in attributes:
+                changes["objectClass"] = [
+                    ("MODIFY_REPLACE", attributes["objectClass"])
+                ]
+            # Clear member when the SCIM group has no members
+            if "member" not in attributes:
+                changes["member"] = [("MODIFY_DELETE", [])]
             ok = self.session.modify(dn, changes)
+            # MODIFY_DELETE on missing member is fine to ignore
+            if not ok and self.session.result.get("description") == "noSuchAttribute":
+                changes.pop("member", None)
+                ok = self.session.modify(dn, changes) if changes else True
         else:
             ok = self.session.add(dn, attributes=attributes)
         if not ok:
@@ -173,8 +202,10 @@ class SRAM_LDAP_Plugin(Plugin):
         # Prefer an already-written person entry
         people = self._search(
             dit.ordered_base(self.ldap_basename),
-            f"(&(objectClass=person)(|(eduPersonUniqueId={user_id})(cn={user_id})))",
-            attributes=["uid", "eduPersonUniqueId", "cn", "displayName"],
+            f"(&(objectClass=person)(|(uniqueIdentifier={user_id})"
+            f"(eduPersonUniqueId={user_id})(cn={user_id})))",
+            attributes=["uid", "eduPersonUniqueId", "cn", "displayName",
+                        "uniqueIdentifier"],
         )
         if people:
             attrs = next(iter(people.values()))
@@ -201,10 +232,12 @@ class SRAM_LDAP_Plugin(Plugin):
             people = self._search(
                 dit.ordered_base(self.ldap_basename),
                 "(objectClass=inetOrgPerson)",
-                attributes=["eduPersonUniqueId", "cn"],
+                attributes=["uniqueIdentifier", "eduPersonUniqueId", "cn"],
             )
             for attrs in people.values():
-                key = attrs.get("eduPersonUniqueId") or attrs.get("cn")
+                key = attrs.get("uniqueIdentifier") or attrs.get(
+                    "eduPersonUniqueId"
+                ) or attrs.get("cn")
                 if isinstance(key, list):
                     key = key[0] if key else None
                 if key and key not in seen:
@@ -223,22 +256,22 @@ class SRAM_LDAP_Plugin(Plugin):
                 if uid:
                     yield uid
                 else:
-                    # Fall back to DN-based synthetic id
                     yield dn
 
     def __delitem__(self, id: str) -> None:
         if self.resource_type == self.USERS:
             people = self._search(
                 dit.ordered_base(self.ldap_basename),
-                f"(&(objectClass=person)(|(eduPersonUniqueId={id})(cn={id})))",
+                f"(&(objectClass=person)(|(uniqueIdentifier={id})"
+                f"(eduPersonUniqueId={id})(cn={id})))",
             )
             for dn in people:
                 self.session.delete(dn)
             if self.flat_derive:
-                # Remove flat twin if present (uid unknown → search)
                 flat_people = self._search(
                     dit.flat_base(self.ldap_basename),
-                    f"(&(objectClass=person)(|(eduPersonUniqueId={id})(cn={id})))",
+                    f"(&(objectClass=person)(|(uniqueIdentifier={id})"
+                    f"(eduPersonUniqueId={id})(cn={id})))",
                 )
                 for dn in flat_people:
                     self.session.delete(dn)
@@ -277,28 +310,65 @@ class SRAM_LDAP_Plugin(Plugin):
     def _get_user(self, id: str) -> Optional[dict]:
         people = self._search(
             dit.ordered_base(self.ldap_basename),
-            f"(&(objectClass=person)(|(eduPersonUniqueId={id})(cn={id})))",
+            f"(&(objectClass=person)(|(uniqueIdentifier={id})"
+            f"(eduPersonUniqueId={id})(cn={id})))",
             attributes=["*"],
         )
         if not people:
             return None
         attrs = next(iter(people.values()))
-        uid = attrs.get("uid")
-        uid_val = uid[0] if isinstance(uid, list) else uid
-        mail = attrs.get("mail")
-        mail_val = mail[0] if isinstance(mail, list) and mail else mail
-        display = attrs.get("displayName")
-        display_val = display[0] if isinstance(display, list) else display
-        return {
-            "id": id,
+
+        def first(name, default=None):
+            val = attrs.get(name, default)
+            if isinstance(val, list):
+                return val[0] if val else default
+            return val
+
+        uid_val = first("uid")
+        mail_val = first("mail")
+        display_val = first("displayName")
+        given = first("givenName")
+        family = first("sn")
+        edu_unique = first("eduPersonUniqueId")
+        status = first("voPersonStatus", "active")
+        external_id = edu_unique or id
+
+        resource = {
+            "id": first("uniqueIdentifier") or id,
+            "schemas": [
+                "urn:ietf:params:scim:schemas:core:2.0:User",
+                mapping.sram_user_schema(),
+            ],
             "userName": uid_val,
             "displayName": display_val,
-            "emails": [{"value": mail_val, "primary": True}] if mail_val else [],
-            "active": (attrs.get("voPersonStatus") or ["active"])[0] == "active",
+            "externalId": external_id,
+            "active": status == "active",
+            "name": {
+                "givenName": given,
+                "familyName": family,
+            },
+            "emails": (
+                [{"value": mail_val, "primary": True}] if mail_val else []
+            ),
+            "meta": {
+                "resourceType": "User",
+                "location": f"/Users/{first('uniqueIdentifier') or id}",
+            },
+            mapping.sram_user_schema(): {
+                "eduPersonUniqueId": edu_unique,
+                "voPersonExternalId": first("voPersonExternalID"),
+                "voPersonExternalAffiliation": first(
+                    "voPersonExternalAffiliation"
+                ),
+                "sramInactiveDays": first("sramInactiveDays"),
+            },
         }
+        return resource
 
     def _set_user(self, id: str, resource: dict) -> None:
         ldap_attrs = mapping.scim_user_to_ldap(resource)
+        # Persist SCIM id for round-trip GET after create
+        ldap_attrs["uniqueIdentifier"] = [id]
         uid = ldap_attrs["uid"][0]
 
         # Refresh under every CO where this uid already exists; if none, stash
@@ -362,12 +432,49 @@ class SRAM_LDAP_Plugin(Plugin):
         if not groups:
             return None
         dn, attrs = next(iter(groups.items()))
-        display = attrs.get("displayName")
-        display_val = display[0] if isinstance(display, list) else display
+
+        def first(name, default=None):
+            val = attrs.get(name, default)
+            if isinstance(val, list):
+                return val[0] if val else default
+            return val
+
+        # cn=@all,ou=Groups,o=org.co,dc=ordered,...
+        # cn=admins,ou=Groups,o=org.co,...
+        cn = first("cn")
+        co_identifier = None
+        for part in dn.split(","):
+            if part.startswith("o="):
+                co_identifier = part[2:]
+                break
+        urn = co_identifier
+        if co_identifier and cn and cn != "@all":
+            urn = f"{co_identifier}:{cn}"
+
+        members = []
+        for member_dn in attrs.get("member") or []:
+            # uid=...,ou=People,...
+            rdn = member_dn.split(",", 1)[0]
+            if rdn.lower().startswith("uid="):
+                members.append({"value": rdn.split("=", 1)[1], "display": rdn})
+
         return {
             "id": id,
-            "displayName": display_val,
-            "members": [],
+            "schemas": [
+                "urn:ietf:params:scim:schemas:core:2.0:Group",
+                mapping.sram_group_schema(),
+            ],
+            "displayName": first("displayName"),
+            "externalId": id,
+            "members": members,
+            "meta": {
+                "resourceType": "Group",
+                "location": f"/Groups/{id}",
+            },
+            mapping.sram_group_schema(): {
+                "urn": urn,
+                "description": first("description"),
+            },
         }
 
     def _set_group(self, id: str, resource: dict) -> None:
@@ -387,6 +494,7 @@ class SRAM_LDAP_Plugin(Plugin):
             self._upsert(dit.co_dn(co_identifier, self.ldap_basename), co_attrs)
 
         grp_attrs = mapping.scim_group_to_group_ldap(resource, group_cn)
+        grp_attrs["uniqueIdentifier"] = [id]
         member_uids = self._member_uids(resource)
 
         # Ensure each member exists under this CO's People
@@ -419,7 +527,10 @@ class SRAM_LDAP_Plugin(Plugin):
                 continue
             member_dns.append(person_dn)
 
-        grp_attrs["member"] = member_dns
+        if member_dns:
+            grp_attrs["member"] = member_dns
+        else:
+            grp_attrs.pop("member", None)
         grp_dn = dit.ordered_group_dn(group_cn, co_identifier, self.ldap_basename)
         self._upsert(grp_dn, grp_attrs)
 

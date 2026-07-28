@@ -1,0 +1,107 @@
+{
+  "name": "multi_co",
+  "description": "Same user in two COs → one flat Person, two flat @all groups",
+  "operations": [
+    {
+      "name": "01_create_user_carol",
+      "op": "POST",
+      "resourceType": "User",
+      "body": {
+        "id": "eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee",
+        "schemas": [
+          "urn:ietf:params:scim:schemas:core:2.0:User",
+          "urn:mace:surf.nl:sram:scim:extension:User"
+        ],
+        "userName": "carol",
+        "externalId": "carol@sram.surf.nl",
+        "displayName": "Carol Example",
+        "active": true,
+        "name": { "givenName": "Carol", "familyName": "Example" },
+        "emails": [{ "value": "carol@example.org", "primary": true }],
+        "urn:mace:surf.nl:sram:scim:extension:User": {
+          "eduPersonUniqueId": "carol@sram.surf.nl",
+          "voPersonExternalId": "carol@uni.example",
+          "sramInactiveDays": 0
+        }
+      }
+    },
+    {
+      "name": "02_create_co_one",
+      "op": "POST",
+      "resourceType": "Group",
+      "body": {
+        "id": "f1111111-1111-1111-1111-111111111111",
+        "schemas": [
+          "urn:ietf:params:scim:schemas:core:2.0:Group",
+          "urn:mace:surf.nl:sram:scim:extension:Group"
+        ],
+        "externalId": "f1111111-1111-1111-1111-111111111111",
+        "displayName": "CO One",
+        "members": [
+          { "value": "eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee", "display": "Carol Example" }
+        ],
+        "urn:mace:surf.nl:sram:scim:extension:Group": {
+          "urn": "orgmulti.c1",
+          "description": "First CO",
+          "links": [
+            { "name": "sbs_url", "value": "https://sbs.example/collaborations/f1111111-1111-1111-1111-111111111111" }
+          ]
+        }
+      }
+    },
+    {
+      "name": "03_create_co_two",
+      "op": "POST",
+      "resourceType": "Group",
+      "body": {
+        "id": "f2222222-2222-2222-2222-222222222222",
+        "schemas": [
+          "urn:ietf:params:scim:schemas:core:2.0:Group",
+          "urn:mace:surf.nl:sram:scim:extension:Group"
+        ],
+        "externalId": "f2222222-2222-2222-2222-222222222222",
+        "displayName": "CO Two",
+        "members": [
+          { "value": "eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee", "display": "Carol Example" }
+        ],
+        "urn:mace:surf.nl:sram:scim:extension:Group": {
+          "urn": "orgmulti.c2",
+          "description": "Second CO",
+          "links": [
+            { "name": "sbs_url", "value": "https://sbs.example/collaborations/f2222222-2222-2222-2222-222222222222" }
+          ]
+        }
+      },
+      "assertions": [
+        {
+          "dn": "uid=carol,ou=People,o=orgmulti.c1,dc=ordered,${LDAP_BASENAME}",
+          "must_exist": true
+        },
+        {
+          "dn": "uid=carol,ou=People,o=orgmulti.c2,dc=ordered,${LDAP_BASENAME}",
+          "must_exist": true
+        },
+        {
+          "dn": "uid=carol,ou=People,dc=flat,${LDAP_BASENAME}",
+          "attrs": {
+            "uid": ["carol"],
+            "voPersonStatus": ["active"]
+          }
+        },
+        {
+          "dn": "cn=orgmulti.c1.@all,ou=Groups,dc=flat,${LDAP_BASENAME}",
+          "attrs": {
+            "member": ["uid=carol,ou=People,dc=flat,${LDAP_BASENAME}"]
+          }
+        },
+        {
+          "dn": "cn=orgmulti.c2.@all,ou=Groups,dc=flat,${LDAP_BASENAME}",
+          "attrs": {
+            "member": ["uid=carol,ou=People,dc=flat,${LDAP_BASENAME}"]
+          }
+        }
+      ]
+    }
+  ],
+  "assertions": []
+}

@@ -1,0 +1,21 @@
+# Service base DN used as LDAP_BASENAME for the SCIM SRAM plugin.
+# Tree after start:
+#   dc=sram,dc=tld
+#     dc=services
+#       dc=pilot          <-- LDAP_BASENAME
+#         (plugin adds dc=ordered / dc=flat)
+
+dn: dc=services,dc=sram,dc=tld
+objectClass: dcObject
+objectClass: organizationalUnit
+dc: services
+ou: services
+
+dn: dc=pilot,dc=services,dc=sram,dc=tld
+objectClass: dcObject
+objectClass: organization
+objectClass: extensibleObject
+dc: pilot
+o: pilot
+name: scim-pilot
+displayName: SCIM LDAP pilot service

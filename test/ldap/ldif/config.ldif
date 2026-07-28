@@ -1,0 +1,9 @@
+dn: cn=config
+changetype: modify
+add: olcAttributeOptions
+olcAttributeOptions: time-
+
+dn: cn=config
+changetype: modify
+replace: olcSizeLimit
+olcSizeLimit: -1

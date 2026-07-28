@@ -1,0 +1,158 @@
+{
+  "name": "minimal",
+  "description": "One user, one collaboration (@all), one subgroup — ordered + flat derive",
+  "operations": [
+    {
+      "name": "01_create_user_alice",
+      "op": "POST",
+      "resourceType": "User",
+      "body": {
+        "id": "11111111-1111-1111-1111-111111111111",
+        "schemas": [
+          "urn:ietf:params:scim:schemas:core:2.0:User",
+          "urn:mace:surf.nl:sram:scim:extension:User"
+        ],
+        "userName": "alice",
+        "externalId": "alice@sram.surf.nl",
+        "displayName": "Alice Example",
+        "active": true,
+        "name": {
+          "givenName": "Alice",
+          "familyName": "Example"
+        },
+        "emails": [
+          {
+            "value": "alice@example.org",
+            "primary": true
+          }
+        ],
+        "urn:mace:surf.nl:sram:scim:extension:User": {
+          "eduPersonUniqueId": "alice@sram.surf.nl",
+          "voPersonExternalId": "alice@uni.example",
+          "voPersonExternalAffiliation": "employee@uni.example",
+          "sramInactiveDays": 0
+        }
+      }
+    },
+    {
+      "name": "02_create_collaboration",
+      "op": "POST",
+      "resourceType": "Group",
+      "body": {
+        "id": "22222222-2222-2222-2222-222222222222",
+        "schemas": [
+          "urn:ietf:params:scim:schemas:core:2.0:Group",
+          "urn:mace:surf.nl:sram:scim:extension:Group"
+        ],
+        "externalId": "22222222-2222-2222-2222-222222222222",
+        "displayName": "Demo Collaboration",
+        "members": [
+          {
+            "value": "11111111-1111-1111-1111-111111111111",
+            "display": "Alice Example"
+          }
+        ],
+        "urn:mace:surf.nl:sram:scim:extension:Group": {
+          "urn": "orgdemo.c1",
+          "description": "Minimal fixture collaboration",
+          "labels": ["orgdemo.demo"],
+          "links": [
+            {
+              "name": "sbs_url",
+              "value": "https://sbs.example/collaborations/22222222-2222-2222-2222-222222222222"
+            },
+            {
+              "name": "logo",
+              "value": "https://example.org/logo.png"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "03_create_subgroup_admins",
+      "op": "POST",
+      "resourceType": "Group",
+      "body": {
+        "id": "33333333-3333-3333-3333-333333333333",
+        "schemas": [
+          "urn:ietf:params:scim:schemas:core:2.0:Group",
+          "urn:mace:surf.nl:sram:scim:extension:Group"
+        ],
+        "externalId": "33333333-3333-3333-3333-333333333333",
+        "displayName": "Admins",
+        "members": [
+          {
+            "value": "11111111-1111-1111-1111-111111111111",
+            "display": "Alice Example"
+          }
+        ],
+        "urn:mace:surf.nl:sram:scim:extension:Group": {
+          "urn": "orgdemo.c1:admins",
+          "description": "Admin subgroup"
+        }
+      }
+    }
+  ],
+  "assertions": [
+    {
+      "dn": "o=orgdemo.c1,dc=ordered,${LDAP_BASENAME}",
+      "attrs": {
+        "o": ["orgdemo.c1"],
+        "displayName": ["Demo Collaboration"]
+      }
+    },
+    {
+      "dn": "uid=alice,ou=People,o=orgdemo.c1,dc=ordered,${LDAP_BASENAME}",
+      "attrs": {
+        "uid": ["alice"],
+        "mail": ["alice@example.org"],
+        "eduPersonUniqueId": ["alice@sram.surf.nl"],
+        "voPersonStatus": ["active"]
+      }
+    },
+    {
+      "dn": "cn=@all,ou=Groups,o=orgdemo.c1,dc=ordered,${LDAP_BASENAME}",
+      "attrs": {
+        "cn": ["@all"],
+        "member": [
+          "uid=alice,ou=People,o=orgdemo.c1,dc=ordered,${LDAP_BASENAME}"
+        ]
+      }
+    },
+    {
+      "dn": "cn=admins,ou=Groups,o=orgdemo.c1,dc=ordered,${LDAP_BASENAME}",
+      "attrs": {
+        "cn": ["admins"],
+        "member": [
+          "uid=alice,ou=People,o=orgdemo.c1,dc=ordered,${LDAP_BASENAME}"
+        ]
+      }
+    },
+    {
+      "dn": "uid=alice,ou=People,dc=flat,${LDAP_BASENAME}",
+      "attrs": {
+        "uid": ["alice"],
+        "voPersonStatus": ["active"]
+      }
+    },
+    {
+      "dn": "cn=orgdemo.c1.@all,ou=Groups,dc=flat,${LDAP_BASENAME}",
+      "attrs": {
+        "cn": ["orgdemo.c1.@all"],
+        "member": [
+          "uid=alice,ou=People,dc=flat,${LDAP_BASENAME}"
+        ]
+      }
+    },
+    {
+      "dn": "cn=orgdemo.c1.admins,ou=Groups,dc=flat,${LDAP_BASENAME}",
+      "attrs": {
+        "cn": ["orgdemo.c1.admins"],
+        "member": [
+          "uid=alice,ou=People,dc=flat,${LDAP_BASENAME}"
+        ]
+      }
+    }
+  ]
+}

@@ -74,6 +74,7 @@ def scim_user_to_ldap(resource: dict) -> Dict[str, List[Any]]:
             "eduPerson",
             "voPerson",
             "sramPerson",
+            "extensibleObject",
         ],
         "uid": [uid],
         "cn": [edu_unique],
@@ -160,7 +161,6 @@ def scim_group_to_group_ldap(
     entry: Dict[str, List[Any]] = {
         "objectClass": ["extensibleObject", "groupOfMembers"],
         "cn": [group_cn],
-        "member": [],
     }
     external_id = resource.get("externalId") or resource.get("id")
     if external_id:

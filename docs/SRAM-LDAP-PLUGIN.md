@@ -23,6 +23,27 @@ LDAP_LAYOUT=sram-ordered
 LDAP_FLAT_DERIVE=true
 ```
 
+## Local test LDAP
+
+```bash
+./test/ldap/start.sh
+./test/ldap/run_integration.sh   # SCIM op sequence → assert LDAP
+```
+
+See [`test/ldap/README.md`](../test/ldap/README.md) for fixture format, plugin
+vs HTTP modes, and recording (PLSC-style replay/verify).
+
+Uses PLSC SRAM schemas and base DN `dc=pilot,dc=services,dc=sram,dc=tld` on
+`localhost:1389`.
+
+## SDP playground pilot (SRAM → SCIM → LDAP)
+
+See [`../SDP/scim-server/docs/SRAM-PILOT.md`](../../SDP/scim-server/docs/SRAM-PILOT.md)
+for enabling SBS SCIM against playground and dumping in-cluster LDAP.
+
+**Before deploy:** push this branch (plugin write fixes + fixtures) so SDP’s
+`SCIM_REF=feature/sram-ldap-ordered-flat` image rebuild includes them.
+
 ## PR workflow
 
 ```bash
@@ -35,5 +56,6 @@ SDP deploy track: [`../SDP/scim-server/docs/PLSC-MIGRATION.md`](../../SDP/scim-s
 
 ## Status
 
-Scaffold + mapping/DIT/flat unit tests green. End-to-end LDAP integration
-tests (against OpenLDAP with SRAM schemas) are the next increment before PR.
+Unit tests + local OpenLDAP integration fixtures (`minimal`, `lifecycle`,
+`multi_co`) green. Push this branch before SDP rebuild so playground picks up
+plugin write fixes.

@@ -1,0 +1,416 @@
+{
+  "name": "lifecycle",
+  "description": "Full SCIM CRUD coverage: create/update/membership/deactivate/delete for Users and Groups",
+  "operations": [
+    {
+      "name": "01_create_user_alice",
+      "op": "POST",
+      "resourceType": "User",
+      "body": {
+        "id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+        "schemas": [
+          "urn:ietf:params:scim:schemas:core:2.0:User",
+          "urn:mace:surf.nl:sram:scim:extension:User"
+        ],
+        "userName": "alice",
+        "externalId": "alice@sram.surf.nl",
+        "displayName": "Alice Example",
+        "active": true,
+        "name": { "givenName": "Alice", "familyName": "Example" },
+        "emails": [{ "value": "alice@example.org", "primary": true }],
+        "urn:mace:surf.nl:sram:scim:extension:User": {
+          "eduPersonUniqueId": "alice@sram.surf.nl",
+          "voPersonExternalId": "alice@uni.example",
+          "sramInactiveDays": 0
+        }
+      }
+    },
+    {
+      "name": "02_create_user_bob",
+      "op": "POST",
+      "resourceType": "User",
+      "body": {
+        "id": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+        "schemas": [
+          "urn:ietf:params:scim:schemas:core:2.0:User",
+          "urn:mace:surf.nl:sram:scim:extension:User"
+        ],
+        "userName": "bob",
+        "externalId": "bob@sram.surf.nl",
+        "displayName": "Bob Example",
+        "active": true,
+        "name": { "givenName": "Bob", "familyName": "Example" },
+        "emails": [{ "value": "bob@example.org", "primary": true }],
+        "urn:mace:surf.nl:sram:scim:extension:User": {
+          "eduPersonUniqueId": "bob@sram.surf.nl",
+          "voPersonExternalId": "bob@uni.example",
+          "sramInactiveDays": 3
+        }
+      }
+    },
+    {
+      "name": "03_create_group_co_with_alice",
+      "op": "POST",
+      "resourceType": "Group",
+      "body": {
+        "id": "cccccccc-cccc-cccc-cccc-cccccccccccc",
+        "schemas": [
+          "urn:ietf:params:scim:schemas:core:2.0:Group",
+          "urn:mace:surf.nl:sram:scim:extension:Group"
+        ],
+        "externalId": "cccccccc-cccc-cccc-cccc-cccccccccccc",
+        "displayName": "Lifecycle CO",
+        "members": [
+          { "value": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa", "display": "Alice Example" }
+        ],
+        "urn:mace:surf.nl:sram:scim:extension:Group": {
+          "urn": "orglife.c1",
+          "description": "Lifecycle collaboration",
+          "links": [
+            { "name": "sbs_url", "value": "https://sbs.example/collaborations/cccccccc-cccc-cccc-cccc-cccccccccccc" }
+          ]
+        }
+      },
+      "assertions": [
+        {
+          "dn": "cn=@all,ou=Groups,o=orglife.c1,dc=ordered,${LDAP_BASENAME}",
+          "attrs": {
+            "member": [
+              "uid=alice,ou=People,o=orglife.c1,dc=ordered,${LDAP_BASENAME}"
+            ]
+          }
+        },
+        {
+          "dn": "uid=alice,ou=People,o=orglife.c1,dc=ordered,${LDAP_BASENAME}",
+          "must_exist": true
+        }
+      ]
+    },
+    {
+      "name": "04_create_subgroup_admins",
+      "op": "POST",
+      "resourceType": "Group",
+      "body": {
+        "id": "dddddddd-dddd-dddd-dddd-dddddddddddd",
+        "schemas": [
+          "urn:ietf:params:scim:schemas:core:2.0:Group",
+          "urn:mace:surf.nl:sram:scim:extension:Group"
+        ],
+        "externalId": "dddddddd-dddd-dddd-dddd-dddddddddddd",
+        "displayName": "Admins",
+        "members": [
+          { "value": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa", "display": "Alice Example" }
+        ],
+        "urn:mace:surf.nl:sram:scim:extension:Group": {
+          "urn": "orglife.c1:admins",
+          "description": "Admins"
+        }
+      },
+      "assertions": [
+        {
+          "dn": "cn=admins,ou=Groups,o=orglife.c1,dc=ordered,${LDAP_BASENAME}",
+          "attrs": {
+            "member": [
+              "uid=alice,ou=People,o=orglife.c1,dc=ordered,${LDAP_BASENAME}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "05_add_bob_to_group",
+      "op": "PUT",
+      "resourceType": "Group",
+      "body": {
+        "id": "cccccccc-cccc-cccc-cccc-cccccccccccc",
+        "schemas": [
+          "urn:ietf:params:scim:schemas:core:2.0:Group",
+          "urn:mace:surf.nl:sram:scim:extension:Group"
+        ],
+        "externalId": "cccccccc-cccc-cccc-cccc-cccccccccccc",
+        "displayName": "Lifecycle CO",
+        "members": [
+          { "value": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa", "display": "Alice Example" },
+          { "value": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb", "display": "Bob Example" }
+        ],
+        "urn:mace:surf.nl:sram:scim:extension:Group": {
+          "urn": "orglife.c1",
+          "description": "Lifecycle collaboration",
+          "links": [
+            { "name": "sbs_url", "value": "https://sbs.example/collaborations/cccccccc-cccc-cccc-cccc-cccccccccccc" }
+          ]
+        }
+      },
+      "assertions": [
+        {
+          "dn": "cn=@all,ou=Groups,o=orglife.c1,dc=ordered,${LDAP_BASENAME}",
+          "attrs": {
+            "member": [
+              "uid=alice,ou=People,o=orglife.c1,dc=ordered,${LDAP_BASENAME}",
+              "uid=bob,ou=People,o=orglife.c1,dc=ordered,${LDAP_BASENAME}"
+            ]
+          }
+        },
+        {
+          "dn": "uid=bob,ou=People,o=orglife.c1,dc=ordered,${LDAP_BASENAME}",
+          "must_exist": true
+        },
+        {
+          "dn": "cn=orglife.c1.@all,ou=Groups,dc=flat,${LDAP_BASENAME}",
+          "attrs": {
+            "member": [
+              "uid=alice,ou=People,dc=flat,${LDAP_BASENAME}",
+              "uid=bob,ou=People,dc=flat,${LDAP_BASENAME}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "06_remove_alice_from_group",
+      "op": "PUT",
+      "resourceType": "Group",
+      "body": {
+        "id": "cccccccc-cccc-cccc-cccc-cccccccccccc",
+        "schemas": [
+          "urn:ietf:params:scim:schemas:core:2.0:Group",
+          "urn:mace:surf.nl:sram:scim:extension:Group"
+        ],
+        "externalId": "cccccccc-cccc-cccc-cccc-cccccccccccc",
+        "displayName": "Lifecycle CO",
+        "members": [
+          { "value": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb", "display": "Bob Example" }
+        ],
+        "urn:mace:surf.nl:sram:scim:extension:Group": {
+          "urn": "orglife.c1",
+          "description": "Lifecycle collaboration",
+          "links": [
+            { "name": "sbs_url", "value": "https://sbs.example/collaborations/cccccccc-cccc-cccc-cccc-cccccccccccc" }
+          ]
+        }
+      },
+      "assertions": [
+        {
+          "dn": "cn=@all,ou=Groups,o=orglife.c1,dc=ordered,${LDAP_BASENAME}",
+          "attrs": {
+            "member": [
+              "uid=bob,ou=People,o=orglife.c1,dc=ordered,${LDAP_BASENAME}"
+            ]
+          }
+        },
+        {
+          "dn": "uid=alice,ou=People,o=orglife.c1,dc=ordered,${LDAP_BASENAME}",
+          "must_exist": true
+        },
+        {
+          "dn": "cn=orglife.c1.@all,ou=Groups,dc=flat,${LDAP_BASENAME}",
+          "attrs": {
+            "member": [
+              "uid=bob,ou=People,dc=flat,${LDAP_BASENAME}"
+            ]
+          }
+        },
+        {
+          "dn": "uid=alice,ou=People,dc=flat,${LDAP_BASENAME}",
+          "must_exist": true
+        }
+      ]
+    },
+    {
+      "name": "07_update_user_alice",
+      "op": "PUT",
+      "resourceType": "User",
+      "body": {
+        "id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+        "schemas": [
+          "urn:ietf:params:scim:schemas:core:2.0:User",
+          "urn:mace:surf.nl:sram:scim:extension:User"
+        ],
+        "userName": "alice",
+        "externalId": "alice@sram.surf.nl",
+        "displayName": "Alice Updated",
+        "active": true,
+        "name": { "givenName": "Alice", "familyName": "Updated" },
+        "emails": [{ "value": "alice.updated@example.org", "primary": true }],
+        "urn:mace:surf.nl:sram:scim:extension:User": {
+          "eduPersonUniqueId": "alice@sram.surf.nl",
+          "voPersonExternalId": "alice@uni.example",
+          "sramInactiveDays": 1
+        }
+      },
+      "assertions": [
+        {
+          "dn": "uid=alice,ou=People,o=orglife.c1,dc=ordered,${LDAP_BASENAME}",
+          "attrs": {
+            "displayName": ["Alice Updated"],
+            "mail": ["alice.updated@example.org"],
+            "sn": ["Updated"],
+            "sramInactiveDays": ["1"]
+          }
+        },
+        {
+          "dn": "uid=alice,ou=People,dc=flat,${LDAP_BASENAME}",
+          "attrs": {
+            "displayName": ["Alice Updated"],
+            "mail": ["alice.updated@example.org"],
+            "sn": ["Updated"],
+            "sramInactiveDays": ["1"],
+            "voPersonStatus": ["active"]
+          }
+        }
+      ]
+    },
+    {
+      "name": "08_update_group_co",
+      "op": "PUT",
+      "resourceType": "Group",
+      "body": {
+        "id": "cccccccc-cccc-cccc-cccc-cccccccccccc",
+        "schemas": [
+          "urn:ietf:params:scim:schemas:core:2.0:Group",
+          "urn:mace:surf.nl:sram:scim:extension:Group"
+        ],
+        "externalId": "cccccccc-cccc-cccc-cccc-cccccccccccc",
+        "displayName": "Lifecycle CO Renamed",
+        "members": [
+          { "value": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb", "display": "Bob Example" }
+        ],
+        "urn:mace:surf.nl:sram:scim:extension:Group": {
+          "urn": "orglife.c1",
+          "description": "Renamed collaboration",
+          "links": [
+            { "name": "sbs_url", "value": "https://sbs.example/collaborations/cccccccc-cccc-cccc-cccc-cccccccccccc" }
+          ]
+        }
+      },
+      "assertions": [
+        {
+          "dn": "o=orglife.c1,dc=ordered,${LDAP_BASENAME}",
+          "attrs": {
+            "displayName": ["Lifecycle CO Renamed"],
+            "description": ["Renamed collaboration"]
+          }
+        },
+        {
+          "dn": "cn=@all,ou=Groups,o=orglife.c1,dc=ordered,${LDAP_BASENAME}",
+          "attrs": {
+            "displayName": ["Lifecycle CO Renamed"]
+          }
+        },
+        {
+          "dn": "cn=orglife.c1.@all,ou=Groups,dc=flat,${LDAP_BASENAME}",
+          "attrs": {
+            "displayName": ["Lifecycle CO Renamed"],
+            "member": [
+              "uid=bob,ou=People,dc=flat,${LDAP_BASENAME}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "09_deactivate_user_alice",
+      "op": "PUT",
+      "resourceType": "User",
+      "body": {
+        "id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+        "schemas": [
+          "urn:ietf:params:scim:schemas:core:2.0:User",
+          "urn:mace:surf.nl:sram:scim:extension:User"
+        ],
+        "userName": "alice",
+        "externalId": "alice@sram.surf.nl",
+        "displayName": "Alice Updated",
+        "active": false,
+        "name": { "givenName": "Alice", "familyName": "Updated" },
+        "emails": [{ "value": "alice.updated@example.org", "primary": true }],
+        "urn:mace:surf.nl:sram:scim:extension:User": {
+          "eduPersonUniqueId": "alice@sram.surf.nl",
+          "voPersonExternalId": "alice@uni.example",
+          "sramInactiveDays": 1
+        }
+      },
+      "assertions": [
+        {
+          "dn": "uid=alice,ou=People,o=orglife.c1,dc=ordered,${LDAP_BASENAME}",
+          "attrs": {
+            "voPersonStatus": ["expired"]
+          }
+        },
+        {
+          "dn": "uid=alice,ou=People,dc=flat,${LDAP_BASENAME}",
+          "attrs": {
+            "voPersonStatus": ["expired"],
+            "displayName": ["Alice Updated"],
+            "mail": ["alice.updated@example.org"]
+          }
+        }
+      ]
+    },
+    {
+      "name": "10_delete_subgroup",
+      "op": "DELETE",
+      "resourceType": "Group",
+      "id": "dddddddd-dddd-dddd-dddd-dddddddddddd",
+      "assertions": [
+        {
+          "dn": "cn=admins,ou=Groups,o=orglife.c1,dc=ordered,${LDAP_BASENAME}",
+          "must_exist": false
+        },
+        {
+          "dn": "cn=orglife.c1.admins,ou=Groups,dc=flat,${LDAP_BASENAME}",
+          "must_exist": false
+        }
+      ]
+    },
+    {
+      "name": "11_delete_group_co",
+      "op": "DELETE",
+      "resourceType": "Group",
+      "id": "cccccccc-cccc-cccc-cccc-cccccccccccc",
+      "assertions": [
+        {
+          "dn": "cn=@all,ou=Groups,o=orglife.c1,dc=ordered,${LDAP_BASENAME}",
+          "must_exist": false
+        },
+        {
+          "dn": "cn=orglife.c1.@all,ou=Groups,dc=flat,${LDAP_BASENAME}",
+          "must_exist": false
+        }
+      ]
+    },
+    {
+      "name": "12_delete_user_bob",
+      "op": "DELETE",
+      "resourceType": "User",
+      "id": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+      "assertions": [
+        {
+          "dn": "uid=bob,ou=People,o=orglife.c1,dc=ordered,${LDAP_BASENAME}",
+          "must_exist": false
+        },
+        {
+          "dn": "uid=bob,ou=People,dc=flat,${LDAP_BASENAME}",
+          "must_exist": false
+        }
+      ]
+    },
+    {
+      "name": "13_delete_user_alice",
+      "op": "DELETE",
+      "resourceType": "User",
+      "id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+      "assertions": [
+        {
+          "dn": "uid=alice,ou=People,o=orglife.c1,dc=ordered,${LDAP_BASENAME}",
+          "must_exist": false
+        },
+        {
+          "dn": "uid=alice,ou=People,dc=flat,${LDAP_BASENAME}",
+          "must_exist": false
+        }
+      ]
+    }
+  ],
+  "assertions": []
+}
