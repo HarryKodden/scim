@@ -236,6 +236,23 @@ def test_flat_group_projects_co_mail_and_status():
     assert entry["organizationalStatus"] == ["active"]
 
 
+def test_co_contact_mail_from_members_when_payload_omits_emails():
+    co_attrs = {
+        "objectClass": list(sram_format.SRAM_CO_OBJECT_CLASSES),
+        "o": ["surf.harrytest"],
+        "displayName": ["harry-test"],
+    }
+    assert mapping.co_contact_mail_from_members(co_attrs, []) is None
+    assert mapping.co_contact_mail_from_members(
+        co_attrs,
+        ["harry.kodden@surf.nl", "david.salek@surf.nl", "harry.kodden@surf.nl"],
+    ) == ["harry.kodden@surf.nl", "david.salek@surf.nl"]
+    co_attrs["mail"] = ["from-payload@surf.nl"]
+    assert mapping.co_contact_mail_from_members(
+        co_attrs, ["member@surf.nl"]
+    ) is None
+
+
 def test_flat_subgroup_also_gets_co_extras():
     ordered = mapping.scim_group_to_group_ldap(
         {

@@ -100,10 +100,10 @@ SCIM org entry observed as `o=surf` (wrong level) with similar URI/description p
 
 | Issue | Notes |
 | --- | --- |
-| Ordered person `uniqueIdentifier` + `extensibleObject` | SCIM-store overlay (OpenLDAP requires extensibleObject for uniqueIdentifier); both stripped on flat |
-| `voPersonPolicyAgreement;time-*` | **SBS → SCIM payload** must include it; mapping already writes when present |
-| CO `mail` | Only from Group.emails in SCIM (not synthesized from members) |
-| Group `uniqueIdentifier` | Bare UUID only (SRAM) |
+| CO `mail` | Group.emails when present; else member contact mails (SRAM shape) — **fixed** |
+| Ordered person `uniqueIdentifier` + `extensibleObject` | SCIM-store overlay (OpenLDAP requires extensibleObject for uniqueIdentifier); both stripped on flat — **accepted** |
+| `voPersonPolicyAgreement;time-*` | **SRAM/SBS** must send `voPersonPolicyAgreement` on User SCIM extension; mapping writes when present |
+| Group `uniqueIdentifier` | Bare UUID only (SRAM) — **fixed** |
 
 Local verification: `pytest test/test_sram_format.py test/test_sram_ldap.py`
 

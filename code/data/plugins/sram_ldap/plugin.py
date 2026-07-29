@@ -659,6 +659,27 @@ class SRAM_LDAP_Plugin(Plugin):
                     )
                 self._upsert(flat_dn, entry)
 
+    def _sync_co_contact_mail(
+        self,
+        co_identifier: str,
+        co_attrs: Dict[str, List[Any]],
+        member_mails: List[str],
+    ) -> Dict[str, List[Any]]:
+        """Set CO mail from member contacts when SCIM Group has no emails."""
+        from data.plugins.sram_ldap import sram_format
+
+        mails = mapping.co_contact_mail_from_members(co_attrs, member_mails)
+        if not mails:
+            return co_attrs
+        merged = dict(co_attrs)
+        merged["mail"] = mails
+        if "objectClass" not in merged:
+            merged["objectClass"] = list(sram_format.SRAM_CO_OBJECT_CLASSES)
+        if "o" not in merged:
+            merged["o"] = [co_identifier]
+        self._upsert(dit.co_dn(co_identifier, self.ldap_basename), merged)
+        return merged
+
     def _delete_holding_ou_if_empty(self) -> None:
         hold_ou = f"ou=People,{dit.ordered_base(self.ldap_basename)}"
         people = self._search(
@@ -708,6 +729,7 @@ class SRAM_LDAP_Plugin(Plugin):
         # Ensure each member exists under this CO's People
         hold_base = dit.ordered_base(self.ldap_basename)
         member_dns: List[str] = []
+        member_mails: List[str] = []
         for uid in member_uids:
             person_dn = dit.person_dn(uid, co_identifier, self.ldap_basename)
             hold_dn = f"uid={uid},ou=People,{hold_base}"
@@ -733,9 +755,12 @@ class SRAM_LDAP_Plugin(Plugin):
                     normalized = mapping.scim_user_to_ldap(
                         {"userName": uid, "displayName": uid, "active": True}
                     )
-                # Preserve existing SCIM uniqueIdentifier; drop extensibleObject.
+                # Preserve existing SCIM uniqueIdentifier overlay when present.
                 self._apply_person_scim_overlay(normalized)
                 self._upsert(person_dn, normalized)
+                for mail in normalized.get("mail") or []:
+                    if mail and mail not in member_mails:
+                        member_mails.append(mail)
                 if person_dn.lower() != hold_dn.lower():
                     self._delete_if_exists(hold_dn)
             else:
@@ -747,7 +772,9 @@ class SRAM_LDAP_Plugin(Plugin):
 
         self._delete_holding_ou_if_empty()
 
-        # CO mail only from SCIM Group.emails (SRAM contact list), not members.
+        co_attrs = self._sync_co_contact_mail(
+            co_identifier, co_attrs, member_mails
+        )
 
         if member_dns:
             grp_attrs["member"] = member_dns

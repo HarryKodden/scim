@@ -102,6 +102,23 @@ def _all_emails(resource: dict) -> List[str]:
     return values
 
 
+def co_contact_mail_from_members(
+    co_attrs: Dict[str, List[Any]],
+    member_mails: List[str],
+) -> Optional[List[str]]:
+    """SRAM CO ``mail`` when Group.emails omitted: use member contact mails.
+
+    Payload ``emails`` / extension ``mail`` win when present on ``co_attrs``.
+    """
+    if co_attrs.get("mail"):
+        return None
+    deduped: List[str] = []
+    for mail in member_mails:
+        if mail and mail not in deduped:
+            deduped.append(mail)
+    return deduped or None
+
+
 def _ssh_keys(resource: dict) -> List[str]:
     keys: List[str] = []
     for item in resource.get("x509Certificates") or []:
