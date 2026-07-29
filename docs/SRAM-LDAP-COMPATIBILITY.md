@@ -100,7 +100,7 @@ SCIM org entry observed as `o=surf` (wrong level) with similar URI/description p
 
 | Issue | Notes |
 | --- | --- |
-| Ordered person `uniqueIdentifier` | SCIM-store overlay (single value); stripped on flat. No `extensibleObject`. |
+| Ordered person `uniqueIdentifier` + `extensibleObject` | SCIM-store overlay (OpenLDAP requires extensibleObject for uniqueIdentifier); both stripped on flat |
 | `voPersonPolicyAgreement;time-*` | **SBS → SCIM payload** must include it; mapping already writes when present |
 | CO `mail` | Only from Group.emails in SCIM (not synthesized from members) |
 | Group `uniqueIdentifier` | Bare UUID only (SRAM) |

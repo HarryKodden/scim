@@ -163,20 +163,18 @@ class SRAM_LDAP_Plugin(Plugin):
     ) -> Dict[str, List[Any]]:
         """Attach SCIM id as uniqueIdentifier on ordered persons (SRAM omits it).
 
-        Do not add extensibleObject — uniqueIdentifier is a standard cosine
-        attribute. Flat derive deletes uniqueIdentifier again.
+        OpenLDAP rejects uniqueIdentifier on inetOrgPerson without an OC that
+        MAY it — use extensibleObject for the SCIM-store overlay. Flat derive
+        strips both again.
         """
         if scim_id or external_id:
             ldap_attrs["uniqueIdentifier"] = mapping.scim_store_identifiers(
                 scim_id or "", external_id
             )
-        # Never keep extensibleObject on persons (SRAM objectClass set).
-        ocs = [
-            oc
-            for oc in (ldap_attrs.get("objectClass") or [])
-            if str(oc).lower() != "extensibleobject"
-        ]
-        if ocs:
+        if ldap_attrs.get("uniqueIdentifier"):
+            ocs = list(ldap_attrs.get("objectClass") or [])
+            if not any(str(oc).lower() == "extensibleobject" for oc in ocs):
+                ocs.append("extensibleObject")
             ldap_attrs["objectClass"] = ocs
         return ldap_attrs
 
