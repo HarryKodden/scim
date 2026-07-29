@@ -89,3 +89,61 @@ def test_scim_sequence_ldap_state(fixture_name, clean_ldap, ldap_env):
     sequence = load_sequence(FIXTURES / fixture_name / "sequence.json")
     apply_sequence(sequence, conn=clean_ldap)
     assert_ldap(sequence, clean_ldap)
+
+
+def test_group_extension_links_from_ldap(clean_ldap, ldap_env):
+    sequence = load_sequence(FIXTURES / "minimal" / "sequence.json")
+    apply_sequence(sequence, conn=clean_ldap)
+
+    from data.plugins.sram_ldap.plugin import SRAM_LDAP_Plugin
+    from data.plugins.sram_ldap import mapping
+
+    host = os.environ.get("LDAP_HOSTNAME", "localhost")
+    basename = os.environ.get(
+        "LDAP_BASENAME", "dc=pilot,dc=services,dc=sram,dc=tld"
+    )
+    user = os.environ.get(
+        "LDAP_USERNAME", "cn=admin,dc=sram,dc=tld"
+    )
+    password = os.environ.get("LDAP_PASSWORD", "secret")
+    flat = os.environ.get("LDAP_FLAT_DERIVE", "true").lower() in (
+        "1",
+        "true",
+        "yes",
+        "on",
+    )
+
+    Groups = SRAM_LDAP_Plugin("Groups", host, basename, user, password, flat)
+    group_id = "22222222-2222-2222-2222-222222222222"
+    group = Groups[group_id]
+
+    ext = group.get(mapping.sram_group_schema()) or {}
+    links = ext.get("links") or []
+    assert sorted(
+        [(l["name"], l["value"]) for l in links]
+    ) == sorted(
+        [
+            (
+                "sbs_url",
+                "https://sbs.example/collaborations/22222222-2222-2222-2222-222222222222",
+            ),
+            ("logo", "https://example.org/logo.png"),
+        ]
+    )
+
+    # Subgroups should inherit CO sbs_url/logo labels (SRAM behavior).
+    subgroup_id = "33333333-3333-3333-3333-333333333333"
+    subgroup = Groups[subgroup_id]
+    subext = subgroup.get(mapping.sram_group_schema()) or {}
+    sublinks = subext.get("links") or []
+    assert sorted(
+        [(l["name"], l["value"]) for l in sublinks]
+    ) == sorted(
+        [
+            (
+                "sbs_url",
+                "https://sbs.example/collaborations/22222222-2222-2222-2222-222222222222",
+            ),
+            ("logo", "https://example.org/logo.png"),
+        ]
+    )

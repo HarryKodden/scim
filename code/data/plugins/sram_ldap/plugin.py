@@ -589,11 +589,28 @@ class SRAM_LDAP_Plugin(Plugin):
                 }
             )
 
+        def labeled_uri_to_links(labeled_uris: List[Any]) -> List[dict]:
+            """Convert LDAP labeledURI strings back to SCIM extension links[].
+
+            SRAM stores labeledURI as: `<url> <name>`.
+            """
+            out: List[dict] = []
+            for item in labeled_uris or []:
+                if not isinstance(item, str):
+                    continue
+                if " " not in item:
+                    continue
+                value, name = item.rsplit(" ", 1)
+                if value and name:
+                    out.append({"name": name, "value": value})
+            return out
+
         scim_id, external_id = mapping.split_scim_store_identifiers(
             attrs.get("uniqueIdentifier")
         )
         scim_id = scim_id or id
         external_id = external_id or scim_id
+        links = labeled_uri_to_links(attrs.get("labeledURI") or [])
 
         return {
             "id": scim_id,
@@ -611,6 +628,7 @@ class SRAM_LDAP_Plugin(Plugin):
             mapping.sram_group_schema(): {
                 "urn": urn,
                 "description": first("description"),
+                **({"links": links} if links else {}),
             },
         }
 
@@ -744,6 +762,10 @@ class SRAM_LDAP_Plugin(Plugin):
             group_cn,
             co_display_name=str(co_display),
         )
+        # SRAM service LDAP stores CO sbs_url/logo labels on subgroups even
+        # when the subgroup extension payload omits them.
+        if "labeledURI" not in grp_attrs and co_attrs.get("labeledURI"):
+            grp_attrs["labeledURI"] = list(co_attrs["labeledURI"])
         # SRAM: bare UUID only on group uniqueIdentifier.
         grp_attrs["uniqueIdentifier"] = mapping.group_unique_identifier(
             id, resource.get("externalId")
