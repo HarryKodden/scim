@@ -562,8 +562,32 @@ class SRAM_LDAP_Plugin(Plugin):
         for member_dn in attrs.get("member") or []:
             # uid=...,ou=People,...
             rdn = member_dn.split(",", 1)[0]
-            if rdn.lower().startswith("uid="):
-                members.append({"value": rdn.split("=", 1)[1], "display": rdn})
+            if not rdn.lower().startswith("uid="):
+                continue
+            uid = rdn.split("=", 1)[1]
+            member_display = uid
+            member_value = uid
+            if self.session.search(
+                member_dn,
+                "(objectClass=person)",
+                search_scope="BASE",
+                attributes=["displayName", "uniqueIdentifier"],
+            ):
+                person_attrs = self.session.entries[0].entry_attributes_as_dict
+                member_display = (
+                    (person_attrs.get("displayName") or [uid])[0] or uid
+                )
+                person_id, _person_external = mapping.split_scim_store_identifiers(
+                    person_attrs.get("uniqueIdentifier")
+                )
+                member_value = person_id or uid
+            members.append(
+                {
+                    "value": member_value,
+                    "display": member_display,
+                    "$ref": f"/Users/{member_value}",
+                }
+            )
 
         scim_id, external_id = mapping.split_scim_store_identifiers(
             attrs.get("uniqueIdentifier")
