@@ -52,6 +52,40 @@
             "mutability": "readWrite",
             "returned": "default",
             "uniqueness": "none"
+        },
+        {
+            "name": "voPersonPolicyAgreement",
+            "description": "Policies agreed to by the user (SBS shape: url + agreed_at).",
+            "type": "complex",
+            "multiValued": true,
+            "required": false,
+            "mutability": "readWrite",
+            "returned": "default",
+            "uniqueness": "none",
+            "subAttributes": [
+                {
+                    "name": "url",
+                    "description": "URL of the agreed policy",
+                    "type": "string",
+                    "multiValued": false,
+                    "required": true,
+                    "caseExact": true,
+                    "mutability": "readWrite",
+                    "returned": "default",
+                    "uniqueness": "none"
+                },
+                {
+                    "name": "agreed_at",
+                    "description": "When the policy was agreed (ISO-8601 datetime string)",
+                    "type": "string",
+                    "multiValued": false,
+                    "required": false,
+                    "caseExact": true,
+                    "mutability": "readWrite",
+                    "returned": "default",
+                    "uniqueness": "none"
+                }
+            ]
         }
     ]
 }

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import base64
 import os
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
 DEFAULT_SRAM_SCHEMA = "urn:mace:surf.nl:sram:scim:extension"
@@ -143,8 +144,32 @@ def _labeled_uris(ext: dict) -> List[str]:
     return labeled
 
 
+def _policy_agreement_epoch(item: dict) -> Optional[int]:
+    """Epoch seconds from ``time`` (int) or SBS ``agreed_at`` (ISO datetime)."""
+    if item.get("time") is not None:
+        try:
+            return int(item["time"])
+        except (TypeError, ValueError):
+            pass
+    agreed_at = item.get("agreed_at")
+    if not agreed_at:
+        return None
+    raw = str(agreed_at).strip().replace(" ", "T", 1)
+    try:
+        dt = datetime.fromisoformat(raw)
+    except ValueError:
+        return None
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return int(dt.timestamp())
+
+
 def _policy_agreement_attrs(resource: dict) -> Dict[str, List[Any]]:
-    """Map voPersonPolicyAgreement → LDAP option attrs ``;time-<epoch>``."""
+    """Map voPersonPolicyAgreement → LDAP option attrs ``;time-<epoch>``.
+
+    Canonical SBS shape: ``{"url": "<url>", "agreed_at": "<iso>"}``.
+    ``value`` / ``time`` are accepted as optional fallbacks.
+    """
     out: Dict[str, List[Any]] = {}
     for schema in (VOPERSON_SCHEMA, sram_user_schema()):
         ext = _extension(resource, schema)
@@ -154,16 +179,48 @@ def _policy_agreement_attrs(resource: dict) -> Dict[str, List[Any]]:
         for item in agreements:
             if not isinstance(item, dict):
                 continue
-            url = item.get("value")
+            url = item.get("url") or item.get("value")
             if not url:
                 continue
-            time = item.get("time")
-            if time is None:
+            epoch = _policy_agreement_epoch(item)
+            if epoch is None:
                 out.setdefault("voPersonPolicyAgreement", []).append(url)
             else:
-                key = f"voPersonPolicyAgreement;time-{time}"
+                key = f"voPersonPolicyAgreement;time-{epoch}"
                 out.setdefault(key, []).append(url)
     return out
+
+
+def policy_agreements_from_ldap(
+    attrs: Dict[str, Any],
+) -> List[Dict[str, Any]]:
+    """Rebuild SCIM ``voPersonPolicyAgreement`` list from LDAP person attrs.
+
+    Returns SBS shape only: ``{"url": "...", "agreed_at": "..."}``.
+    """
+    items: List[Dict[str, Any]] = []
+    for name, values in attrs.items():
+        lower = str(name).lower()
+        if not lower.startswith("vopersonpolicyagreement"):
+            continue
+        if not isinstance(values, list):
+            values = [values]
+        epoch: Optional[int] = None
+        if ";time-" in lower:
+            try:
+                epoch = int(lower.rsplit(";time-", 1)[1])
+            except ValueError:
+                epoch = None
+        for url in values:
+            if not url:
+                continue
+            item: Dict[str, Any] = {"url": str(url)}
+            if epoch is not None:
+                item["agreed_at"] = datetime.fromtimestamp(
+                    epoch, tz=timezone.utc
+                ).strftime("%Y-%m-%d %H:%M:%S+00:00")
+            items.append(item)
+    return items
 
 
 def scim_user_to_ldap(resource: dict) -> Dict[str, List[Any]]:

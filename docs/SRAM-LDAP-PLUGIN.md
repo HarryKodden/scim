@@ -27,6 +27,9 @@ SCIM ``id`` is always server-generated (UUID). Client correlation stays in
 ``externalId``. Group ``members.value`` resolves by server ``id`` first, with
 ``externalId`` as a fallback for SBS quirks.
 
+Full attribute tables (SCIM→LDAP and LDAP→SCIM):
+**[`SCIM-LDAP-MAPPING.md`](SCIM-LDAP-MAPPING.md)**.
+
 ## Local test LDAP
 
 ```bash

@@ -40,7 +40,10 @@ def test_sram_person_mapping_matches_dictated_ocs_and_forbids_overlays():
                 "voPersonExternalAffiliation": "employee@surf.nl",
                 "sramInactiveDays": 1,
                 "voPersonPolicyAgreement": [
-                    {"value": "https://sram.surf.nl/aup", "time": 1780922154},
+                    {
+                        "url": "https://sram.surf.nl/aup",
+                        "agreed_at": "2026-06-08 12:35:54+00:00",
+                    },
                 ],
             },
         }

@@ -83,6 +83,13 @@ async def create_user(
                         "eduPersonUniqueId": "string",
                         "voPersonExternalAffiliation": "string",
                         "voPersonExternalId": "string",
+                        "sramInactiveDays": 0,
+                        "voPersonPolicyAgreement": [
+                            {
+                                "url": "https://example.org/aup",
+                                "agreed_at": "2026-06-09 07:10:03+00:00",
+                            }
+                        ],
                     },
                     "x509Certificates": [
                         {

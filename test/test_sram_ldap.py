@@ -73,7 +73,7 @@ def test_scim_user_to_ldap():
             "voPersonExternalAffiliation": "employee@uni.example",
             "sramInactiveDays": 7,
             "voPersonPolicyAgreement": [
-                {"value": "https://surf.nl", "time": 1780989003},
+                {"url": "https://surf.nl", "agreed_at": "2026-06-09 07:10:03+00:00"},
             ],
         },
     }
@@ -86,6 +86,45 @@ def test_scim_user_to_ldap():
     assert "extensibleObject" not in entry["objectClass"]
     assert entry["sshPublicKey"] == ["ssh-ed25519 AAAA test@host"]
     assert entry["voPersonPolicyAgreement;time-1780989003"] == ["https://surf.nl"]
+
+
+def test_scim_user_policy_agreement_sbs_shape():
+    """SBS sends url + agreed_at only."""
+    schema = mapping.sram_user_schema()
+    entry = mapping.scim_user_to_ldap(
+        {
+            "userName": "john",
+            "displayName": "John",
+            "active": True,
+            schema: {
+                "eduPersonUniqueId": "urn:john",
+                "sramInactiveDays": 1,
+                "voPersonPolicyAgreement": [
+                    {
+                        "url": "https://surf.nl",
+                        "agreed_at": "2026-07-29 12:47:03+00:00",
+                    }
+                ],
+            },
+        }
+    )
+    # 2026-07-29 12:47:03 UTC → 1785329223
+    assert entry["voPersonPolicyAgreement;time-1785329223"] == ["https://surf.nl"]
+
+
+def test_policy_agreements_from_ldap_roundtrip():
+    items = mapping.policy_agreements_from_ldap(
+        {
+            "voPersonPolicyAgreement;time-1785329223": ["https://surf.nl"],
+            "uid": ["john"],
+        }
+    )
+    assert items == [
+        {
+            "url": "https://surf.nl",
+            "agreed_at": "2026-07-29 12:47:03+00:00",
+        }
+    ]
 
 
 def test_scim_user_inactive():

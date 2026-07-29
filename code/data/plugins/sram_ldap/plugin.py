@@ -459,6 +459,11 @@ class SRAM_LDAP_Plugin(Plugin):
                 "sramInactiveDays": first("sramInactiveDays"),
             },
         }
+        agreements = mapping.policy_agreements_from_ldap(attrs)
+        if agreements:
+            resource[mapping.sram_user_schema()][
+                "voPersonPolicyAgreement"
+            ] = agreements
         return resource
 
     def _set_user(self, id: str, resource: dict) -> None:
