@@ -230,17 +230,25 @@ def test_merge_vo_person_status():
     assert flat.merge_vo_person_status(["expired", "expired"]) == "expired"
 
 
-def test_scim_store_identifiers_keeps_server_id_first():
+def test_scim_store_identifiers_keeps_server_and_external_id():
     values = mapping.scim_store_identifiers(
         "server-uuid-1",
         "client-uuid-1@sram.surf.nl",
     )
-    assert values[0] == "server-uuid-1"
-    assert "client-uuid-1@sram.surf.nl" in values
-    assert "client-uuid-1" in values
+    assert values == ["server-uuid-1", "client-uuid-1@sram.surf.nl"]
     scim_id, external_id = mapping.split_scim_store_identifiers(values)
     assert scim_id == "server-uuid-1"
     assert external_id == "client-uuid-1@sram.surf.nl"
+
+
+def test_group_unique_identifier_is_bare_only():
+    assert mapping.group_unique_identifier(
+        "server-generated-uuid",
+        "fb9ce3da-0242-4fe4-9ea5-462d0cdfec58@sram.surf.nl",
+    ) == ["fb9ce3da-0242-4fe4-9ea5-462d0cdfec58"]
+    assert mapping.group_unique_identifier(
+        "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee@sram.surf.nl"
+    ) == ["aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"]
 
 
 def test_plugin_id_is_server_generated_not_external_id():

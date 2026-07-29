@@ -47,18 +47,21 @@ def flat_group_entry(
     entry = copy.deepcopy(ordered_entry)
     entry["cn"] = [f"{co_identifier}.{group_cn}"]
     entry["member"] = list(flat_member_dns)
-    # Ordered groups may carry [scim_id, externalId…]; SRAM flat keeps the
-    # bare client correlation id only (service LDAP shape).
+    # SRAM flat/ordered groups: bare uniqueIdentifier only.
     uids = entry.get("uniqueIdentifier") or []
-    if isinstance(uids, list) and len(uids) > 1:
-        _scim_id, external_id = mapping.split_scim_store_identifiers(uids)
-        bare = (
-            mapping.bare_unique_identifier(external_id) if external_id else None
-        )
-        if bare:
-            entry["uniqueIdentifier"] = [bare]
-        elif external_id:
-            entry["uniqueIdentifier"] = [external_id]
+    if uids:
+        if not isinstance(uids, list):
+            uids = [uids]
+        bare = mapping.bare_unique_identifier(str(uids[0])) or str(uids[0])
+        # Prefer bare form of any value that looks like uuid@realm
+        for v in uids:
+            b = mapping.bare_unique_identifier(str(v))
+            if b and "@" not in str(v):
+                bare = b
+                break
+            if b:
+                bare = b
+        entry["uniqueIdentifier"] = [bare]
     # SRAM projects CO mail + organizationalStatus onto flat groups.
     if co_attrs:
         if co_attrs.get("mail") and not entry.get("mail"):

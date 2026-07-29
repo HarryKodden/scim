@@ -100,12 +100,13 @@ SCIM org entry observed as `o=surf` (wrong level) with similar URI/description p
 
 | Issue | Notes |
 | --- | --- |
-| Ordered person `uniqueIdentifier` | **SCIM-store overlay** for `/Users/{id}` + Group members; stripped again on flat persons. Mapping tests assert SRAM shape without it. |
-| `voPersonPolicyAgreement;time-*` | Written when present in SCIM User payload (`test_sram_format`) |
-| Holding `ou=People` under ordered | Transient only; deleted when empty |
-| Multi-value order (`labeledURI`, `sshPublicKey`) | Not significant for LDAP |
+| Ordered person `uniqueIdentifier` | SCIM-store overlay (single value); stripped on flat. No `extensibleObject`. |
+| `voPersonPolicyAgreement;time-*` | **SBS → SCIM payload** must include it; mapping already writes when present |
+| CO `mail` | Only from Group.emails in SCIM (not synthesized from members) |
+| Group `uniqueIdentifier` | Bare UUID only (SRAM) |
 
-Local verification: `pytest test/test_sram_format.py test/test_sram_ldap.py` (dictated shapes in `sram_format.py`).
+Local verification: `pytest test/test_sram_format.py test/test_sram_ldap.py`
+
 
 
 

@@ -41,22 +41,28 @@ def bare_unique_identifier(value: Optional[str]) -> Optional[str]:
 def scim_store_identifiers(
     scim_id: str, external_id: Optional[str] = None
 ) -> List[str]:
-    """LDAP uniqueIdentifier values for the SCIM store overlay.
+    """Ordered-person SCIM-store overlay for uniqueIdentifier.
 
-    First value is the server-generated SCIM ``id``. Extra values are the
-    client ``externalId`` (and its bare UUID form) so Group ``members.value``
-    can resolve whether the client sends the server id or its own id.
+    Stores the server SCIM ``id`` and, when different, the client ``externalId``
+    so both ``GET /Users/{id}`` and Group ``members.value`` resolve. SRAM
+    persons omit this attribute entirely; flat derive deletes it.
     """
     values: List[str] = []
     if scim_id:
         values.append(str(scim_id))
     if external_id:
         ext = str(external_id)
-        bare = bare_unique_identifier(ext) or ext
-        for candidate in (ext, bare):
-            if candidate and candidate not in values:
-                values.append(candidate)
+        if ext not in values:
+            values.append(ext)
     return values
+
+
+def group_unique_identifier(
+    scim_id: str, external_id: Optional[str] = None
+) -> List[str]:
+    """SRAM group uniqueIdentifier: bare UUID only (no @realm)."""
+    bare = bare_unique_identifier(external_id or scim_id)
+    return [bare] if bare else []
 
 
 def split_scim_store_identifiers(
@@ -71,7 +77,9 @@ def split_scim_store_identifiers(
     if not cleaned:
         return None, None
     scim_id = cleaned[0]
-    external_id = cleaned[1] if len(cleaned) > 1 else cleaned[0]
+    # Prefer a @realm value as externalId when present.
+    with_realm = next((v for v in cleaned if "@" in v), None)
+    external_id = with_realm or (cleaned[1] if len(cleaned) > 1 else cleaned[0])
     return scim_id, external_id
 
 

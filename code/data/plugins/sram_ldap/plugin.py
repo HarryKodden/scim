@@ -161,29 +161,40 @@ class SRAM_LDAP_Plugin(Plugin):
         scim_id: Optional[str] = None,
         external_id: Optional[str] = None,
     ) -> Dict[str, List[Any]]:
-        """Attach SCIM id (+ optional externalId) as uniqueIdentifier on ordered persons.
+        """Attach SCIM id as uniqueIdentifier on ordered persons (SRAM omits it).
 
-        Requires extensibleObject. Flat derive strips both so service LDAP stays
-        SRAM-shaped.
+        Do not add extensibleObject — uniqueIdentifier is a standard cosine
+        attribute. Flat derive deletes uniqueIdentifier again.
         """
-        if scim_id:
+        if scim_id or external_id:
             ldap_attrs["uniqueIdentifier"] = mapping.scim_store_identifiers(
-                scim_id, external_id
+                scim_id or "", external_id
             )
-        if ldap_attrs.get("uniqueIdentifier"):
-            ocs = list(ldap_attrs.get("objectClass") or [])
-            if not any(str(oc).lower() == "extensibleobject" for oc in ocs):
-                ocs.append("extensibleObject")
-                ldap_attrs["objectClass"] = ocs
+        # Never keep extensibleObject on persons (SRAM objectClass set).
+        ocs = [
+            oc
+            for oc in (ldap_attrs.get("objectClass") or [])
+            if str(oc).lower() != "extensibleobject"
+        ]
+        if ocs:
+            ldap_attrs["objectClass"] = ocs
         return ldap_attrs
 
-    def _upsert(self, dn: str, attributes: Dict[str, List[Any]]) -> None:
+    def _upsert(
+        self,
+        dn: str,
+        attributes: Dict[str, List[Any]],
+        *,
+        remove_attrs: Optional[List[str]] = None,
+    ) -> None:
         attributes = self._sanitize_attributes(attributes)
         is_group = any(
             str(oc).lower() == "groupofmembers"
             for oc in (attributes.get("objectClass") or [])
         )
-        if self.session.search(dn, "(objectClass=*)", search_scope="BASE", attributes=["*"]):
+        if self.session.search(
+            dn, "(objectClass=*)", search_scope="BASE", attributes=["*"]
+        ):
             changes = {}
             for attr, values in attributes.items():
                 if attr.lower() == "objectclass":
@@ -196,10 +207,16 @@ class SRAM_LDAP_Plugin(Plugin):
             # Only clear member on groupOfMembers entries (never on organization).
             if is_group and "member" not in attributes:
                 changes["member"] = [("MODIFY_DELETE", [])]
+            for attr in remove_attrs or []:
+                if attr not in changes:
+                    changes[attr] = [("MODIFY_DELETE", [])]
             ok = self.session.modify(dn, changes)
-            # MODIFY_DELETE on missing member is fine to ignore
+            # MODIFY_DELETE on missing attr is fine to ignore
             if not ok and self.session.result.get("description") == "noSuchAttribute":
-                changes.pop("member", None)
+                for attr in list(changes):
+                    ops = changes[attr]
+                    if ops and ops[0][0] == "MODIFY_DELETE":
+                        changes.pop(attr, None)
                 ok = self.session.modify(dn, changes) if changes else True
         else:
             ok = self.session.add(dn, attributes=attributes)
@@ -506,7 +523,11 @@ class SRAM_LDAP_Plugin(Plugin):
                 co_statuses.extend(attrs.get("voPersonStatus") or [])
         status = flat.merge_vo_person_status(co_statuses or statuses or ["active"])
         entry = flat.flat_person_entry(ldap_attrs, status)
-        self._upsert(dit.flat_person_dn(uid, self.ldap_basename), entry)
+        self._upsert(
+            dit.flat_person_dn(uid, self.ldap_basename),
+            entry,
+            remove_attrs=["uniqueIdentifier"],
+        )
 
     # --- Groups -------------------------------------------------------------
 
@@ -680,9 +701,8 @@ class SRAM_LDAP_Plugin(Plugin):
             group_cn,
             co_display_name=str(co_display),
         )
-        # Server SCIM id first; bare/full externalId also stored for lookup +
-        # SRAM flat projection (see flat.flat_group_entry).
-        grp_attrs["uniqueIdentifier"] = mapping.scim_store_identifiers(
+        # SRAM: bare UUID only on group uniqueIdentifier.
+        grp_attrs["uniqueIdentifier"] = mapping.group_unique_identifier(
             id, resource.get("externalId")
         )
         member_uids = self._member_uids(resource)
@@ -690,7 +710,6 @@ class SRAM_LDAP_Plugin(Plugin):
         # Ensure each member exists under this CO's People
         hold_base = dit.ordered_base(self.ldap_basename)
         member_dns: List[str] = []
-        member_mails: List[str] = []
         for uid in member_uids:
             person_dn = dit.person_dn(uid, co_identifier, self.ldap_basename)
             hold_dn = f"uid={uid},ou=People,{hold_base}"
@@ -716,13 +735,9 @@ class SRAM_LDAP_Plugin(Plugin):
                     normalized = mapping.scim_user_to_ldap(
                         {"userName": uid, "displayName": uid, "active": True}
                     )
-                # Keep uniqueIdentifier + extensibleObject together (do not
-                # strip extensibleObject while uniqueIdentifier remains).
+                # Preserve existing SCIM uniqueIdentifier; drop extensibleObject.
                 self._apply_person_scim_overlay(normalized)
                 self._upsert(person_dn, normalized)
-                for mail in normalized.get("mail") or []:
-                    if mail and mail not in member_mails:
-                        member_mails.append(mail)
                 if person_dn.lower() != hold_dn.lower():
                     self._delete_if_exists(hold_dn)
             else:
@@ -734,20 +749,7 @@ class SRAM_LDAP_Plugin(Plugin):
 
         self._delete_holding_ou_if_empty()
 
-        # SRAM CO mail: from payload, else member contact mails.
-        if not co_attrs.get("mail") and member_mails:
-            co_attrs = dict(co_attrs)
-            co_attrs["mail"] = member_mails
-            # Preserve required org attrs for upsert
-            if "objectClass" not in co_attrs:
-                co_attrs["objectClass"] = [
-                    "top",
-                    "organization",
-                    "extensibleObject",
-                ]
-            if "o" not in co_attrs:
-                co_attrs["o"] = [co_identifier]
-            self._upsert(dit.co_dn(co_identifier, self.ldap_basename), co_attrs)
+        # CO mail only from SCIM Group.emails (SRAM contact list), not members.
 
         if member_dns:
             grp_attrs["member"] = member_dns
