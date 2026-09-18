@@ -36,6 +36,9 @@ scim_forward_key = os.environ.get(
     os.environ.get("API_KEY", "secret")
 )
 
+# Backend option: Evolveum MidPoint
+midpoint_url = os.environ.get("MIDPOINT_URL", None)
+
 # Backend option: iRODS
 irods_host = os.environ.get("IRODS_HOST", None)
 irods_port = int(os.environ.get("IRODS_PORT", "1247"))
@@ -102,6 +105,11 @@ elif scim_forward_url:
         scim_forward_url,
         scim_forward_key
     )
+elif midpoint_url:
+    from data.plugins.midpoint import MidPointPlugin
+
+    Users = MidPointPlugin(user_model)
+    Groups = MidPointPlugin(group_model)
 elif irods_host:
     from data.plugins.irods import iRODSPlugin
 

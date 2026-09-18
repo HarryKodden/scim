@@ -106,6 +106,7 @@ At this moment the following Plugin Options are implementated:
 * MongoDB (No-SQL)
 * JumpCloud
 * SCIM (Proxy incomming SCIM requests to upstream SCIM Server)
+* Evolveum MidPoint (Users→UserType, Groups→RoleType via MidPoint REST)
 * LDAP
 * iRODS (Integrated Rule-Oriented Data System)
 
@@ -129,6 +130,10 @@ This image uses environment variables for configuration.
 | `DATABASE_URL` | SQL Database connection string | postgresql://user:password@postrgres_host:5432/mydb<br />**or**<br /> mysql+pymysql://user:password@mysql_host/mydb | |
 | `JUMPCLOUD_URL` | The API endpoint for JumpCloud | <https://console.jumpcloud.com> | |
 | `JUMPCLOUD_KEY` | The API Key for your JumpCloud tenant | **value** of API key obtained from JumpCloud\_<br /><br />**Mandatory when JUMPCLOUD_URL is set** | |
+| `MIDPOINT_URL` | Evolveum MidPoint REST base URL. Enables the MidPoint plugin (Users→users, Groups→roles) | `http://midpoint:8080/midpoint/ws/rest` | |
+| `MIDPOINT_USERNAME` | MidPoint username for basic auth | `administrator` | `administrator` |
+| `MIDPOINT_PASSWORD` | MidPoint password<br /><br />**Mandatory when MIDPOINT_URL is set** | | |
+| `MIDPOINT_HOST_HEADER` | Optional HTTP Host override (needed when the MidPoint hostname contains underscores) | `localhost` | |
 | `FORWARD_SCIM_URL` | Forward SCIM request to upstream SCIM server | <https://example.com/v2/api> | |
 | `FORWARD_SCIM_KEY` | API KEY for **FORWARD_SCIM_URL** scim server. if not provided, **API_KEY** will be used | my-secret-password | |
 | `LDAP_HOSTNAME` | Hostname or IP address of LDAP host | ldap.example.org | |
