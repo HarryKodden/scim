@@ -1,28 +1,43 @@
 
 @startuml
+skinparam nodesep 40
+skinparam ranksep 60
+
 cloud World
 
 cloud SCIM {
   collections plugin as "Plugin Mechanism..."
 }
 
-World <--> SCIM: SCIM Protocol\nRFC 7643
+World -down-> SCIM: SCIM Protocol\nRFC 7643
+SCIM -up-> World
 
-file data
-database sql
-database mongo
-cloud jumpcloud
-cloud scim as "upstream SCIM server"
-database ldap as "LDAP"
-database irods as "iRODS"
+package "Storage" as storage {
+  file data
+  database sql
+  database mongo
+  database ldap as "LDAP"
+  database irods as "iRODS"
+}
 
-plugin <--> data : flat files
-plugin <--> sql #line:red;line.bold;text:red : SQL Database
-plugin <--> mongo #green;line.bold;text:green : NoSQL Database
-plugin <--> jumpcloud #blue;line.bold;text:blue : jumpcloud
-plugin <--> midPoint #red;line.bold;text:red : Evolveum Midpoint
-plugin <--> scim #brown;line.bold;text:brown : scim protocol
-plugin <--> ldap : LDAP protocol
-plugin <--> irods #purple;line.bold;text:purple : iRODS protocol
+package "External" as external {
+  cloud jumpcloud
+  cloud midPoint
+  cloud scim as "upstream SCIM server"
+}
+
+' Keep SCIM above both packages
+SCIM -[hidden]down-> storage
+SCIM -[hidden]down-> external
+storage -[hidden]right-> external
+
+plugin -down-> data #line:blue;line.bold;text:blue : flat files
+plugin -down-> sql #line:blue;line.bold;text:blue : SQL Database
+plugin -down-> mongo #blue;line.bold;text:blue : NoSQL Database
+plugin -down-> ldap #blue;line.bold;text:blue : LDAP protocol
+plugin -down-> irods #blue;line.bold;text:blue : iRODS protocol
+
+plugin -down-> jumpcloud #red;line.bold;text:red : jumpcloud
+plugin -down-> midPoint #red;line.bold;text:red : Evolveum Midpoint
+plugin -down-> scim #red;line.bold;text:red : scim protocol
 @enduml
-
