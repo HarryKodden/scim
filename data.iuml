@@ -20,6 +20,7 @@ plugin <--> data : flat files
 plugin <--> sql #line:red;line.bold;text:red : SQL Database
 plugin <--> mongo #green;line.bold;text:green : NoSQL Database
 plugin <--> jumpcloud #blue;line.bold;text:blue : jumpcloud
+plugin <--> midPoint #red;line.bold;text:red : Evolveum Midpoint
 plugin <--> scim #brown;line.bold;text:brown : scim protocol
 plugin <--> ldap : LDAP protocol
 plugin <--> irods #purple;line.bold;text:purple : iRODS protocol
