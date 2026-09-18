@@ -83,6 +83,10 @@ async def create_user(
                         "eduPersonUniqueId": "string",
                         "voPersonExternalAffiliation": "string",
                         "voPersonExternalId": "string",
+                        "sramInactiveDays": 0,
+                        "sshPublicKey": [
+                            "ssh-ed25519 AAAA... comment"
+                        ],
                     },
                     "x509Certificates": [
                         {
@@ -91,6 +95,7 @@ async def create_user(
                     ],
                     "schemas": [
                         "urn:ietf:params:scim:schemas:core:2.0:User",
+                        "urn:mace:surf.nl:sram:scim:extension:User",
                     ],
                 },
             },

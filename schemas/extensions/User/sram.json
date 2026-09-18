@@ -52,6 +52,17 @@
             "mutability": "readWrite",
             "returned": "default",
             "uniqueness": "none"
+        },
+        {
+            "name": "sshPublicKey",
+            "description": "SSH public key(s) of the user (OpenSSH format)",
+            "type": "string",
+            "multiValued": true,
+            "required": false,
+            "caseExact": true,
+            "mutability": "readWrite",
+            "returned": "default",
+            "uniqueness": "none"
         }
     ]
 }
