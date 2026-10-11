@@ -14,19 +14,20 @@
 | code/events/\_\_init\_\_.py          |       35 |        2 |     94% |    45, 94 |
 | code/events/async\_jobs.py           |      202 |       38 |     81% |49, 54-58, 108, 118-122, 135-137, 165-167, 175, 181, 184, 187-188, 194, 225-234, 240-241, 273-274, 281-283, 307 |
 | code/events/builder.py               |      107 |       15 |     86% |82-84, 87-89, 120-132, 192 |
-| code/events/config.py                |       24 |        2 |     92% |    35, 39 |
+| code/events/config.py                |       29 |        2 |     93% |    38, 42 |
 | code/events/delivery/\_\_init\_\_.py |        2 |        0 |    100% |           |
-| code/events/delivery/dispatch.py     |       12 |        0 |    100% |           |
+| code/events/delivery/dispatch.py     |       22 |        2 |     91% |     37-38 |
 | code/events/delivery/poll.py         |       59 |        1 |     98% |        31 |
 | code/events/delivery/push.py         |       36 |        0 |    100% |           |
 | code/events/feed\_events.py          |       79 |       13 |     84% |43, 49, 59-66, 79, 81, 95, 97, 109, 124, 139, 149 |
 | code/events/feed\_registry.py        |       88 |       18 |     80% |41-54, 83, 90-91, 98-101, 126, 136 |
+| code/events/keys.py                  |       64 |        5 |     92% |37, 62-63, 107, 117 |
 | code/events/mapping.py               |       15 |        0 |    100% |           |
 | code/events/prefer.py                |       17 |        2 |     88% |     28-29 |
 | code/events/publisher.py             |       37 |        7 |     81% |60, 67-74, 111-117 |
-| code/events/signing.py               |       11 |        0 |    100% |           |
+| code/events/signing.py               |       16 |        0 |    100% |           |
 | code/filter.py                       |      197 |       32 |     84% |138-139, 162-165, 201, 217-243, 260-261, 268, 290, 299, 306 |
-| code/main.py                         |       47 |        5 |     89% |81-83, 105, 109 |
+| code/main.py                         |       54 |        8 |     85% |86-88, 92-94, 116, 120 |
 | code/routers/\_\_init\_\_.py         |      211 |       20 |     91% |67, 106-107, 180, 239, 245, 250, 256-257, 286, 306, 326-327, 358, 362-364, 379-380, 383 |
 | code/routers/async\_results.py       |       11 |        0 |    100% |           |
 | code/routers/bulk.py                 |       29 |        3 |     90% | 35, 63-64 |
@@ -35,6 +36,7 @@
 | code/routers/groups.py               |       81 |       11 |     86% |139-143, 151, 159-160, 178, 182, 207-210 |
 | code/routers/resource.py             |       20 |        0 |    100% |           |
 | code/routers/schema.py               |       18 |        0 |    100% |           |
+| code/routers/ssf.py                  |       20 |        1 |     95% |        21 |
 | code/routers/users.py                |       99 |       17 |     83% |137-139, 168, 174-178, 186, 195-196, 206-215, 236, 262-263 |
 | code/schema.py                       |      159 |       10 |     94% |68-69, 98, 232, 247, 369-370, 398-401 |
 | code/scim\_errors.py                 |       58 |        6 |     90% |42, 109, 119-125, 146 |
@@ -42,7 +44,7 @@
 | code/services/groups.py              |       83 |       16 |     81% |36-37, 53-54, 73-74, 79, 84, 92-93, 105, 108, 112-113, 137-138 |
 | code/services/users.py               |      101 |       14 |     86% |41, 55-56, 75-76, 89, 97-98, 117-118, 139, 145-146, 156 |
 | code/versioning.py                   |       73 |       14 |     81% |21-24, 30, 36, 43-45, 53, 60, 89, 92, 105 |
-| test/conftest.py                     |       56 |       17 |     70% |31-51, 67-68, 73-74, 79-80 |
+| test/conftest.py                     |       61 |       19 |     69% |31-51, 67-68, 73-74, 79-80, 85-86 |
 | test/test\_async\_jobs\_unit.py      |       24 |        0 |    100% |           |
 | test/test\_async\_requests.py        |      150 |        5 |     97% |   258-265 |
 | test/test\_auth.py                   |        8 |        0 |    100% |           |
@@ -63,9 +65,10 @@
 | test/test\_schema.py                 |       80 |        0 |    100% |           |
 | test/test\_scim\_errors.py           |       76 |        0 |    100% |           |
 | test/test\_services.py               |      113 |        0 |    100% |           |
+| test/test\_ssf\_discovery.py         |       47 |        0 |    100% |           |
 | test/test\_user.py                   |       67 |        0 |    100% |           |
 | test/test\_validation.py             |       10 |        0 |    100% |           |
-| **TOTAL**                            | **3804** |  **303** | **92%** |           |
+| **TOTAL**                            | **3967** |  **316** | **92%** |           |
 
 
 ## Setup coverage badge
