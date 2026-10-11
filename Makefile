@@ -2,7 +2,7 @@
 IMAGE ?= scim-sample
 DOCKER_IMAGE ?= harrykodden/scim
 REPOSITORY_URL ?= harrykodden
-ARCHITECTURE ?= linux/amd64
+ARCHITECTURE ?= linux/$(shell uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/')
 TAG ?= latest
 VERSION ?=
 

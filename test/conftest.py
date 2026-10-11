@@ -79,6 +79,12 @@ def reset_file_backed_data(setup_data):
     except ImportError:
         pass
 
+    try:
+        from events.keys import reset_signing_key_cache
+        reset_signing_key_cache()
+    except ImportError:
+        pass
+
 
 @pytest.fixture(scope="module")
 def test_app(setup_data):

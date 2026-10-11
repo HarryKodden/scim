@@ -4,6 +4,8 @@ import os
 from dataclasses import dataclass
 from typing import Optional
 
+from events.keys import SigningKey, load_signing_key
+
 
 @dataclass(frozen=True)
 class EventConfig:
@@ -19,6 +21,7 @@ class EventConfig:
     signing_algorithm: str
     push_require_tls: bool
     poll_enabled: bool
+    signing_key: Optional[SigningKey] = None
 
     @property
     def push_enabled(self) -> bool:
@@ -26,7 +29,7 @@ class EventConfig:
 
     @property
     def signing_enabled(self) -> bool:
-        return bool(self.signing_secret)
+        return self.signing_key is not None or bool(self.signing_secret)
 
 
 def load_event_config() -> EventConfig:
@@ -38,7 +41,11 @@ def load_event_config() -> EventConfig:
     if async_request not in {"none", "long", "request"}:
         async_request = "request"
 
+    signing_key = load_signing_key()
     signing_algorithm = os.environ.get("SET_SIGNING_ALGORITHM", "HS256")
+    if signing_key is not None:
+        signing_algorithm = signing_key.algorithm
+
     push_require_tls = os.environ.get(
         "SET_PUSH_REQUIRE_TLS", "false"
     ).lower() in ("1", "true", "yes")
@@ -61,4 +68,5 @@ def load_event_config() -> EventConfig:
         push_require_tls=push_require_tls,
         poll_enabled=os.environ.get("SET_POLL_ENABLED", "true").lower()
         in ("1", "true", "yes"),
+        signing_key=signing_key,
     )

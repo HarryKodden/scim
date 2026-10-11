@@ -157,7 +157,11 @@ This image uses environment variables for configuration.
 | `ASYNC_REQUEST` | Async SCIM requests (RFC 9967 §2.5.1): `none`, `request`, or `long` — see [Async SCIM requests](#async-scim-requests). Default `request` only enables async when the client sends `Prefer: respond-async`. | `request` | `request` |
 | `ASYNC_INLINE` | Run async jobs inline before returning 202 (dev/tests only) | `1` | unset |
 | `SET_SIGNING_SECRET` | HMAC secret for JWS-signed SET push (`application/secevent+jwt`) | | |
-| `SET_SIGNING_ALGORITHM` | JWS algorithm when signing is enabled | `HS256` | `HS256` |
+| `SET_SIGNING_ALGORITHM` | JWS algorithm when signing is enabled | `HS256` or `RS256` | `HS256` (RSA keys force `RS256`) |
+| `SET_SIGNING_PRIVATE_KEY` | PEM-encoded RSA private key for RS256 SET signing (use with OpenID SSF receivers such as easyssf) | | |
+| `SET_SIGNING_PRIVATE_KEY_FILE` | Path to a PEM RSA private key (alternative to `SET_SIGNING_PRIVATE_KEY`) | `/keys/set.pem` | |
+| `SET_SIGNING_GENERATE_RSA` | Generate an ephemeral RSA key on startup when no private key is configured (demo only) | `true` | `false` |
+| `SET_SIGNING_KEY_ID` | `kid` advertised in JWKS and JWS headers | `scim-set-1` | `scim-set-1` |
 | `SET_PUSH_REQUIRE_TLS` | Reject `http://` push URLs when `true` | `true` | `false` |
 | `SET_FEEDS` | Feed definitions (JSON array or comma-separated ids) | `[{"id":"default","displayName":"Default"}]` | `default` |
 | `SET_FEEDS_ENABLED` | Emit `feed:add` / `feed:remove` on membership changes | `true` | `true` |
@@ -368,7 +372,17 @@ These are advertised in `securityEvents.eventUris` alongside standard provisioni
 
 ### SET signing (optional)
 
-Set `SET_SIGNING_SECRET` to deliver compact JWS SETs (`Content-Type: application/secevent+jwt`). Without it, SETs are posted as JSON for simpler receiver development.
+Set `SET_SIGNING_SECRET` for HMAC (`HS256`) compact JWS SETs, or configure an RSA private key
+(`SET_SIGNING_PRIVATE_KEY` / `SET_SIGNING_PRIVATE_KEY_FILE`, algorithm `RS256`) for OpenID SSF
+receivers such as [easyssf](https://github.com/easyssf/easyssf). Without signing, SETs are posted as
+JSON for simpler receiver development.
+
+With RSA signing enabled the service publishes:
+
+- `GET /.well-known/jwks.json` — public JWK Set
+- `GET /.well-known/ssf-configuration` — minimal transmitter metadata (`issuer`, `jwks_uri`)
+
+For local demos, `SET_SIGNING_GENERATE_RSA=true` creates an ephemeral RSA key on startup.
 
 In production, set `SET_PUSH_REQUIRE_TLS=true` so only `https://` push URLs are accepted.
 

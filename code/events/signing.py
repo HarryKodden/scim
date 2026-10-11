@@ -11,6 +11,7 @@ from events.config import EventConfig
 
 SET_CONTENT_TYPE = "application/secevent+jwt"
 UNSIGNED_SET_CONTENT_TYPE = "application/json"
+SET_TYPE_HEADER = "secevent+jwt"
 
 
 def prepare_set_delivery_body(
@@ -20,14 +21,30 @@ def prepare_set_delivery_body(
     """
     Serialize a SET for HTTP push.
 
-    Returns (body, content-type). When SET_SIGNING_SECRET is set, body is a
-    compact JWS; otherwise the SET is sent as JSON (legacy/dev receivers).
+    Returns (body, content-type). When RSA or HMAC signing is configured, body is a
+    compact JWS with typ secevent+jwt; otherwise the SET is sent as JSON
+    (legacy/dev receivers).
     """
-    if config.signing_enabled:
+    if config.signing_key is not None:
+        headers = {
+            "typ": SET_TYPE_HEADER,
+            "kid": config.signing_key.key_id,
+        }
+        token = jwt.encode(
+            set_token,
+            config.signing_key.private_key_pem,
+            algorithm=config.signing_key.algorithm,
+            headers=headers,
+        )
+        return token, SET_CONTENT_TYPE
+
+    if config.signing_secret:
         token = jwt.encode(
             set_token,
             config.signing_secret,
             algorithm=config.signing_algorithm,
+            headers={"typ": SET_TYPE_HEADER},
         )
         return token, SET_CONTENT_TYPE
+
     return json.dumps(set_token), UNSIGNED_SET_CONTENT_TYPE
