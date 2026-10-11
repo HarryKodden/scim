@@ -87,6 +87,7 @@ def warm_set_signing_key() -> None:
     if key is not None:
         logger.info("SET signing ready: alg=%s kid=%s", key.algorithm, key.key_id)
 
+
 if len(BASE_PATH) > 1:
     @app.get("/")
     async def redirect():
