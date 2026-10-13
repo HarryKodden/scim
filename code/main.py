@@ -3,6 +3,7 @@
 import os
 import logging
 import uvicorn
+from typing import Optional
 
 from fastapi import Request, FastAPI, status
 from fastapi.responses import RedirectResponse
@@ -17,8 +18,8 @@ logger = logging.getLogger(__name__)
 
 
 def resolve_app_version(
-    release: str | None = None,
-    version: str | None = None,
+    release: Optional[str] = None,
+    version: Optional[str] = None,
 ) -> str:
     """Version shown in Swagger/OpenAPI info.version."""
     raw = release if release is not None else os.environ.get("RELEASE")
