@@ -27,7 +27,7 @@
 | code/events/publisher.py             |       37 |        7 |     81% |60, 67-74, 111-117 |
 | code/events/signing.py               |       16 |        0 |    100% |           |
 | code/filter.py                       |      197 |       32 |     84% |138-139, 162-165, 201, 217-243, 260-261, 268, 290, 299, 306 |
-| code/main.py                         |       54 |        8 |     85% |86-88, 92-94, 116, 120 |
+| code/main.py                         |       55 |        8 |     85% |87-89, 93-95, 117, 121 |
 | code/routers/\_\_init\_\_.py         |      211 |       20 |     91% |67, 106-107, 180, 239, 245, 250, 256-257, 286, 306, 326-327, 358, 362-364, 379-380, 383 |
 | code/routers/async\_results.py       |       11 |        0 |    100% |           |
 | code/routers/bulk.py                 |       29 |        3 |     90% | 35, 63-64 |
@@ -68,7 +68,7 @@
 | test/test\_ssf\_discovery.py         |       47 |        0 |    100% |           |
 | test/test\_user.py                   |       67 |        0 |    100% |           |
 | test/test\_validation.py             |       10 |        0 |    100% |           |
-| **TOTAL**                            | **3967** |  **316** | **92%** |           |
+| **TOTAL**                            | **3968** |  **316** | **92%** |           |
 
 
 ## Setup coverage badge
