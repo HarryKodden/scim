@@ -134,6 +134,10 @@ This image uses environment variables for configuration.
 | `MIDPOINT_USERNAME` | MidPoint username for basic auth | `administrator` | `administrator` |
 | `MIDPOINT_PASSWORD` | MidPoint password<br /><br />**Mandatory when MIDPOINT_URL is set** | | |
 | `MIDPOINT_HOST_HEADER` | Optional HTTP Host override (needed when the MidPoint hostname contains underscores) | `localhost` | |
+| `MIDPOINT_LEADING_GROUPS` | When true, SCIM Groups match existing MidPoint Roles by name; Group DELETE does not delete the Role | `true` | `true` |
+| `MIDPOINT_SCIM_EXTENSION_NS` | Namespace of the MidPoint schema-extension item that stores the raw SCIM JSON | `https://github.com/HarryKodden/scim/xml/ns/midpoint` | |
+| `MIDPOINT_SCIM_EXTENSION_ATTR` | Local name of that extension item (must exist on UserType and RoleType; prefer DisplayHint HIDDEN) | `scimResource` | |
+| `MIDPOINT_SCIM_DETAILS_PATH` | Optional full Prism path override for PATCH (default `extension/<attr>`) | `extension/scimResource` | |
 | `FORWARD_SCIM_URL` | Forward SCIM request to upstream SCIM server | <https://example.com/v2/api> | |
 | `FORWARD_SCIM_KEY` | API KEY for **FORWARD_SCIM_URL** scim server. if not provided, **API_KEY** will be used | my-secret-password | |
 | `LDAP_HOSTNAME` | Hostname or IP address of LDAP host | ldap.example.org | |
