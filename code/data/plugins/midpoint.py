@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 # SCIM document (after mapped native attrs are popped) lives in a MidPoint
 # schema-extension attribute — not in the human-facing ``description`` field.
 # Deploy a SchemaType that defines this item on UserType and RoleType (hidden
-# in the GUI). See midpoint-invite-integration post-initial-objects.
+# in the GUI). See midpoint/post-initial-objects/ and README (MidPoint plugin).
 #
 # Override with env if your schema uses another namespace / local name / path.
 SCIM_DETAILS_NS = os.environ.get(
