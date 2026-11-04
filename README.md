@@ -106,11 +106,38 @@ At this moment the following Plugin Options are implementated:
 * MongoDB (No-SQL)
 * JumpCloud
 * SCIM (Proxy incomming SCIM requests to upstream SCIM Server)
-* Evolveum MidPoint (Users→UserType, Groups→RoleType via MidPoint REST)
+* Evolveum MidPoint (Users→UserType, Groups→RoleType via MidPoint REST) — see [MidPoint plugin](#midpoint-plugin)
 * LDAP
 * iRODS (Integrated Rule-Oriented Data System)
 
 The actual Plugin is selected by providing the corresponding envrionment variables, see below.
+
+### MidPoint plugin
+
+When `MIDPOINT_URL` is set, SCIM Users map to MidPoint `UserType` and Groups to `RoleType`. Identity fields (`userName` / `name`, memberships, …) are written to native MidPoint attributes; the remainder of each SCIM resource is stored as JSON in a **schema-extension** item (`extension/scimResource` by default), so MidPoint’s human-facing `description` stays clean.
+
+**Your MidPoint instance must load that schema.** Ship the object from this repository as a MidPoint [post-initial object](https://docs.evolveum.com/midpoint/reference/support-4.8/deployment/post-initial-import/):
+
+| File | Purpose |
+| ---- | ------- |
+| [`midpoint/post-initial-objects/105-schema-scim-extension.xml`](midpoint/post-initial-objects/105-schema-scim-extension.xml) | Defines hidden `scimResource` on `UserType` and `RoleType` (namespace `https://github.com/HarryKodden/scim/xml/ns/midpoint`) |
+
+**New MidPoint (Docker / first start)** — mount the directory into MidPoint’s post-initial import path so it is applied once on startup, for example:
+
+```yaml
+services:
+  midpoint:
+    volumes:
+      - ./midpoint/post-initial-objects:/opt/midpoint/var/post-initial-objects
+```
+
+(Exact mount path can vary by image; the Evolveum MidPoint container uses `post-initial-objects` under the MidPoint home/`var` tree.)
+
+**Existing MidPoint** — import the same XML once (GUI: Configuration → Import object, or MidPoint REST). Re-importing the same `oid` updates the schema definition.
+
+If you already use another extension attribute name or namespace, override `MIDPOINT_SCIM_EXTENSION_NS`, `MIDPOINT_SCIM_EXTENSION_ATTR`, and optionally `MIDPOINT_SCIM_DETAILS_PATH` to match your SchemaType — the item must exist on both UserType and RoleType. Prefer DisplayHint `HIDDEN` so operators do not edit the raw JSON in the GUI.
+
+With `MIDPOINT_LEADING_GROUPS=true` (default), SCIM Group create binds to an existing MidPoint Role by `displayName`, and Group DELETE does not delete that Role (useful when MidPoint is system of record and another system echoes Group operations over SCIM).
 
 ## Environment variables
 

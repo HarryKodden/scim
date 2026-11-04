@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Schema extension used by the HarryKodden/scim MidPoint plugin to store the
+  raw SCIM resource JSON on UserType / RoleType without polluting description.
+  Item is hidden from MidPoint GUI forms (a:display=HIDDEN).
+-->
+<schema oid="b2c3d4e5-f6a7-8901-bcde-f12345678901"
+        xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+        xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+        xmlns:a="http://prism.evolveum.com/xml/ns/public/annotation-3"
+        xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+
+    <name>scim-resource-extension</name>
+    <description>
+        Extension attribute scimResource for SCIM plugin raw document storage.
+    </description>
+
+    <definition>
+        <xsd:schema elementFormDefault="qualified"
+                    targetNamespace="https://github.com/HarryKodden/scim/xml/ns/midpoint"
+                    xmlns:tns="https://github.com/HarryKodden/scim/xml/ns/midpoint"
+                    xmlns:a="http://prism.evolveum.com/xml/ns/public/annotation-3"
+                    xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+                    xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+
+            <xsd:complexType name="UserScimExtensionType">
+                <xsd:annotation>
+                    <xsd:appinfo>
+                        <a:extension ref="c:UserType"/>
+                    </xsd:appinfo>
+                </xsd:annotation>
+                <xsd:sequence>
+                    <xsd:element name="scimResource" type="xsd:string" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation>
+                            <xsd:appinfo>
+                                <a:indexed>false</a:indexed>
+                                <a:display>HIDDEN</a:display>
+                                <a:displayName>SCIM resource</a:displayName>
+                                <a:help>Raw SCIM User JSON managed by the SCIM MidPoint plugin</a:help>
+                            </xsd:appinfo>
+                        </xsd:annotation>
+                    </xsd:element>
+                </xsd:sequence>
+            </xsd:complexType>
+
+            <xsd:complexType name="RoleScimExtensionType">
+                <xsd:annotation>
+                    <xsd:appinfo>
+                        <a:extension ref="c:RoleType"/>
+                    </xsd:appinfo>
+                </xsd:annotation>
+                <xsd:sequence>
+                    <xsd:element name="scimResource" type="xsd:string" minOccurs="0" maxOccurs="1">
+                        <xsd:annotation>
+                            <xsd:appinfo>
+                                <a:indexed>false</a:indexed>
+                                <a:display>HIDDEN</a:display>
+                                <a:displayName>SCIM resource</a:displayName>
+                                <a:help>Raw SCIM Group JSON managed by the SCIM MidPoint plugin</a:help>
+                            </xsd:appinfo>
+                        </xsd:annotation>
+                    </xsd:element>
+                </xsd:sequence>
+            </xsd:complexType>
+
+        </xsd:schema>
+    </definition>
+</schema>
