@@ -43,6 +43,33 @@ def _midpoint_leading_groups() -> bool:
     }
 
 
+# Cap MidPoint error bodies so SCIM clients (e.g. Invite) never receive
+# multi‑100KB OperationResult dumps on 4xx/5xx.
+_MIDPOINT_ERROR_BODY_MAX = int(os.environ.get("MIDPOINT_ERROR_BODY_MAX", "512"))
+
+
+def _short_midpoint_error(status_code: int, body: str) -> str:
+    """Return a short, stable error snippet from a MidPoint HTTP error body."""
+    text = (body or "").strip()
+    message = None
+    try:
+        data = json.loads(text)
+        # Common shapes: OperationResultType wrapper or bare result.
+        obj = data.get("object") if isinstance(data, dict) else None
+        if isinstance(obj, dict) and obj.get("message"):
+            message = obj.get("message")
+        elif isinstance(data, dict) and data.get("message"):
+            message = data.get("message")
+    except (TypeError, ValueError):
+        message = None
+    if not message:
+        message = text
+    message = " ".join(str(message).split())
+    if len(message) > _MIDPOINT_ERROR_BODY_MAX:
+        message = message[: _MIDPOINT_ERROR_BODY_MAX - 3] + "..."
+    return f"HTTP {status_code}: {message}"
+
+
 def _as_list(value: Any) -> List[Any]:
     if value is None:
         return []
@@ -171,8 +198,8 @@ class MidPointClient:
         )
         if response.status_code >= 400:
             raise Exception(
-                f"MidPoint {method} {path} failed with HTTP {response.status_code}: "
-                f"{response.text}"
+                f"MidPoint {method} {path} failed with "
+                f"{_short_midpoint_error(response.status_code, response.text)}"
             )
         return response
 
@@ -398,6 +425,8 @@ class MidPointPlugin(Plugin):
             resource["displayName"] = _poly_name(obj.get("fullName")) or resource.get(
                 "displayName"
             )
+            resource_type = "User"
+            location = f"/Users/{id}"
         else:
             resource["displayName"] = (
                 _poly_name(obj.get("displayName"))
@@ -405,6 +434,17 @@ class MidPointPlugin(Plugin):
                 or resource.get("displayName")
             )
             resource["members"] = self._read_members(id)
+            resource_type = "Group"
+            location = f"/Groups/{id}"
+
+        # UserResource/GroupResource require meta; blobs written outside SCIM
+        # (or truncated) may omit it — synthesize so GET/DELETE do not 500.
+        meta = resource.get("meta")
+        if not isinstance(meta, dict):
+            meta = {}
+        meta.setdefault("resourceType", resource_type)
+        meta.setdefault("location", location)
+        resource["meta"] = meta
 
         logger.debug("[__getitem__] result keys: %s", list(resource.keys()))
         return resource

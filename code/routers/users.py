@@ -1,6 +1,7 @@
 # routers/users.py
 
 import json
+import os
 
 from fastapi import APIRouter, Depends, Body, status, HTTPException, Query, Request, Response
 from pydantic_core import from_json, ValidationError
@@ -9,12 +10,12 @@ import traceback
 
 from schema import ListResponse, User, Patch, GroupResource, \
     SCIM_PATCH_OP
-from typing import Any
+from typing import Any, Optional
 from auth import api_key_auth
 
 from routers import BASE_PATH, PAGE_SIZE, \
     get_all_resources, resource_exists, patch_resource, \
-    SCIM_Route, SCIM_Response
+    SCIM_Route, SCIM_Response, short_error_detail
 
 from events.feed_events import emit_feed_remove
 from events.feed_registry import resolve_feed_for_group
@@ -33,6 +34,31 @@ from data.users import \
 
 import logging
 logger = logging.getLogger(__name__)
+
+# Invite may POST /Users again for an already-provisioned invitee (re-invite /
+# accept with a different IdP subject). Return the existing User instead of 409
+# so Invite can continue with Group membership updates.
+def _idempotent_user_create() -> bool:
+    return os.environ.get("SCIM_IDEMPOTENT_USER_CREATE", "true").lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
+
+
+def _escape_filter_value(value: str) -> str:
+    return value.replace("\\", "\\\\").replace('"', '\\"')
+
+
+def _find_user_by_filter(query: str) -> Optional[Any]:
+    listed = get_all_resources("User", 1, 1, query)
+    if not listed.totalResults or not listed.Resources:
+        return None
+    raw = listed.Resources[0]
+    uid = raw.get("id") if isinstance(raw, dict) else getattr(raw, "id", None)
+    return get_user_resource(uid) if uid else None
+
 
 router = APIRouter(
     route_class=SCIM_Route,
@@ -104,23 +130,51 @@ async def create_user(
 ) -> Any:
     """ Create a User """
 
-    if resource_exists(
-        "User",
-        f"userName eq \"{user.userName}\""
-    ):
-        raise HTTPException(
-            status_code=409,
-            detail="userName already exists"
+    existing = None
+    if user.userName:
+        existing = _find_user_by_filter(
+            f'userName eq "{_escape_filter_value(user.userName)}"'
+        )
+    if existing is None and user.externalId:
+        existing = _find_user_by_filter(
+            f'externalId eq "{_escape_filter_value(user.externalId)}"'
         )
 
-    if user.externalId:
-        if resource_exists(
-            "User",
-            f"externalId eq \"{user.externalId}\""
-        ):
+    if existing is not None:
+        if not _idempotent_user_create():
             raise HTTPException(
                 status_code=409,
-                detail="User already exists with same externalId"
+                detail=(
+                    "userName already exists"
+                    if user.userName
+                    and existing.userName == user.userName
+                    else "User already exists with same externalId"
+                ),
+            )
+        logger.info(
+            "POST Users: reuse existing %s (userName=%s externalId=%s)",
+            existing.id,
+            user.userName,
+            user.externalId,
+        )
+        try:
+            resource = put_user_resource(existing.id, user)
+            emit_user_event("create", resource, base_path=BASE_PATH)
+            return dump_resource(resource, response)
+        except ValidationError:
+            raise HTTPException(
+                status_code=422,
+                detail="Invalid User resource",
+            )
+        except Exception as e:
+            logger.error(
+                "[CREATE_USER reuse] %s, %s",
+                short_error_detail(e),
+                traceback.format_exc(),
+            )
+            raise HTTPException(
+                status_code=404,
+                detail=f"Error: {short_error_detail(e)}",
             )
 
     try:
@@ -135,10 +189,14 @@ async def create_user(
             detail="Invalid User resource"
         )
     except Exception as e:
-        logger.error(f"[CREATE_USER] {str(e)}, {traceback.format_exc()}")
+        logger.error(
+            "[CREATE_USER] %s, %s",
+            short_error_detail(e),
+            traceback.format_exc(),
+        )
         raise HTTPException(
             status_code=404,
-            detail=f"Error: {str(e)}"
+            detail=f"Error: {short_error_detail(e)}",
         )
 
 
@@ -193,7 +251,9 @@ async def update_user(id: str, user: User, request: Request, response: Response)
         return dump_resource(resource, response)
 
     except Exception as e:
-        raise HTTPException(status_code=404, detail=f"Error: {str(e)}")
+        raise HTTPException(
+            status_code=404, detail=f"Error: {short_error_detail(e)}"
+        )
 
 
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -260,4 +320,6 @@ async def patch_user(id: str, patch: Patch, request: Request, response: Response
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Error: {str(e)}")
+        raise HTTPException(
+            status_code=400, detail=f"Error: {short_error_detail(e)}"
+        )

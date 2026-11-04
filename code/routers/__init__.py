@@ -11,7 +11,7 @@ from fastapi.routing import APIRoute
 from schema import SCIM_API_MESSAGES, SCIM_CONTENT_TYPE, ListResponse
 
 from filter import Filter
-from typing import Callable, Any
+from typing import Callable, Any, Union
 
 from events.async_jobs import accept_async_response
 from events.config import load_event_config
@@ -26,6 +26,17 @@ logger = logging.getLogger(__name__)
 
 BASE_PATH = os.environ.get('BASE_PATH', '')
 PAGE_SIZE = int(os.environ.get('PAGE_SIZE', 100))
+# Keep SCIM error details / failure logs short for upstream clients (Invite).
+_HTTP_ERROR_DETAIL_MAX = int(os.environ.get('SCIM_ERROR_DETAIL_MAX', '512'))
+
+
+def short_error_detail(exc: Union[BaseException, Any], limit: int = None) -> str:
+    """Truncate exception text so clients never get huge upstream dumps."""
+    text = str(exc)
+    max_len = limit if limit is not None else _HTTP_ERROR_DETAIL_MAX
+    if len(text) <= max_len:
+        return text
+    return text[: max_len - 3] + '...'
 
 
 def is_bulk_endpoint(request: Request) -> bool:
@@ -158,7 +169,7 @@ class SCIM_Route(APIRoute):
                     request.method,
                     request.url.path,
                     exc.status_code,
-                    exc.detail,
+                    short_error_detail(exc.detail),
                     request.headers.get("content-type", ""),
                     request_body_text[:4000]
                 )
@@ -168,7 +179,7 @@ class SCIM_Route(APIRoute):
                     "[REQ FAIL] %s %s status=500 detail=%s content_type=%s body=%s",
                     request.method,
                     request.url.path,
-                    str(exc),
+                    short_error_detail(exc),
                     request.headers.get("content-type", ""),
                     request_body_text[:4000]
                 )

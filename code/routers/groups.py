@@ -12,7 +12,7 @@ from auth import api_key_auth
 
 from routers import BASE_PATH, PAGE_SIZE, \
     get_all_resources, resource_exists, patch_resource, \
-    SCIM_Route, SCIM_Response
+    SCIM_Route, SCIM_Response, short_error_detail
 
 from events.feed_events import (
     emit_group_membership_feed_changes,
@@ -109,10 +109,14 @@ async def create_group(
             detail="Invalid Group resource"
         )
     except Exception as e:
-        logger.error(f"[CREATE_GROUP] {str(e)}, {traceback.format_exc()}")
+        logger.error(
+            "[CREATE_GROUP] %s, %s",
+            short_error_detail(e),
+            traceback.format_exc(),
+        )
         raise HTTPException(
             status_code=404,
-            detail=f"Error: {str(e)}"
+            detail=f"Error: {short_error_detail(e)}",
         )
 
 
@@ -157,7 +161,9 @@ async def update_group(id: str, group: Group, request: Request, response: Respon
 
         return dump_resource(resource, response)
     except Exception as e:
-        raise HTTPException(status_code=404, detail=f"Error: {str(e)}")
+        raise HTTPException(
+            status_code=404, detail=f"Error: {short_error_detail(e)}"
+        )
 
 
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -207,4 +213,6 @@ async def patch_group(id: str, patch: Patch, request: Request, response: Respons
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Error: {str(e)}")
+        raise HTTPException(
+            status_code=400, detail=f"Error: {short_error_detail(e)}"
+        )
