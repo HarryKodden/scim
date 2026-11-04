@@ -60,8 +60,11 @@ def test_scim_not_found_resource_type(test_app):
     assert body["scimType"] == "invalidPath"
 
 
-def test_scim_duplicate_user_returns_409(test_app):
+def test_scim_duplicate_user_returns_409(test_app, monkeypatch):
     import uuid
+
+    # Strict uniqueness (409) when idempotent create is disabled.
+    monkeypatch.setenv("SCIM_IDEMPOTENT_USER_CREATE", "false")
 
     user_name = f"scim-error-dup-{uuid.uuid4().hex[:8]}"
     headers = {

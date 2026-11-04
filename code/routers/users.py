@@ -35,9 +35,7 @@ from data.users import \
 import logging
 logger = logging.getLogger(__name__)
 
-# Invite may POST /Users again for an already-provisioned invitee (re-invite /
-# accept with a different IdP subject). Return the existing User instead of 409
-# so Invite can continue with Group membership updates.
+
 def _idempotent_user_create() -> bool:
     return os.environ.get("SCIM_IDEMPOTENT_USER_CREATE", "true").lower() in {
         "1",

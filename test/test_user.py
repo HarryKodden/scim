@@ -62,7 +62,9 @@ def test_create_user(test_app):
       },
       headers=headers
     )
-    assert response.status_code == 409  # Duplicate !
+    # Default SCIM_IDEMPOTENT_USER_CREATE reuses the existing user.
+    assert response.status_code == 201
+    assert response.json()["id"] == user.id
 
     response = test_app.delete(f"/Users/{user.id}", headers=headers)
     assert response.status_code == 204
@@ -147,7 +149,9 @@ def test_update_user(test_app):
       },
       headers=headers
     )
-    assert response.status_code == 409
+    assert response.status_code == 201
+    assert response.json()["id"] == id
+    assert response.json().get("active") is True
 
     response = test_app.patch(
       f"/Users/{id}",
@@ -197,7 +201,9 @@ def test_update_user(test_app):
       },
       headers=headers
     )
-    assert response.status_code == 409
+    # Idempotent create matches on externalId and reuses the same user.
+    assert response.status_code == 201
+    assert response.json()["id"] == id
 
     response = test_app.delete(
       f"/Users/{id}",
