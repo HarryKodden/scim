@@ -51,20 +51,20 @@ version:
 
 release-check:
 	@VERSION=$$($(MAKE) -s _resolve-version); \
-	echo "$$VERSION" | grep -Eq "$(SEMVER_RE)" || (echo "VERSION must be semver (x.y.z), got: $$VERSION"; exit 1); \
-	command -v gh >/dev/null 2>&1 || (echo "Install GitHub CLI: https://cli.github.com/"; exit 1); \
-	test -z "$$(git status --porcelain)" || (echo "Working tree is not clean; commit or stash changes first"; exit 1); \
-	! git rev-parse "v$$VERSION" >/dev/null 2>&1 || (echo "Tag v$$VERSION already exists"; exit 1); \
+	echo "$$VERSION" | grep -Eq "$(SEMVER_RE)" || { echo "VERSION must be semver (x.y.z), got: $$VERSION"; exit 1; }; \
+	command -v gh >/dev/null 2>&1 || { echo "Install GitHub CLI: https://cli.github.com/"; exit 1; }; \
+	test -z "$$(git status --porcelain)" || { echo "Working tree is not clean; commit or stash changes first"; exit 1; }; \
+	! git rev-parse "v$$VERSION" >/dev/null 2>&1 || { echo "Tag v$$VERSION already exists"; exit 1; }; \
 	echo "Ready to publish v$$VERSION -> $(DOCKER_IMAGE):$$VERSION"
 
 release: release-check
 	@VERSION=$$($(MAKE) -s _resolve-version); \
 	gh release create "v$$VERSION" \
 		--title "v$$VERSION" \
-		--generate-notes; \
-	echo ""; \
-	echo "Published v$$VERSION."; \
-	echo "Watch: https://github.com/$$(gh repo view --json nameWithOwner -q .nameWithOwner)/actions/workflows/release.yml"; \
+		--generate-notes && \
+	echo "" && \
+	echo "Published v$$VERSION." && \
+	echo "Watch: https://github.com/$$(gh repo view --json nameWithOwner -q .nameWithOwner)/actions/workflows/release.yml" && \
 	echo "Images: $(DOCKER_IMAGE):$$VERSION, $(DOCKER_IMAGE):latest"
 
 release-draft: release-check
@@ -72,7 +72,7 @@ release-draft: release-check
 	gh release create "v$$VERSION" \
 		--title "v$$VERSION" \
 		--generate-notes \
-		--draft; \
+		--draft && \
 	echo "Draft release v$$VERSION created. Publish it on GitHub to build Docker images."
 
 build all:
