@@ -28,16 +28,16 @@
 | code/events/signing.py               |       16 |        0 |    100% |           |
 | code/filter.py                       |      197 |       32 |     84% |138-139, 162-165, 201, 217-243, 260-261, 268, 290, 299, 306 |
 | code/main.py                         |       55 |        8 |     85% |87-89, 93-95, 117, 121 |
-| code/routers/\_\_init\_\_.py         |      211 |       20 |     91% |67, 106-107, 180, 239, 245, 250, 256-257, 286, 306, 326-327, 358, 362-364, 379-380, 383 |
+| code/routers/\_\_init\_\_.py         |      218 |       21 |     90% |39, 78, 117-118, 191, 250, 256, 261, 267-268, 297, 317, 337-338, 369, 373-375, 390-391, 394 |
 | code/routers/async\_results.py       |       11 |        0 |    100% |           |
 | code/routers/bulk.py                 |       29 |        3 |     90% | 35, 63-64 |
 | code/routers/config.py               |       12 |        0 |    100% |           |
 | code/routers/feeds.py                |       32 |        0 |    100% |           |
-| code/routers/groups.py               |       81 |       11 |     86% |139-143, 151, 159-160, 178, 182, 207-210 |
+| code/routers/groups.py               |       81 |       11 |     86% |143-147, 155, 163-164, 184, 188, 213-216 |
 | code/routers/resource.py             |       20 |        0 |    100% |           |
 | code/routers/schema.py               |       18 |        0 |    100% |           |
 | code/routers/ssf.py                  |       20 |        1 |     95% |        21 |
-| code/routers/users.py                |       99 |       17 |     83% |137-139, 168, 174-178, 186, 195-196, 206-215, 236, 262-263 |
+| code/routers/users.py                |      124 |       22 |     82% |162-173, 189-195, 224, 230-234, 242, 251-252, 264-273, 294, 320-321 |
 | code/schema.py                       |      159 |       10 |     94% |68-69, 98, 232, 247, 369-370, 398-401 |
 | code/scim\_errors.py                 |       58 |        6 |     90% |42, 109, 119-125, 146 |
 | code/services/\_\_init\_\_.py        |        0 |        0 |    100% |           |
@@ -63,12 +63,12 @@
 | test/test\_resource.py               |       22 |        0 |    100% |           |
 | test/test\_routers\_utils.py         |       57 |        0 |    100% |           |
 | test/test\_schema.py                 |       80 |        0 |    100% |           |
-| test/test\_scim\_errors.py           |       76 |        0 |    100% |           |
+| test/test\_scim\_errors.py           |       77 |        0 |    100% |           |
 | test/test\_services.py               |      113 |        0 |    100% |           |
 | test/test\_ssf\_discovery.py         |       47 |        0 |    100% |           |
-| test/test\_user.py                   |       67 |        0 |    100% |           |
+| test/test\_user.py                   |       71 |        0 |    100% |           |
 | test/test\_validation.py             |       10 |        0 |    100% |           |
-| **TOTAL**                            | **3968** |  **316** | **92%** |           |
+| **TOTAL**                            | **4005** |  **322** | **92%** |           |
 
 
 ## Setup coverage badge
